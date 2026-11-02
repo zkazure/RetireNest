@@ -33,6 +33,12 @@ from living.costs import (
     transport_cost,
 )
 from living.errors import LivingCostError
+from living.extras import (
+    entertainment_annual,
+    soft_annual,
+    travel_annual,
+    upbringing_annual,
+)
 from living.profile import LivingProfile
 
 __version__ = "1.0.0"
@@ -48,6 +54,7 @@ __all__ = [
     "city_tier",
     "clothing_cost",
     "education_cost",
+    "entertainment_annual",
     "food_cost",
     "house_buy_year",
     "house_type",
@@ -55,8 +62,11 @@ __all__ = [
     "inflation_factor",
     "profile_from_dict",
     "ret_tier",
+    "soft_annual",
     "stage_rate",
     "to_real",
     "total_living_cost",
     "transport_cost",
+    "travel_annual",
+    "upbringing_annual",
 ]

@@ -60,3 +60,18 @@ result = estimate_medical_cost(age=35, city="上海", insurance="职工医保")
 ## 测试
 
 在 `src/` 下执行 `uv run pytest`。医疗测试位于 `tests/test_medical_costs.py`。
+
+
+## 三态支出
+
+`tri_state.py` 把医疗支出拆成无病无灾、小病小灾、大病大灾三档，供 `lifecycle`
+做年度仿真：
+
+- 三态概率按年龄段给，分性别调整；小病概率对齐年住院率约 22%，大病概率是
+  `[待转录]` 的临时值，等重疾表 CI4 到位后整表替换，只改这一个文件
+- 成本 = 基线门诊 1200 元 + 事件附加；小病附加 12000（次均住院 9870 上浮），
+  大病附加 15 万（治疗、护理与收入损失）
+- 期望年支出 = Σ 概率 × 各态年支出，`expected_annual(age, sex)` 直接可用
+
+替换数据时的约束：三态概率之和必须为 1，且 `major < minor`，否则
+`TriStateProbability` 在校验阶段就会拒绝。
