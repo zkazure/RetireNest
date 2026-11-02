@@ -32,6 +32,11 @@ export interface CommandOutputSpec {
   visible?: boolean;
 }
 
+export interface CommandExample {
+  name?: string;
+  inputs: Record<string, unknown>;
+}
+
 export interface CommandManifest {
   id: string;
   version: string;
@@ -41,7 +46,7 @@ export interface CommandManifest {
   outputs: CommandOutputSpec[];
   deterministic?: boolean;
   as_of?: string | null;
-  examples?: Record<string, unknown>[];
+  examples?: CommandExample[];
 }
 
 export interface CommandListResponse {

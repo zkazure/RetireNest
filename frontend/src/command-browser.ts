@@ -103,6 +103,8 @@ function selectCommand(command: CommandManifest) {
       </div>
       <div class="cmd-actions">
         <button type="submit" class="cmd-button">执行命令</button>
+        <button type="button" class="cmd-button cmd-button-ghost" id="command-fill">填充示例</button>
+        <button type="button" class="cmd-button cmd-button-ghost" id="command-clear">清空</button>
         <span class="cmd-hint">输入来自 manifest；decimal 用字符串，date 用 YYYY-MM-DD。</span>
       </div>
       <p class="cmd-error" id="command-error" role="alert" hidden></p>
@@ -130,7 +132,16 @@ function selectCommand(command: CommandManifest) {
   form.addEventListener('submit', event => {
     event.preventDefault();
     void executeSelected(command);
-  });}
+  });
+  const example = command.examples?.[0]?.inputs;
+  const fillButton = detail.querySelector<HTMLButtonElement>('#command-fill')!;
+  fillButton.disabled = !example;
+  fillButton.title = example ? '用 manifest 的第一条示例填表' : '该命令没有示例';
+  fillButton.addEventListener('click', () => fillValues(command, form, example ?? {}));
+  detail.querySelector<HTMLButtonElement>('#command-clear')!.addEventListener('click', () =>
+    fillValues(command, form, {}),
+  );
+}
 
 function renderInput(spec: CommandInputSpec): string {
   const id = `cmd-input-${spec.name}`;
@@ -199,6 +210,37 @@ function collectInputs(command: CommandManifest): Record<string, unknown> {
     }
   }
   return inputs;
+}
+
+type FormControl = HTMLInputElement | HTMLSelectElement;
+
+function findControl(form: HTMLFormElement, name: string): FormControl | null {
+  return form.querySelector<FormControl>(`[data-input="${name}"]`);
+}
+
+function setControlValue(spec: CommandInputSpec, element: FormControl, value: unknown) {
+  if (spec.type === 'boolean') {
+    (element as HTMLInputElement).checked = value === true;
+  } else if (value === undefined || value === null) {
+    element.value = '';
+  } else {
+    element.value = String(value);
+  }
+  element.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/** 用一条值表覆盖全部输入：缺项回落到 manifest 的 default，再缺就清空。 */
+function fillValues(
+  command: CommandManifest,
+  form: HTMLFormElement,
+  values: Record<string, unknown>,
+) {
+  for (const spec of command.inputs) {
+    const element = findControl(form, spec.name);
+    if (!element) continue;
+    const hasValue = Object.prototype.hasOwnProperty.call(values, spec.name);
+    setControlValue(spec, element, hasValue ? values[spec.name] : spec.default);
+  }
 }
 
 function renderOutputs(command: CommandManifest, response: CommandExecutionResponse) {

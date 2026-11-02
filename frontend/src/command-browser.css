@@ -313,6 +313,18 @@ button, input, select { font: inherit; }
   word-break: break-word;
 }
 
+.cmd-actions { flex-wrap: wrap; }
+
+.cmd-button-ghost {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--green);
+  font-weight: 500;
+}
+
+.cmd-button-ghost:hover { background: var(--soft); }
+.cmd-button-ghost:disabled { cursor: not-allowed; opacity: .45; }
+
 .cmd-run-meta {
   margin: 10px 0 0;
   color: var(--muted);
