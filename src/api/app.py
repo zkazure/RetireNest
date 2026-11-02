@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from api.errors import ApiError
 from api.schemas import PlanRequest
@@ -54,3 +56,10 @@ async def unexpected_error_handler(_: Request, exc: Exception) -> JSONResponse:
 @app.post("/api/retirement/plan")
 def create_plan(request: PlanRequest) -> dict[str, object]:
     return build_plan_response(request)
+
+
+# 生产模式由 run.py 先执行 npm run build，再由这里托管构建产物。
+# 挂载放在 API 路由之后，保证 /api 和 /docs 优先匹配。
+FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+if FRONTEND_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")

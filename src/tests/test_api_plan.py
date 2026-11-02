@@ -154,3 +154,13 @@ def test_custom_city_is_accepted() -> None:
     response = post_plan(payload)
     assert response.status_code == 200
     assert response.json()["plan_input"]["city"] == "某某市"
+
+
+DIST_INDEX = ROOT / "frontend" / "dist" / "index.html"
+
+
+@pytest.mark.skipif(not DIST_INDEX.is_file(), reason="前端尚未构建")
+def test_built_frontend_is_served_at_root() -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
