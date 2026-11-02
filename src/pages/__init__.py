@@ -4,6 +4,8 @@
 解析结果由 `GET /api/pages/{page_id}` 提供给前端。
 """
 
+from pages.lifecycle import MANIFEST as LIFECYCLE_PAGE
+from pages.lifecycle import PAGES as LIFECYCLE_PAGES
 from pages.models import (
     PageError,
     PageExecution,
@@ -14,8 +16,6 @@ from pages.models import (
     PageToggle,
 )
 from pages.resolve import resolve
-from pages.lifecycle import MANIFEST as LIFECYCLE_PAGE
-from pages.lifecycle import PAGES as LIFECYCLE_PAGES
 from pages.retirement import MANIFEST as RETIREMENT_PAGE
 from pages.retirement import PAGES as RETIREMENT_PAGES
 
