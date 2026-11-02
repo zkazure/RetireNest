@@ -31,6 +31,15 @@ uv run --project src python run.py --prod
 
 前端用 `src/command-registry.ts` 的显式允许列表决定暴露哪些命令；后台新增命令不会自动出现。协议见 [../docs/command-protocol.md](../docs/command-protocol.md)。
 
+## 规划对话页
+
+- 开发模式：http://127.0.0.1:5173/agent.html
+- 单端口模式：http://127.0.0.1:8000/agent.html
+
+页面用 `fetch` 调 `POST /api/agent/chat/stream`，边读 SSE 边渲染 `session`、`tool_call`、`tool_result`、`reply`、`done` 事件；流式不可用时回退到普通 `POST /api/agent/chat`。工具轨迹折叠展示 command_id、输入、输出或错误，warning 单独显示。
+
+启用了 Bearer 时，在页面顶部的“访问令牌”输入 token；token 只放内存，不写 localStorage。没有模型 key 时可用 `RETIRENEST_AGENT_FAKE=1` 启动固定演示，页面会显示“开发假模型”字样。Agent 配置、鉴权、SQLite 与会话说明见 [../docs/agent.md](../docs/agent.md)。
+
 ## 手动启动（排错）
 
 先启动后端（见 [../src/api/README.md](../src/api/README.md)），再在 frontend 目录执行：
@@ -72,6 +81,8 @@ build 同时执行 TypeScript 严格检查和生产构建，静态产物位于 d
 - `src/command-registry.ts`：前端显式注册表，决定哪些命令进入命令浏览器。
 - `src/command-browser.ts`、`commands.html`：通用命令浏览器。
 - `src/command-output.ts`：命令浏览器的输出表，按 `outputs` 规格过滤与格式化。
+- `src/agent-chat.ts`、`agent.html`、`src/agent-chat.css`：规划对话页。
+- `src/agent-stream.ts`：增量 SSE 解析器。
 - `src/model.ts`：只保留 `PlanInput`、`ProjectionPoint`、`PlanResult` 类型，不再本地计算。
 - `src/main.ts`：表单事件、页面加载、结果渲染、字段级错误和 PDF 入口。
 - `src/pdf-export.ts`：接收后端返回的 `plan_input`、`result`、`scenarios` 和 `explanation`。
@@ -79,7 +90,7 @@ build 同时执行 TypeScript 严格检查和生产构建，静态产物位于 d
 
 PlanInput 金额单位是元；nominalReturn 和 inflation 是百分数（3 表示 3%）；coverage 也是百分数（80 表示 80%）。points[].assets、target、projected 和 gap 的单位均为元。depletedAge 为首次在退休期出现负资产的年龄，未出现则为 null。
 
-聊天页尚未接入。底部“规则解读”仍由后端的规则文本生成，不是 LLM 输出；后端 Agent 端点可选，模型密钥只放后端环境变量，绝不要放进前端。配置见 [../docs/agent.md](../docs/agent.md)。
+底部“规则解读”仍由后端的规则文本生成，不是 LLM 输出；对话页的回复才来自 Agent。模型密钥只放后端环境变量，绝不要放进前端。配置见 [../docs/agent.md](../docs/agent.md)。
 
 ## 测算口径
 

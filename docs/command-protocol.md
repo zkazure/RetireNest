@@ -31,9 +31,9 @@ GET  /api/pages/{page_id}
 - `GET /api/commands`：返回协议版本和全部命令 manifest。
 - `POST /api/commands/{command_id}`：执行一个命令。
 - `GET /api/pages/{page_id}`：返回页面清单，见第 5 节。
-- Agent 对话走 `POST /api/agent/chat`，不属于命令协议；它读取同一份 manifest 生成工具 schema，见 [docs/agent.md](agent.md)。
-- 没有鉴权头、Cookie 或 API Key。
-- 请求和响应都是 `application/json`。
+- Agent 对话走 `POST /api/agent/chat` 与 `POST /api/agent/chat/stream`（SSE），不属于命令协议；它读取同一份 manifest 生成工具 schema，见 [docs/agent.md](agent.md)。
+- 命令与页面端点没有鉴权头、Cookie 或 API Key；Agent 端点在配置 `RETIRENEST_AGENT_TOKEN(S)` 后需要 Bearer。
+- 请求和响应都是 `application/json`；Agent 的 stream 端点是 `text/event-stream`。
 
 ## 2. 命令清单
 
@@ -418,5 +418,5 @@ const response = await runCommand('medical.estimate', {
 - 后端不做批量执行或依赖 DAG；页面的顺序执行由前端按页面清单完成。
 - 不做动态枚举选项服务；选项写在 manifest，页面清单原样引用。
 - 不做服务端页面组合器：页面清单只描述结构与执行顺序，不返回结果。
-- 不做鉴权、多用户、持久化。
+- 命令与页面端点不做鉴权、多用户、持久化；Agent 端点另有轻量 Bearer 与可选 SQLite，见 [docs/agent.md](agent.md)。
 - 输出类型目前不强制校验；适配器负责返回与 manifest 一致的字段。
