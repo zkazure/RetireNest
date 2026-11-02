@@ -5,8 +5,8 @@
     uv run python tools/fetch_rates.py
 
 页面用 r.jina.ai 渲染后再解析，因为这个代理会执行 JS；只有本脚本联网，
-profit 包本身不依赖网络。抓到的是候选值，核对银行公告后手动改
-profit/rates.py 的 SNAPSHOT，脚本不会自动写文件。
+deposit 包本身不依赖网络。抓到的是候选值，核对银行公告后手动改
+deposit/rates.py 的 SNAPSHOT，脚本不会自动写文件。
 """
 
 from __future__ import annotations
@@ -79,7 +79,7 @@ def main() -> int:
         print(f"{source.bank}: 活期 {percent}%  ({source.url})")
     if failures:
         print(f"\n{failures} 家失败，失败的一家都不要手工补数，重试或换个来源。")
-    print("\n核对银行公告后，把结果抄进 profit/rates.py 的 SNAPSHOT，并更新 fetched_at。")
+    print("\n核对银行公告后，把结果抄进 deposit/rates.py 的 SNAPSHOT，并更新 fetched_at。")
     return 0 if failures == 0 else 1
 
 

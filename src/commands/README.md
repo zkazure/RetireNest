@@ -7,8 +7,8 @@
 - `plan.retirement` → `plan` 包的 `validate` / `calculate` / `build_scenarios` / `build_explanation`
 - `medical.estimate` → `medical.estimate_medical_cost`
 - `pension.basic` → `pension.BasicPensionInput` / `pension.calculate`
-- `deposit.demand` → `profit.DemandDeposit` / `profit.calculate`
-- `living.calculate` → `yishizhuxing.calculate`
+- `deposit.demand` → `deposit.DemandDeposit` / `deposit.calculate`
+- `living.calculate` → `living.calculate()`
 
 ## 文件
 
