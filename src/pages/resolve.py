@@ -29,6 +29,7 @@ _CONTROL_TYPES = {
     "enum": "select",
     "boolean": "checkbox",
     "text": "text",
+    "tier": "tier",
 }
 
 # 页面上渲染的是来源命令的类型；消费命令必须能接受这个类型的取值。
@@ -40,6 +41,7 @@ _COMPATIBLE = {
     "enum": {"enum", "text"},
     "boolean": {"boolean"},
     "text": {"text"},
+    "tier": {"tier"},
 }
 
 
@@ -221,16 +223,38 @@ def _resolve_field(
     ):
         if key in constraints:
             payload[target] = constraints[key]
+    if source_spec.type == "tier":
+        payload["tiers"] = _tier_payload(field.name, [spec for _, spec in field_consumers])
+        payload["allowCustom"] = field.precise
     if source_spec.type == "enum":
         if not source_spec.options:
             raise PageError(f"字段 {field.name} 是枚举但没有选项。")
         payload["options"] = [{"label": option, "value": option} for option in source_spec.options]
         payload["allowCustom"] = False
+    if field.precise:
+        payload["precise"] = True
+    if field.derive:
+        payload["derive"] = field.derive
     if field.hint:
         payload["hint"] = field.hint
     if field.visible_when:
         payload["visibleWhen"] = [dict(condition) for condition in field.visible_when]
     return payload
+
+
+def _tier_payload(field_name: str, specs: list[InputSpec]) -> list[dict[str, Any]]:
+    """同一字段被多个命令消费时，档位表必须完全一致，否则界面回显会对不上。"""
+    reference = [(tier.value, tier.label, tier.amount) for tier in specs[0].tiers]
+    if not reference:
+        raise PageError(f"字段 {field_name} 是档位输入但没有选项。")
+    for spec in specs[1:]:
+        current = [(tier.value, tier.label, tier.amount) for tier in spec.tiers]
+        if current != reference:
+            raise PageError(f"字段 {field_name} 在不同命令里的档位表不一致。")
+    return [
+        {"value": tier.value, "label": tier.label, "amount": tier.amount}
+        for tier in specs[0].tiers
+    ]
 
 
 def _intersect(field_name: str, specs: list[InputSpec]) -> dict[str, Any]:

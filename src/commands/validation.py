@@ -69,6 +69,13 @@ def _coerce_value(spec: InputSpec, raw: Any) -> tuple[Any, str | None]:
             return None, "请选择是或否。"
         return raw, None
 
+    if spec.type == "tier":
+        if not isinstance(raw, str):
+            return None, "请选择列表中的选项。"
+        if raw not in {tier.value for tier in spec.tiers}:
+            return None, "请选择列表中的选项。"
+        return raw, None
+
     if spec.type == "text":
         if not isinstance(raw, str):
             return None, "请输入文本。"

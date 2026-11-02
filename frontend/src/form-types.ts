@@ -1,7 +1,7 @@
 export type FormValue = string | number | boolean | null;
 export type RawValues = Record<string, string | boolean>;
 export type FormValues = Record<string, FormValue>;
-export type FieldType = 'text' | 'number' | 'decimal' | 'date' | 'select' | 'checkbox' | 'textarea';
+export type FieldType = 'text' | 'number' | 'decimal' | 'date' | 'select' | 'checkbox' | 'textarea' | 'tier' | 'multi';
 export interface Condition { field: string; equals: string | boolean }
 export interface FormField {
   name: string;
@@ -19,6 +19,9 @@ export interface FormField {
   hint?: string;
   defaultValue?: string | number | boolean;
   options?: {label: string; value: string}[];
+  tiers?: {value: string; label: string; amount: number}[];
+  precise?: boolean;
+  derive?: string;
   optionsSource?: string;
   allowCustom?: boolean;
   visibleWhen?: Condition[];

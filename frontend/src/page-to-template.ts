@@ -23,6 +23,15 @@ function toField(field: PageFieldSpec): FormField {
       value: option.value,
     }));
   }
+  if (field.tiers) {
+    converted.tiers = field.tiers.map(tier => ({
+      value: tier.value,
+      label: tier.label,
+      amount: tier.amount,
+    }));
+  }
+  if (field.precise) converted.precise = true;
+  if (field.derive) converted.derive = field.derive;
   if (field.allowCustom) converted.allowCustom = true;
   if (field.visibleWhen) {
     converted.visibleWhen = field.visibleWhen.map(condition => ({

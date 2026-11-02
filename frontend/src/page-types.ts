@@ -6,7 +6,8 @@ export type PageFieldType =
   | 'date'
   | 'select'
   | 'checkbox'
-  | 'textarea';
+  | 'textarea'
+  | 'tier';
 
 export interface PageCondition {
   field: string;
@@ -27,6 +28,9 @@ export interface PageFieldSpec {
   maxLength?: number;
   hint?: string;
   options?: { label: string; value: string }[];
+  tiers?: { value: string; label: string; amount: number }[];
+  precise?: boolean;
+  derive?: string | null;
   allowCustom?: boolean;
   visibleWhen?: PageCondition[];
   source?: { command: string; input: string };

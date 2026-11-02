@@ -12,6 +12,19 @@ from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
+class TierOption:
+    """选择题的一个选项：提交值、界面文案与对应的计算取值。
+
+    `type="tier"` 的输入用它渲染分段控件，并把「按 1.75 万计算」这类回显
+    一并下发给前端，避免档位映射只存在于后端。
+    """
+
+    value: str
+    label: str
+    amount: float
+
+
+@dataclass(frozen=True, slots=True)
 class InputSpec:
     name: str
     question: str
@@ -20,6 +33,7 @@ class InputSpec:
     required: bool = True
     default: Any = None
     options: tuple[str, ...] = ()
+    tiers: tuple[TierOption, ...] = ()
     constraints: Mapping[str, Any] = field(default_factory=dict)
     semantic: str | None = None
     required_when: Mapping[str, Any] | None = None
