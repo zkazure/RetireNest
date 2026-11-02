@@ -147,6 +147,41 @@ def test_field_without_consumer_is_rejected() -> None:
         resolve(page)
 
 
+def test_required_comes_from_the_page_field() -> None:
+    body = client.get("/api/pages/retirement").json()
+    for name in ("debt", "monthly_pension", "partner", "annual_rate", "prior_monthly_wage"):
+        assert field(body, name)["required"] is False
+    for name in ("age", "assets", "birth_date"):
+        assert field(body, name)["required"] is True
+
+    category = field(body, "category")
+    assert category["required"] is True
+    assert category["visibleWhen"] == [{"field": "gender", "equals": "女"}]
+
+
+def test_page_field_is_required_by_default() -> None:
+    assert PageField(name="age", command="plan.retirement").required is True
+
+
+def test_optional_field_rejects_required_command_input() -> None:
+    page = PageManifest(
+        id="broken",
+        version="1.0.0",
+        title="坏页面",
+        description="",
+        sections=(
+            PageSection(
+                id="one",
+                title="一",
+                fields=(PageField(name="age", command="plan.retirement", required=False),),
+            ),
+        ),
+        executions=(PageExecution(command="plan.retirement", inputs={"age": "age"}),),
+    )
+    with pytest.raises(PageError, match="可留空"):
+        resolve(page)
+
+
 def test_unknown_page_returns_404() -> None:
     response = client.get("/api/pages/nope")
     assert response.status_code == 404

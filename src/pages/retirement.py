@@ -39,7 +39,7 @@ FINANCE = PageSection(
         PageField(name="monthly_income", command=PLAN),
         PageField(name="monthly_expense", command=PLAN),
         PageField(name="assets", command=PLAN),
-        PageField(name="debt", command=PLAN),
+        PageField(name="debt", command=PLAN, required=False),
     ),
 )
 
@@ -49,7 +49,7 @@ RETIREMENT = PageSection(
     description="以下金额按今天的购买力填写；预估养老金为自行估计值。",
     fields=(
         PageField(name="retirement_expense", command=PLAN),
-        PageField(name="monthly_pension", command=PLAN),
+        PageField(name="monthly_pension", command=PLAN, required=False),
     ),
 )
 
@@ -58,19 +58,19 @@ LIVING_SECTION = PageSection(
     title="生活与家庭偏好",
     description="这些偏好会交给生活支出命令，测算退休前后的衣食住行花费。",
     fields=(
-        PageField(name="partner", command=LIVING),
-        PageField(name="children", command=LIVING),
-        PageField(name="child_age_now", command=LIVING, hint="没有孩子可留空。"),
-        PageField(name="housing_plan", command=LIVING),
-        PageField(name="lifestyle", command=LIVING),
-        PageField(name="retire_city", command=LIVING, hint="留空表示与现在同城。"),
-        PageField(name="clothing_freq", command=LIVING),
-        PageField(name="clothing_grade", command=LIVING),
-        PageField(name="cooking", command=LIVING),
-        PageField(name="extra_food", command=LIVING),
-        PageField(name="retire_commute", command=LIVING),
-        PageField(name="trip_level", command=LIVING),
-        PageField(name="visits_home", command=LIVING),
+        PageField(name="partner", command=LIVING, required=False),
+        PageField(name="children", command=LIVING, required=False),
+        PageField(name="child_age_now", command=LIVING, required=False, hint="没有孩子可留空。"),
+        PageField(name="housing_plan", command=LIVING, required=False),
+        PageField(name="lifestyle", command=LIVING, required=False),
+        PageField(name="retire_city", command=LIVING, required=False, hint="留空表示与现在同城。"),
+        PageField(name="clothing_freq", command=LIVING, required=False),
+        PageField(name="clothing_grade", command=LIVING, required=False),
+        PageField(name="cooking", command=LIVING, required=False),
+        PageField(name="extra_food", command=LIVING, required=False),
+        PageField(name="retire_commute", command=LIVING, required=False),
+        PageField(name="trip_level", command=LIVING, required=False),
+        PageField(name="visits_home", command=LIVING, required=False),
     ),
 )
 
@@ -99,8 +99,10 @@ PENSION_SECTION = PageSection(
         PageField(name="average_index", command=PENSION),
         PageField(name="account_balance", command=PENSION),
         PageField(name="calculation_base", command=PENSION),
-        PageField(name="prior_monthly_wage", command=PENSION),
-        PageField(name="annual_adjustment", command=PENSION, hint="留空由后端取默认值。"),
+        PageField(name="prior_monthly_wage", command=PENSION, required=False),
+        PageField(
+            name="annual_adjustment", command=PENSION, required=False, hint="留空由后端取默认值。"
+        ),
     ),
 )
 
@@ -111,7 +113,7 @@ DEPOSIT_SECTION = PageSection(
     toggle=PageToggle(name="deposit_enabled", label="填写存款信息"),
     fields=(
         PageField(name="principal", command=DEPOSIT),
-        PageField(name="annual_rate", command=DEPOSIT, hint="留空由后端取默认值。"),
+        PageField(name="annual_rate", command=DEPOSIT, required=False, hint="留空由后端取默认值。"),
         PageField(name="start_date", command=DEPOSIT),
         PageField(name="end_date", command=DEPOSIT),
     ),

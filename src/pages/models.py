@@ -27,6 +27,8 @@ class PageField:
     """提供 question、类型、选项与约束的命令。"""
     input: str | None = None
     """该命令的输入名；省略时与字段名相同。"""
+    required: bool = True
+    """页面上是否必须回答；默认必答，写 False 才允许留空。"""
     hint: str | None = None
     visible_when: tuple[Mapping[str, Any], ...] = ()
 

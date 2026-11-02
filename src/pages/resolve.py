@@ -2,7 +2,9 @@
 
 解析时做三件事：
 
-1. 校验页面定义：引用存在、字段不重复、没有死字段或悬空参数、规则指向真实字段。
+1. 校验页面定义：引用存在、字段不重复、没有死字段或悬空参数、规则指向真实字段；
+   页面标为可留空的字段，消费它的命令也必须允许省略。字段是否必答只由页面
+   清单的 `required` 决定，不再从命令输入推导。
 2. 取字段文案：label 只能来自 manifest 的 question，页面模块不能自带问题文本。
 3. 合并约束：同一字段被多个命令消费时，min/max/precision/max_length 取交集，
    每次请求现算，前端因此不需要持有任何数值常量。
@@ -185,7 +187,13 @@ def _resolve_field(
             )
 
     constraints = _intersect(field.name, [spec for _, spec in field_consumers])
-    required = any(spec.required or spec.required_when for _, spec in field_consumers)
+    if not field.required:
+        for manifest, spec in field_consumers:
+            if spec.required or spec.required_when:
+                raise PageError(
+                    f"字段 {field.name} 在页面上可留空，但命令 {manifest.id} 要求必填。"
+                )
+    required = field.required
 
     payload: dict[str, Any] = {
         "name": field.name,
