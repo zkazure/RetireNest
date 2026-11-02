@@ -1,0 +1,334 @@
+:root {
+  --bg: #f4f6ef;
+  --card: #ffffff;
+  --ink: #24352b;
+  --muted: #728073;
+  --green: #24573f;
+  --sage: #5e906a;
+  --line: #dfe6da;
+  --soft: #edf2e5;
+  --error-bg: #fff0e5;
+  --error-ink: #a3582d;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+button, input, select { font: inherit; }
+
+.cmd-header,
+.cmd-layout {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.cmd-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 36px 0 24px;
+}
+
+.cmd-brand {
+  color: var(--green);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.cmd-brand small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .18em;
+}
+
+.cmd-heading { text-align: right; }
+
+.cmd-eyebrow {
+  margin: 0 0 6px;
+  color: var(--sage);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .16em;
+}
+
+.cmd-heading h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+.cmd-subtitle {
+  max-width: 620px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cmd-layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+  padding-bottom: 60px;
+}
+
+.cmd-sidebar,
+.cmd-detail {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.cmd-sidebar {
+  position: sticky;
+  top: 20px;
+  padding: 18px 14px;
+}
+
+.cmd-sidebar-title {
+  margin: 0 6px 10px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+.cmd-list { display: grid; gap: 6px; }
+
+.cmd-list-item {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cmd-list-item:hover { background: #f7f9f2; }
+
+.cmd-list-item.selected {
+  border-color: #cbd8bf;
+  background: var(--soft);
+}
+
+.cmd-list-id {
+  color: var(--sage);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.cmd-list-question {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.cmd-list-meta {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.cmd-detail {
+  min-height: 520px;
+  padding: 26px 28px;
+}
+
+.cmd-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.cmd-detail-head h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.cmd-description {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cmd-version {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.cmd-form { padding: 20px 0 0; }
+
+.cmd-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.cmd-field { display: grid; gap: 5px; min-width: 0; }
+
+.cmd-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: #445747;
+  font-size: 12px;
+}
+
+.cmd-label em {
+  margin-left: 3px;
+  color: var(--sage);
+  font-style: normal;
+}
+
+.cmd-unit {
+  flex: none;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.cmd-field input[type="text"],
+.cmd-field input[type="number"],
+.cmd-field input[type="date"],
+.cmd-field select {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfcf8;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.cmd-field input:focus,
+.cmd-field select:focus {
+  outline: 2px solid #cddfbd;
+  outline-offset: 1px;
+  border-color: var(--sage);
+}
+
+.cmd-field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green);
+}
+
+.cmd-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.cmd-button {
+  min-height: 38px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--green);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cmd-button:hover { background: #1d4733; }
+.cmd-button:disabled { cursor: wait; opacity: .6; }
+
+.cmd-hint,
+.cmd-muted {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.cmd-error {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--error-bg);
+  color: var(--error-ink);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.cmd-output-wrap {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.cmd-output-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cmd-output-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cmd-output {
+  max-height: 460px;
+  margin: 12px 0 0;
+  padding: 16px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7f9f2;
+  color: #2d4334;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .cmd-header { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .cmd-heading { text-align: left; }
+  .cmd-layout { grid-template-columns: 1fr; }
+  .cmd-sidebar { position: static; }
+  .cmd-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .cmd-header, .cmd-layout { width: min(100% - 28px, 1180px); }
+  .cmd-header { padding-top: 24px; }
+  .cmd-heading h1 { font-size: 25px; }
+  .cmd-detail { padding: 20px 16px; }
+  .cmd-grid { grid-template-columns: 1fr; }
+  .cmd-list { grid-template-columns: 1fr; }
+  .cmd-detail-head { flex-direction: column; gap: 8px; }
+  .cmd-version { justify-items: start; }
+  .cmd-actions { align-items: flex-start; flex-direction: column; }
+}
