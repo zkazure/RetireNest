@@ -3,7 +3,7 @@
 FastAPI 暴露三组端点：
 
 - `GET /api/pages/{page_id}`：返回页面清单，主页据此渲染表单并决定提交时执行哪些命令。
-- `GET /api/commands`：返回协议版本和五个领域命令的 manifest。
+- `GET /api/commands`：返回协议版本和十一个领域命令的 manifest。
 - `POST /api/commands/{command_id}`：执行单个命令，请求 `{version, inputs}`，返回 `{command_id, version, outputs, meta}`。
 - `POST /api/retirement/plan`：过渡接口，把旧请求的 `values` 映射成 12 个基础字段，返回与 `frontend/contracts/plan-response.example.json` 同构的响应；新前端不再调用。
 

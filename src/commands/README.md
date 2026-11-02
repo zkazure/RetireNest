@@ -9,6 +9,21 @@
 - `pension.basic` → `pension.BasicPensionInput` / `pension.calculate`
 - `deposit.demand` → `deposit.DemandDeposit` / `deposit.calculate`
 - `living.calculate` → `living.calculate()`
+- `savings.project` → `savings.project`
+- `savings.goal` → `savings.required_contribution`
+- `inflation.convert` → `inflation.convert`
+- `simulation.retirement` → `simulation.simulate`
+- `withdrawal.safe_rate` → `simulation.safe_withdrawal`
+- `longevity.estimate` → `longevity.estimate`
+
+## 工具元数据
+
+协议 1.1 给 LLM 预留了三个可选字段，页面不使用：
+
+- `InputSpec.description`：参数的单位、口径、与其它参数的关系。
+- `CommandManifest.when_to_use` / `when_not_to_use`：什么时候该用这个工具、什么时候该换另一个。
+
+新增或修改命令时，把“同名工具怎么区分”写进 `when_to_use` / `when_not_to_use`，不要只在 prompt 里堆例子。
 
 ## 文件
 

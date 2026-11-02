@@ -1,14 +1,22 @@
-# 命令协议 v1
+# 命令协议 v1.1
 
 RetireNest 后端把领域能力暴露为**命令**：一个命令回答一个明确的问题，接收一组输入，返回领域输出。前端不通过页面级聚合接口取数据，而是从命令清单里选择命令，在页面代码里自由组合。
 
-本期协议版本：`1.0.0`。当前注册五个命令：
+本期协议版本：`1.1.0`。当前注册十一个命令：
 
 - `plan.retirement`
 - `medical.estimate`
 - `pension.basic`
 - `deposit.demand`
 - `living.calculate`
+- `savings.project`
+- `savings.goal`
+- `inflation.convert`
+- `simulation.retirement`
+- `withdrawal.safe_rate`
+- `longevity.estimate`
+
+后六个是退休规划的计算原语：储蓄增长、目标倒推、通胀换算、蒙特卡洛、安全提取率与寿命估计。它们不进入主页表单，供命令浏览器、开发者和后续 Agent 直接调用；主页仍使用前五个命令。
 
 退休规划主页由页面清单驱动：`GET /api/pages/retirement` 告诉前端有哪些字段、怎么分组、提交时调用哪些命令；前端逐个执行命令并组合结果。`POST /api/retirement/plan` 保留为过渡接口。
 
@@ -30,7 +38,7 @@ GET  /api/pages/{page_id}
 
 ```json
 {
-  "protocol_version": "1.0.0",
+  "protocol_version": "1.1.0",
   "commands": [
     {
       "id": "medical.estimate",
@@ -41,7 +49,9 @@ GET  /api/pages/{page_id}
       "as_of": "2025",
       "inputs": [],
       "outputs": [],
-      "examples": []
+      "examples": [],
+      "when_to_use": "用户问医疗预算时用。",
+      "when_not_to_use": "用户问退休资金缺口时用 plan.retirement。"
     }
   ]
 }
@@ -57,11 +67,13 @@ GET  /api/pages/{page_id}
 - `version`：命令版本；执行请求必须回传相同版本。
 - `question`：命令回答的问题，给前端开发者和文档使用，不是 LLM prompt。
 - `description`：补充说明。
-- `deterministic`：相同输入、相同版本、相同 `as_of` 是否得到相同输出。
-- `as_of`：数据基准时间，例如医疗的 2025 价格年、利率快照的抓取日期。
+- `deterministic`：相同输入、相同版本、相同 `as_of` 是否得到相同输出。固定 seed 的蒙特卡洛也算确定：它可复现，但不代表没有随机性。
+- `as_of`：数据基准时间，例如医疗的 2025 价格年、利率快照的抓取日期、寿命参数的 2020 基准。
 - `inputs`：输入规格数组。
 - `outputs`：输出规格数组。
 - `examples`：示例输入，便于文档和调试。
+- `when_to_use`：什么时候该选这个工具；可选的工具选择指引，页面不展示。
+- `when_not_to_use`：什么时候该换另一个工具；与 `when_to_use` 一起防止模型误用相近工具。
 
 ### 输入规格
 
@@ -76,7 +88,8 @@ GET  /api/pages/{page_id}
   "options": [],
   "constraints": { "min": 0, "max": 120 },
   "semantic": "age",
-  "required_when": null
+  "required_when": null,
+  "description": "周岁，整数；结果条件于已经活到这个年龄。"
 }
 ```
 
@@ -104,6 +117,8 @@ GET  /api/pages/{page_id}
 
 `default` 只在输入缺失时使用；有默认值的可选输入可以省略。
 
+`description` 是给工具调用方（尤其是 LLM）看的参数说明，写清单位、名义/实际口径、与其它参数的关系。它不替代 `question`：`question` 是页面文案，`description` 是工具语义。
+
 ### 输出规格
 
 ```json
@@ -115,7 +130,8 @@ GET  /api/pages/{page_id}
   "semantic": "money_per_month_nominal",
   "precision": 2,
   "time_axis": null,
-  "visible": true
+  "visible": true,
+  "description": "基础养老金加个人账户养老金，按退休时点。"
 }
 ```
 
@@ -261,11 +277,12 @@ GET  /api/pages/{page_id}
 
 ## 7. 版本与确定性
 
-- `protocol_version` 是清单协议版本；破坏性变更升主版本。
+- `protocol_version` 是清单协议版本；破坏性变更升主版本。1.1 新增 `InputSpec.description`、`OutputSpec.description`、`CommandManifest.when_to_use` / `when_not_to_use`，都是可选字段，命令版本保持 1.0.0。
 - 每个命令独立 `version`；执行请求必须回传当前版本。
 - 新增可选输出可以保持版本；删除/改名/改单位必须升版本。
 - 响应回显 `command_id`、`version`、`meta.deterministic`、`meta.as_of`。
 - 命令不得依赖隐藏的“今天”；需要日期基准时写进 `as_of` 或输入。
+- 固定 `seed` 的蒙特卡洛仍标 `deterministic: true`：相同输入得到相同输出；它不等于“结果没有随机性”。
 
 ## 8. 前端注册表
 
@@ -334,6 +351,51 @@ const response = await runCommand('medical.estimate', {
 - 输出：`years`、`retire_index`、`inflation`、`edu_inflation`、`nominal`、`real`。
 - `nominal`/`real` 是对象，内含 `clothing`、`food`、`housing`、`transport`、`education`、`total` 数组；时间轴从 `age` 起，步长 1 年。
 
+以下六个是 1.1 新增的计算原语，默认口径与 `plan.retirement` 一致：实际购买力、按年、年末投入。
+
+### savings.project
+
+- 问题：给定当前储蓄、每月投入、名义回报率、通胀率和年限，未来能攒到多少。
+- 输入：`current_savings`、`monthly_contribution`、`annual_return_pct`、`inflation_pct`、`years`；可选 `compounding`（按年/按月，默认按年）、`timing`（期末/期初，默认期末）。
+- 输出：`future_balance_real`、`future_balance_nominal`、`total_contributions_real`、`total_invested_real`、`growth_real`、`real_return_pct`、`assumptions`。
+- 月投入按实际值恒定；`total_invested_real` 含当前储蓄，`total_contributions_real` 只算新增投入。
+
+### savings.goal
+
+- 问题：想达到一个目标金额，每月需要存多少。
+- 输入：`target_amount`、`current_savings`、`annual_return_pct`、`inflation_pct`、`years`，可选 `compounding`、`timing`。
+- 输出：`required_monthly_contribution_real`、`required_annual_contribution_real`、`projected_without_contribution_real`、`shortfall_real`、`real_return_pct`、`assumptions`。
+- 目标已被现有储蓄覆盖时，投入要求为 0；不要用 `savings.project` 反复试参数。
+
+### inflation.convert
+
+- 问题：一笔名义金额相当于今天多少购买力，或反过来。
+- 输入：`amount`、`annual_inflation_pct`、`years`、`direction`（名义转实际/实际转名义，默认名义转实际）。
+- 输出：`converted_amount`、`cumulative_factor`、`annual_inflation_pct`、`direction`、`note`。
+- `savings.*` 与 `simulation.*` 已内含通胀，不要再用本命令折算它们的输出。
+
+### simulation.retirement
+
+- 问题：按当前储蓄和投入，退休后钱会不会用完。
+- 输入：`current_savings`、`monthly_contribution`、`years_to_retirement`、`retirement_years`、`annual_retirement_expense`、`annual_return_pct`、`volatility_pct`、`inflation_pct`；可选 `monthly_pension`（默认 0）、`paths`（默认 2000）、`seed`（默认 42）。
+- 输出：`success_rate`、`failed_paths`、`median_terminal_balance_real`、`p10_terminal_balance_real`、`p90_terminal_balance_real`、`median_depletion_year`，以及结构字段 `terminal_balance_percentiles`、`depletion_year_percentiles`、`balance_percentiles`、`paths`、`seed`、`assumptions`、`note`。
+- 模型：名义毛收益率对数正态，通胀确定性折算；每年年末投入或支取。余额为负即视为耗尽。
+- 成功定义：退休期内任何一年年末余额都不为负。`success_rate` 是路径占比，不是概率保证；固定 `seed` 使结果可复现。
+
+### withdrawal.safe_rate
+
+- 问题：退休时有一笔钱，每年可以安全提取多少。
+- 输入：`retirement_savings`、`retirement_years`、`annual_return_pct`、`volatility_pct`、`inflation_pct`；可选 `target_success_rate`（默认 90）、`paths`、`seed`。
+- 输出：`safe_withdrawal_rate_pct`、`annual_withdrawal_real`、`monthly_withdrawal_real`、`success_rate_at_rate`、`depletion_year_percentiles`、`paths`、`seed`、`assumptions`、`note`。
+- 在同一组路径上对提取比例二分，找满足目标成功率的最高比例；提取额按实际购买力固定。
+
+### longevity.estimate
+
+- 问题：按年龄、性别和健康状况，大概能活到多少岁。
+- 输入：`current_age`、`sex`（男/女）、`health`（较差/一般/良好，默认一般）。
+- 输出：`median_age_at_death`、`p10/p25/p75/p90_age_at_death`、`probability_to_85`、`probability_to_90`、`probability_to_95`、`median_remaining_years`、`life_expectancy_at_birth_used`、`assumptions`。
+- `as_of`：`2020`。基准寿命、Gompertz 离散参数和健康档位平移都是演示假设，不是生命表或医学预测；概率用百分数（21.4 表示 21.4%）。
+
 ## 10. 与旧接口的关系
 
 - `POST /api/retirement/plan` 保留为过渡接口，仍返回页面级 `PlanResponse`；新前端不再调用。
@@ -344,7 +406,8 @@ const response = await runCommand('medical.estimate', {
 ## 11. 非目标
 
 - 不做终端用户拖拽连线。
-- 不做 LLM 自动选命令。
+- 命令层不调用 LLM；协议 1.1 的 `description`、`when_to_use`、`when_not_to_use` 是给后续 Agent 层生成工具 schema 用的，Agent 尚未接入。
+- 不做税务工具；`pension.basic` 只覆盖社保养老金，税制是地区规则，等有明确地区后再加。
 - 后端不做批量执行或依赖 DAG；页面的顺序执行由前端按页面清单完成。
 - 不做动态枚举选项服务；选项写在 manifest，页面清单原样引用。
 - 不做服务端页面组合器：页面清单只描述结构与执行顺序，不返回结果。
