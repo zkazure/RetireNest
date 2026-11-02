@@ -3,7 +3,9 @@ import type { CommandManifest } from './command-types';
 
 // 前端显式注册：后端新增命令不会自动出现在页面里，必须在这里放行。
 const ENABLED_COMMANDS = new Set([
-  'plan.retirement',
+  'lifecycle.project',
+  'lifecycle.simulate',
+  'strategy.compare',
   'medical.estimate',
   'pension.basic',
   'deposit.demand',
