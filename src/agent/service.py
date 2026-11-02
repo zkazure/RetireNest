@@ -102,8 +102,14 @@ class AgentService:
         *,
         user: str | None = None,
         on_event: Callable[[dict[str, Any]], None] | None = None,
+        override: LLMConfig | None = None,
     ) -> AgentReply:
-        if not self.enabled:
+        """跑一轮对话。
+
+        `override` 来自设置页随请求带来的密钥：只用于这一轮，不写进 service，
+        也不落日志；服务端环境变量仍是兜底。
+        """
+        if not self.enabled and override is None:
             raise AgentDisabled(self.config.missing)
         if self.auth.enabled and not user:
             raise AgentUnauthorized("缺少访问令牌。")
@@ -117,7 +123,8 @@ class AgentService:
             ]
             conversation.extend(session.messages)
             conversation.append({"role": "user", "content": message})
-            run = run_agent(conversation, self.client, self.catalog, on_event=on_event)
+            client = self._client_for(override)
+            run = run_agent(conversation, client, self.catalog, on_event=on_event)
             session.messages = trim_messages(conversation[1:])
             session.updated_at = time.time()
             self.sessions.save(session)
@@ -126,8 +133,15 @@ class AgentService:
                 reply=run.reply,
                 tool_calls=run.tool_calls,
                 warnings=run.warnings,
-                model=self._model_name,
+                model=override.model if override is not None and override.model else self._model_name,
             )
+
+    def _client_for(self, override: LLMConfig | None) -> ChatClient:
+        if override is None:
+            return self.client
+        if not override.enabled:
+            raise AgentDisabled(override.missing)
+        return OpenAIChatClient(override)
 
     def reset(self, session_id: str, user: str | None = None) -> bool:
         owner = user if self.auth.enabled else None

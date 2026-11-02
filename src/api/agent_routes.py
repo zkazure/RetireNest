@@ -15,7 +15,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from agent import AgentDisabled, AgentError, AgentService
+from agent import AgentDisabled, AgentError, AgentService, LLMConfig
 from agent.models import AgentReply
 from api.errors import ApiError
 
@@ -64,6 +64,27 @@ def _resolve_user(service: AgentService, request: Request) -> str | None:
     return service.auth.user_for(_bearer_token(request))
 
 
+MAX_HEADER_LENGTH = 300
+
+
+def _override_config(service: AgentService, request: Request) -> LLMConfig | None:
+    """设置页把密钥放在请求头里，只用于这一轮；没带 key 就沿用服务端配置。"""
+    api_key = request.headers.get("x-llm-api-key", "").strip()
+    if not api_key:
+        return None
+    if len(api_key) > MAX_HEADER_LENGTH:
+        raise ApiError(400, "INVALID_SETTINGS", "API Key 过长。")
+    model = request.headers.get("x-llm-model", "").strip()[:MAX_HEADER_LENGTH]
+    base_url = request.headers.get("x-llm-base-url", "").strip()[:MAX_HEADER_LENGTH]
+    if base_url and not base_url.startswith(("http://", "https://")):
+        raise ApiError(400, "INVALID_SETTINGS", "Base URL 必须以 http:// 或 https:// 开头。")
+    return service.config.with_overrides(
+        api_key=api_key,
+        model=model or None,
+        base_url=base_url or None,
+    )
+
+
 def _reply_payload(reply: AgentReply) -> dict[str, Any]:
     return {
         "session_id": reply.session_id,
@@ -78,12 +99,23 @@ def _api_error(exc: AgentError) -> ApiError:
     return ApiError(exc.status, exc.code, exc.message)
 
 
+@router.get("/api/agent/config")
+def agent_config(http_request: Request) -> dict[str, Any]:
+    """设置页用：只回是否可用与模型名，永远不回显 key。"""
+    service = _service(http_request)
+    return {
+        "configured": service.config.describe(),
+        "auth_required": service.auth.enabled,
+    }
+
+
 @router.post("/api/agent/chat")
 def chat(request: AgentChatRequest, http_request: Request) -> dict[str, Any]:
     service = _service(http_request)
     try:
+        override = _override_config(service, http_request)
         user = _resolve_user(service, http_request)
-        reply = service.chat(request.session_id, request.message, user=user)
+        reply = service.chat(request.session_id, request.message, user=user, override=override)
     except AgentError as exc:
         raise _api_error(exc) from exc
     return _reply_payload(reply)
@@ -92,7 +124,8 @@ def chat(request: AgentChatRequest, http_request: Request) -> dict[str, Any]:
 @router.post("/api/agent/chat/stream")
 def chat_stream(request: AgentChatRequest, http_request: Request) -> StreamingResponse:
     service = _service(http_request)
-    if not service.enabled:
+    override = _override_config(service, http_request)
+    if not service.enabled and override is None:
         raise _api_error(AgentDisabled(service.config.missing))
     try:
         user = _resolve_user(service, http_request)
@@ -109,6 +142,7 @@ def chat_stream(request: AgentChatRequest, http_request: Request) -> StreamingRe
                     request.message,
                     user=user,
                     on_event=events.put,
+                    override=override,
                 )
                 events.put({"type": "reply", **_reply_payload(reply)})
                 events.put({"type": "done", "session_id": reply.session_id})

@@ -33,6 +33,35 @@ class LLMConfig:
     def enabled(self) -> bool:
         return bool(self.api_key and self.model)
 
+    def with_overrides(
+        self,
+        *,
+        api_key: str | None = None,
+        model: str | None = None,
+        base_url: str | None = None,
+    ) -> LLMConfig:
+        """用请求头里的值补一份临时配置；没给的项沿用服务端配置。"""
+        return LLMConfig(
+            api_key=api_key or self.api_key,
+            model=model or self.model,
+            base_url=base_url or self.base_url,
+            timeout_seconds=self.timeout_seconds,
+        )
+
+    def describe(self) -> dict[str, object]:
+        """给设置页看的非敏感状态：不回显 key，只说明是否可用。"""
+        host = None
+        if self.base_url:
+            from urllib.parse import urlparse
+
+            host = urlparse(self.base_url).hostname
+        return {
+            "enabled": self.enabled,
+            "model": self.model,
+            "base_url_host": host,
+            "missing": list(self.missing),
+        }
+
     @property
     def missing(self) -> tuple[str, ...]:
         missing = []

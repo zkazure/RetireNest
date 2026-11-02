@@ -411,3 +411,67 @@ def test_demo_fake_service_runs_without_key() -> None:
     assert reply.tool_calls[0]["command_id"] == "savings.project"
     assert reply.tool_calls[0]["ok"] is True
     assert reply.warnings == ()
+
+
+def test_config_endpoint_never_echoes_key() -> None:
+    install(AgentService(LLMConfig(api_key="sk-secret-value", model="demo-model")))
+    body = client.get("/api/agent/config").json()
+    assert body["configured"]["enabled"] is True
+    assert body["configured"]["model"] == "demo-model"
+    assert "sk-secret-value" not in json.dumps(body)
+
+
+def test_config_endpoint_reports_missing_when_disabled() -> None:
+    install(AgentService(LLMConfig()))
+    body = client.get("/api/agent/config").json()
+    assert body["configured"]["enabled"] is False
+    assert "RETIRENEST_LLM_API_KEY" in body["configured"]["missing"]
+
+
+def test_request_can_carry_its_own_key(monkeypatch) -> None:
+    """服务端没配 key 时，设置页带来的 key 应该能跑通这一轮。"""
+    created: list[LLMConfig] = []
+
+    class FakeClient:
+        model_name = "header-model"
+
+        def __init__(self, config: LLMConfig) -> None:
+            created.append(config)
+
+        def complete(self, messages, tools):
+            return AssistantTurn(content="收到", tool_calls=())
+
+    monkeypatch.setattr("agent.service.OpenAIChatClient", FakeClient)
+    install(AgentService(LLMConfig()))
+    response = client.post(
+        "/api/agent/chat",
+        json={"message": "你好"},
+        headers={
+            "X-LLM-Api-Key": "sk-from-browser",
+            "X-LLM-Model": "header-model",
+            "X-LLM-Base-Url": "https://example.test/v1",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["model"] == "header-model"
+    assert created[0].api_key == "sk-from-browser"
+    assert created[0].base_url == "https://example.test/v1"
+
+
+def test_bad_base_url_is_rejected() -> None:
+    install(AgentService(LLMConfig()))
+    response = client.post(
+        "/api/agent/chat",
+        json={"message": "你好"},
+        headers={"X-LLM-Api-Key": "sk-x", "X-LLM-Model": "m", "X-LLM-Base-Url": "file:///etc/passwd"},
+    )
+    assert response.status_code == 400
+    assert response.json()["code"] == "INVALID_SETTINGS"
+
+
+def test_override_does_not_leak_into_service_config() -> None:
+    install(AgentService(LLMConfig()))
+    from agent.service import AgentService as Service
+
+    service = Service(LLMConfig())
+    assert service.config.api_key is None
