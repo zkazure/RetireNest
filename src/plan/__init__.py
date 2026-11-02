@@ -1,6 +1,6 @@
 """plan：基础退休规划的聚合测算。
 
-本期只消费前端 12 个基础字段；医疗、养老、存款和生活偏好尚未参与。
+本期只消费 12 个基础字段；医疗、养老、存款和生活偏好由各自命令测算。
 """
 
 from plan.engine import build_explanation, build_scenarios, calculate

@@ -31,8 +31,8 @@ uv run --project src python run.py --prod
 - 开发模式：http://127.0.0.1:5173/commands.html
 - 单端口模式：http://127.0.0.1:8000/commands.html
 
-命令清单由 `GET /api/commands` 提供，单个命令通过 `POST /api/commands/{id}` 执行；protocol、manifest 和错误格式见 [docs/command-protocol.md](docs/command-protocol.md)。现有退休页和 `/api/retirement/plan` 保持不变。
+命令清单由 `GET /api/commands` 提供，单个命令通过 `POST /api/commands/{id}` 执行；退休规划主页由 `GET /api/pages/retirement` 的页面清单驱动，提交时逐个调用命令。protocol、manifest、页面清单和错误格式见 [docs/command-protocol.md](docs/command-protocol.md)。`POST /api/retirement/plan` 保留为过渡接口。
 
-已实现规划信息表单、退休资金概览、资产曲线、三种情景对比、规则解读与 PDF 报告导出。基础 12 个字段已接入本地 FastAPI 后端；医疗、养老、存款等扩展信息仍只收集，尚未参与计算；LLM 未接入。运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
+已实现规划信息表单、退休资金概览、资产曲线、三种情景对比、规则解读与 PDF 报告导出。退休资金由 `plan.retirement` 命令计算；医疗、养老、存款与生活支出由各自命令独立测算并在结果页单独展示，不并入退休资金目标；LLM 未接入。运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
 
-前端填写栏已支持动态 JSON 模板。接口契约以 [frontend/FORM_TEMPLATE.md](frontend/FORM_TEMPLATE.md) 及 `frontend/contracts/` 中的示例为准。
+前端不再保存字段配置：表单的问题、类型、选项、约束与分组全部来自后端页面清单。契约示例见 `frontend/contracts/`。

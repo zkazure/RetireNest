@@ -1,13 +1,13 @@
 # api：退休规划 HTTP 接入层
 
-FastAPI 提供 `POST /api/retirement/plan`，把前端动态表单的 `values` 映射成 12 个基础字段，调用 `plan` 包计算，返回与 `frontend/contracts/plan-response.example.json` 同构的响应。
+FastAPI 暴露三组端点：
 
-另外提供命令协议端点：
-
-- `GET /api/commands`：返回协议版本和四个领域命令的 manifest。
+- `GET /api/pages/{page_id}`：返回页面清单，主页据此渲染表单并决定提交时执行哪些命令。
+- `GET /api/commands`：返回协议版本和五个领域命令的 manifest。
 - `POST /api/commands/{command_id}`：执行单个命令，请求 `{version, inputs}`，返回 `{command_id, version, outputs, meta}`。
+- `POST /api/retirement/plan`：过渡接口，把旧请求的 `values` 映射成 12 个基础字段，返回与 `frontend/contracts/plan-response.example.json` 同构的响应；新前端不再调用。
 
-协议、错误码和 manifest 字段见 [docs/command-protocol.md](../../docs/command-protocol.md)。命令接口与旧的 `/api/retirement/plan` 相互独立。
+协议、页面清单、错误码和 manifest 字段见 [docs/command-protocol.md](../../docs/command-protocol.md)。页面清单只描述结构，执行业务仍走命令端点。
 
 ## 启动
 
@@ -44,9 +44,9 @@ uv run uvicorn api.app:app --host 127.0.0.1 --port 8000
 }
 ```
 
-- 只读取 12 个基础字段；医疗、养老、存款、生活偏好等扩展字段静默忽略，保证 43 字段的模板请求仍可用。
+- 只读取 12 个基础字段；医疗、养老、存款、生活偏好等扩展字段静默忽略，保证旧请求仍可用。
 - `values` 中的 `null`、缺失、类型错误和非有限数会转成字段级 422。
-- 城市本期只校验非空和最多 30 字，不做现有生活模块的 44 城白名单。
+- 城市本期只校验非空和最多 30 字，不做生活模块的 44 城白名单。
 
 ## 响应
 
@@ -64,8 +64,8 @@ uv run uvicorn api.app:app --host 127.0.0.1 --port 8000
 
 ```bash
 cd src
-uv run pytest tests/test_api_plan.py
-uv run ruff check api plan tests/test_api_plan.py tests/test_plan_engine.py
+uv run pytest tests/test_api_plan.py tests/test_pages.py
+uv run ruff check api plan pages tests
 ```
 
-接口测试直接读取 `frontend/contracts/` 的请求与响应示例，覆盖 200、409、422、非法 JSON、未知顶层字段和自定义城市。
+接口测试直接读取 `frontend/contracts/` 的请求与响应示例，覆盖 200、409、422、非法 JSON、未知顶层字段和自定义城市；页面清单测试对比 `tests/fixtures/retirement-page.json`。

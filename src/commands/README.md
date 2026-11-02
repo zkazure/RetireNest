@@ -4,6 +4,7 @@
 
 ## 当前命令
 
+- `plan.retirement` → `plan` 包的 `validate` / `calculate` / `build_scenarios` / `build_explanation`
 - `medical.estimate` → `medical.estimate_medical_cost`
 - `pension.basic` → `pension.BasicPensionInput` / `pension.calculate`
 - `deposit.demand` → `profit.DemandDeposit` / `profit.calculate`
@@ -34,6 +35,8 @@
 - 领域模块的输入错误由 adapter 转成 `CommandInputError`；未预期异常交给 API 层 500。
 - 不把页面文案、布局、固定三情景写进 manifest。
 - 输出类型目前是描述性的，handler 要保证返回字段与 manifest 一致。
+- 输出默认 `visible=True`；数组下标、回显输入等实现细节标 `visible=False`，页面结果卡片不渲染它们。
+- 页面清单（`src/pages/`）只引用这里的输入输出，不复制文案；改问题文案就改 manifest。
 
 ## 测试
 

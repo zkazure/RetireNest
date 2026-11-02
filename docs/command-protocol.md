@@ -2,24 +2,27 @@
 
 RetireNest 后端把领域能力暴露为**命令**：一个命令回答一个明确的问题，接收一组输入，返回领域输出。前端不通过页面级聚合接口取数据，而是从命令清单里选择命令，在页面代码里自由组合。
 
-本期协议版本：`1.0.0`。当前注册四个命令：
+本期协议版本：`1.0.0`。当前注册五个命令：
 
+- `plan.retirement`
 - `medical.estimate`
 - `pension.basic`
 - `deposit.demand`
 - `living.calculate`
 
-现有退休规划页和 `POST /api/retirement/plan` 保持不变；命令协议是并行的新接口。
+退休规划主页由页面清单驱动：`GET /api/pages/retirement` 告诉前端有哪些字段、怎么分组、提交时调用哪些命令；前端逐个执行命令并组合结果。`POST /api/retirement/plan` 保留为过渡接口。
 
 ## 1. 端点
 
 ```
 GET  /api/commands
 POST /api/commands/{command_id}
+GET  /api/pages/{page_id}
 ```
 
 - `GET /api/commands`：返回协议版本和全部命令 manifest。
 - `POST /api/commands/{command_id}`：执行一个命令。
+- `GET /api/pages/{page_id}`：返回页面清单，见第 5 节。
 - 没有鉴权头、Cookie 或 API Key。
 - 请求和响应都是 `application/json`。
 
@@ -111,9 +114,12 @@ POST /api/commands/{command_id}
   "unit": "元/月",
   "semantic": "money_per_month_nominal",
   "precision": 2,
-  "time_axis": null
+  "time_axis": null,
+  "visible": true
 }
 ```
+
+`visible` 为 `false` 表示这是实现细节（数组下标、回显输入、结构化结果），页面不展示；模块结果卡片只渲染 `visible` 的输出。
 
 输出 `type` 目前是描述性的：
 
@@ -181,7 +187,56 @@ POST /api/commands/{command_id}
 - 条件必填由 `required_when` 校验。
 - 领域模块抛出的输入错误会被适配器转成 422；未预期异常返回 500。
 
-## 5. 错误
+## 5. 页面清单
+
+`GET /api/pages/{page_id}` 只描述页面结构，不返回测算结果：
+
+- `sections`：分组、顺序与可选开关；每个字段带 `label`、类型、单位、选项、约束、`required`、`visibleWhen`。
+- `executions`：提交时按顺序执行的命令。`inputs` 把命令参数映射到页面字段；`toggle` 非空时只有开关打开才执行；`outputs` 是结果展示所需的输出规格。
+- `rules`：跨字段预校验，前端只做即时提示，命令校验仍是权威。
+
+字段的 `label` 必须等于来源命令 manifest 的 `question`。同一字段被多个命令消费时，`min`/`max`/`precision`/`max_length` 取交集，且每次请求现算，前端不持有数值常量。
+
+```json
+{
+  "id": "retirement",
+  "version": "1.0.0",
+  "sections": [
+    {
+      "id": "basic",
+      "title": "基本情况",
+      "fields": [
+        {
+          "name": "age",
+          "label": "你现在多少岁？",
+          "type": "number",
+          "integer": true,
+          "required": true,
+          "unit": "岁",
+          "min": 18,
+          "max": 80,
+          "source": { "command": "plan.retirement", "input": "age" }
+        }
+      ]
+    }
+  ],
+  "executions": [
+    {
+      "command": "plan.retirement",
+      "version": "1.0.0",
+      "question": "按现在的收入和支出，退休时能攒下多少、还差多少？",
+      "inputs": { "age": "age" },
+      "toggle": null,
+      "outputs": []
+    }
+  ],
+  "rules": []
+}
+```
+
+页面清单不包含测算逻辑，也不决定结果怎么排版；结果由各命令的输出组成。
+
+## 6. 错误
 
 ```json
 {
@@ -202,7 +257,7 @@ POST /api/commands/{command_id}
 
 请求体本身格式错误（非法 JSON、顶层多字段）仍走 FastAPI 的 422 `VALIDATION_ERROR`，与命令输入错误区分。
 
-## 6. 版本与确定性
+## 7. 版本与确定性
 
 - `protocol_version` 是清单协议版本；破坏性变更升主版本。
 - 每个命令独立 `version`；执行请求必须回传当前版本。
@@ -210,12 +265,13 @@ POST /api/commands/{command_id}
 - 响应回显 `command_id`、`version`、`meta.deterministic`、`meta.as_of`。
 - 命令不得依赖隐藏的“今天”；需要日期基准时写进 `as_of` 或输入。
 
-## 7. 前端注册表
+## 8. 前端注册表
 
 命令清单是后端能力表；前端另有显式注册表 `frontend/src/command-registry.ts`：
 
 ```ts
 const ENABLED_COMMANDS = new Set([
+  'plan.retirement',
   'medical.estimate',
   'pension.basic',
   'deposit.demand',
@@ -239,7 +295,14 @@ const response = await runCommand('medical.estimate', {
 
 命令浏览器 `frontend/commands.html` 是开发者工具：左侧命令列表，右侧按 manifest 自动生成输入表单，执行后展示 JSON 输出。它不做页面级组合。
 
-## 8. 现有命令
+## 9. 现有命令
+
+### plan.retirement
+
+- 问题：按现在的收入和支出，退休时能攒下多少、还差多少。
+- 输入：`city`、`age`、`retire_age`、`life_expectancy`、`monthly_income`、`monthly_expense`、`assets`、`debt`、`retirement_expense`、`monthly_pension`、`nominal_return`、`inflation`。
+- 输出：`target`、`projected`、`gap`、`coverage`、`required_monthly_saving`、`monthly_surplus`，以及 `points`、`scenarios`、`explanation`、`warnings`、`plan_input`。
+- `points`、`scenarios`、`plan_input` 等结构字段标 `visible: false`，只供页面组合使用。
 
 ### medical.estimate
 
@@ -269,18 +332,19 @@ const response = await runCommand('medical.estimate', {
 - 输出：`years`、`retire_index`、`inflation`、`edu_inflation`、`nominal`、`real`。
 - `nominal`/`real` 是对象，内含 `clothing`、`food`、`housing`、`transport`、`education`、`total` 数组；时间轴从 `age` 起，步长 1 年。
 
-## 9. 与旧接口的关系
+## 10. 与旧接口的关系
 
-- `POST /api/retirement/plan` 继续服务现有退休规划页，返回页面级 `PlanResponse`。
-- 新命令协议不依赖旧接口；旧接口也不调用新命令。
-- 迁移策略：新页面使用命令注册表；现有页面保持不动，等有明确需求再拆成命令组合。
-- 不在本期提供 `plan.projection`、三情景命令或页面级组合器。
+- `POST /api/retirement/plan` 保留为过渡接口，仍返回页面级 `PlanResponse`；新前端不再调用。
+- `plan.retirement` 与旧接口共用 `plan/payload.py` 的构造器，结果字段结构一致。
+- 主页通过页面清单逐个调用命令；医疗、养老、存款、生活支出的结果单独展示，不并入退休资金目标。
+- 不在本期提供 `plan.projection`、命令 DAG 或后端页面组合器。
 
-## 10. 非目标
+## 11. 非目标
 
 - 不做终端用户拖拽连线。
 - 不做 LLM 自动选命令。
-- 不做命令批量执行或依赖 DAG。
-- 不做动态枚举选项服务；选项当前写在 manifest。
+- 后端不做批量执行或依赖 DAG；页面的顺序执行由前端按页面清单完成。
+- 不做动态枚举选项服务；选项写在 manifest，页面清单原样引用。
+- 不做服务端页面组合器：页面清单只描述结构与执行顺序，不返回结果。
 - 不做鉴权、多用户、持久化。
 - 输出类型目前不强制校验；适配器负责返回与 manifest 一致的字段。
