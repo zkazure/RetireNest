@@ -60,6 +60,7 @@ def _json_type(spec: InputSpec) -> str:
         "enum": "string",
         "boolean": "boolean",
         "text": "string",
+        "tier": "string",
     }
     if spec.type not in mapping:
         raise ValueError(f"不支持的输入类型：{spec.type}")
@@ -76,6 +77,12 @@ def input_schema(spec: InputSpec) -> dict[str, Any]:
         if not spec.options:
             raise ValueError(f"枚举输入 {spec.name} 缺少 options。")
         schema["enum"] = list(spec.options)
+    if spec.type == "tier":
+        if not spec.tiers:
+            raise ValueError(f"档位输入 {spec.name} 缺少 tiers。")
+        schema["enum"] = [tier.value for tier in spec.tiers]
+        options = "，".join(f"{tier.value}={tier.label}" for tier in spec.tiers)
+        schema["description"] = f"{schema['description']}；选项：{options}"
     if spec.type == "decimal":
         schema["pattern"] = _DECIMAL_PATTERN
     if spec.type == "date":

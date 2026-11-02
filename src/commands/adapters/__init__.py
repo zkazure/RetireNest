@@ -2,6 +2,7 @@
 
 from commands.adapters.deposit import COMMAND as DEPOSIT_COMMAND
 from commands.adapters.inflation import COMMAND as INFLATION_COMMAND
+from commands.adapters.lifecycle import COMMANDS as LIFECYCLE_COMMANDS
 from commands.adapters.living import COMMAND as LIVING_COMMAND
 from commands.adapters.longevity import COMMAND as LONGEVITY_COMMAND
 from commands.adapters.medical import COMMAND as MEDICAL_COMMAND
@@ -20,7 +21,8 @@ COMMANDS = (
     INFLATION_COMMAND,
     *SIMULATION_COMMANDS,
     LONGEVITY_COMMAND,
+    *LIFECYCLE_COMMANDS,
 )
-"""当前注册的十一个命令，顺序即清单顺序。"""
+"""当前注册的十四个命令，顺序即清单顺序。"""
 
 __all__ = ["COMMANDS"]
