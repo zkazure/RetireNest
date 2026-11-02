@@ -5,6 +5,7 @@
 
 from plan.engine import build_explanation, build_scenarios, calculate
 from plan.models import FieldError, PlanInput, PlanResult, ProjectionPoint, Scenario
+from plan.payload import input_payload, result_payload, scenario_payload
 from plan.validation import validate
 
 __all__ = [
@@ -16,5 +17,8 @@ __all__ = [
     "build_explanation",
     "build_scenarios",
     "calculate",
+    "input_payload",
+    "result_payload",
+    "scenario_payload",
     "validate",
 ]

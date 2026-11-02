@@ -9,11 +9,12 @@ from api.errors import schema_mismatch, validation_error
 from api.schemas import PlanRequest
 from plan import (
     PlanInput,
-    PlanResult,
-    Scenario,
     build_explanation,
     build_scenarios,
     calculate,
+    input_payload,
+    result_payload,
+    scenario_payload,
     validate,
 )
 from plan.models import FieldError
@@ -100,50 +101,6 @@ def parse_values(values: dict[str, Any]) -> tuple[PlanInput | None, list[FieldEr
     )
 
 
-def _input_payload(plan_input: PlanInput) -> dict[str, object]:
-    return {
-        "city": plan_input.city,
-        "age": plan_input.age,
-        "retirementAge": plan_input.retirement_age,
-        "lifeExpectancy": plan_input.life_expectancy,
-        "monthlyIncome": plan_input.monthly_income,
-        "monthlyExpense": plan_input.monthly_expense,
-        "assets": plan_input.assets,
-        "debt": plan_input.debt,
-        "retirementExpense": plan_input.retirement_expense,
-        "monthlyPension": plan_input.monthly_pension,
-        "nominalReturn": plan_input.nominal_return,
-        "inflation": plan_input.inflation,
-    }
-
-
-def _result_payload(result: PlanResult) -> dict[str, object]:
-    return {
-        "yearsToRetirement": result.years_to_retirement,
-        "retirementYears": result.retirement_years,
-        "realReturn": result.real_return,
-        "monthlySurplus": result.monthly_surplus,
-        "target": result.target,
-        "projected": result.projected,
-        "gap": result.gap,
-        "coverage": result.coverage,
-        "requiredMonthlySaving": result.required_monthly_saving,
-        "points": [{"age": point.age, "assets": point.assets} for point in result.points],
-        "depletedAge": result.depleted_age,
-    }
-
-
-def _scenario_payload(scenario: Scenario) -> dict[str, object]:
-    return {
-        "id": scenario.id,
-        "label": scenario.label,
-        "nominal_return": scenario.nominal_return,
-        "target": scenario.target,
-        "projected": scenario.projected,
-        "gap": scenario.gap,
-    }
-
-
 def build_plan_response(request: PlanRequest) -> dict[str, object]:
     """校验版本和 values，计算并返回 PlanResponse 同构的 dict。"""
     if request.template_id != TEMPLATE_ID or request.schema_version != SCHEMA_VERSION:
@@ -161,9 +118,9 @@ def build_plan_response(request: PlanRequest) -> dict[str, object]:
         "template_id": TEMPLATE_ID,
         "schema_version": SCHEMA_VERSION,
         "mode": "backend",
-        "plan_input": _input_payload(plan_input),
-        "result": _result_payload(result),
-        "scenarios": [_scenario_payload(scenario) for scenario in scenarios],
+        "plan_input": input_payload(plan_input),
+        "result": result_payload(result),
+        "scenarios": [scenario_payload(scenario) for scenario in scenarios],
         "explanation": build_explanation(plan_input, result),
         "warnings": list(WARNINGS),
     }
