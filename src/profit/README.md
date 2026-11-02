@@ -28,7 +28,7 @@ result.daily_rate  # Decimal('0.0000013889')，仅供展示
 ## 参数
 
 - principal：本金，Decimal、int 或字符串，须大于 0 且最多两位小数；float 会被拒绝。
-- annual_rate：年利率，类型同上，不能为负；省略时用默认的 0.05%。
+- annual_rate：年利率，类型同上，不能为负；省略时取 `rates.py` 里利率快照的等权平均（当前 0.05%），不写死在计算里。
 - start_date / end_date：起止日期，结束日期必须晚于起始日期。
 
 ## 返回
