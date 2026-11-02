@@ -27,7 +27,7 @@ def run(command_id: str, inputs: dict, version: str = PROTOCOL):
     )
 
 
-def test_command_list_contains_five_manifests() -> None:
+def test_command_list_contains_all_manifests() -> None:
     response = client.get("/api/commands")
     assert response.status_code == 200
 
@@ -40,6 +40,12 @@ def test_command_list_contains_five_manifests() -> None:
         "pension.basic",
         "deposit.demand",
         "living.calculate",
+        "savings.project",
+        "savings.goal",
+        "inflation.convert",
+        "simulation.retirement",
+        "withdrawal.safe_rate",
+        "longevity.estimate",
     ]
     for command in body["commands"]:
         assert command["question"]
@@ -308,4 +314,4 @@ def test_command_list_inputs_include_conditional_rule() -> None:
     category = next(item for item in pension["inputs"] if item["name"] == "category")
     assert category["required"] is False
     assert category["required_when"] == {"field": "gender", "equals": "女"}
-    assert len(list_commands()) == 5
+    assert len(list_commands()) == 11

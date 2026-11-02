@@ -8,6 +8,12 @@ const ENABLED_COMMANDS = new Set([
   'pension.basic',
   'deposit.demand',
   'living.calculate',
+  'savings.project',
+  'savings.goal',
+  'inflation.convert',
+  'simulation.retirement',
+  'withdrawal.safe_rate',
+  'longevity.estimate',
 ]);
 
 let manifests = new Map<string, CommandManifest>();
