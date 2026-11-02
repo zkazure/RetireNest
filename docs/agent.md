@@ -33,7 +33,7 @@ make dev
 
 ```bash
 RETIRENEST_AGENT_FAKE=1 make dev
-# 打开 http://127.0.0.1:5173/agent.html
+# 打开任意页面，右下角有悬浮对话框
 ```
 
 启用鉴权和持久化：
@@ -157,7 +157,7 @@ DELETE /api/agent/sessions/{id}   删除自己的会话
 
 ## 前端聊天页
 
-- 地址：`/agent.html`（开发模式 http://127.0.0.1:5173/agent.html，单端口模式 http://127.0.0.1:8000/agent.html）。
+- 地址：任意页面右下角的悬浮对话框，点开即用，不再有独立页面。
 - 顶部有“访问令牌”输入，只放内存，不写 localStorage；启用 Bearer 时需要填。
 - 优先 SSE；流式不可用时回退到普通 JSON。
 - 工具轨迹用可折叠面板展示 command_id、输入、输出或错误；warning 单独显示。

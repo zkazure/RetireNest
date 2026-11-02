@@ -125,7 +125,10 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
   if (form) form.hidden = true;
   const retirementAge = project.rows.find(row => row.phase === '退休')?.age ?? project.rows[0].age;
   host('summary-host').innerHTML = `
-    <div class="summary-actions"><button class="button button-outline" type="button" id="edit-button">修改参数</button></div>
+    <div class="summary-actions">
+      <button class="button button-outline" type="button" id="pdf-button">导出 PDF</button>
+      <button class="button button-outline" type="button" id="edit-button">修改参数</button>
+    </div>
     <div class="summary-grid">
       ${card('退休后月养老金', `${money(project.pension_monthly)} 元`, '按推导的缴费年限与指数计算')}
       ${card('规划终点资产', wan(project.final_assets), project.depleted_age ? `${project.depleted_age} 岁出现不足` : `可支撑至 ${project.rows[project.rows.length - 1].age} 岁`)}
@@ -139,6 +142,35 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
     <section class="view-card" data-view="risk"><h2>风险与生活水平</h2>${riskPanel(sim)}</section>`;
   host('strategy-host').innerHTML = `<section class="view-card" data-view="strategy"><h2>策略对比</h2><p class="section-hint">同一份画像套上五个预设，看哪种活法更宽裕。</p>${strategyTable(compare.variants)}</section>`;
   host('results').hidden = false;
+  host('pdf-button').addEventListener('click', async () => {
+    const button = host('pdf-button') as HTMLButtonElement;
+    button.disabled = true;
+    button.textContent = '正在生成…';
+    try {
+      const { createReportPdf } = await import('./pdf-export');
+      const bytes = await createReportPdf({
+        pensionMonthly: project.pension_monthly,
+        finalAssets: project.final_assets,
+        breakEvenAge: project.break_even_age,
+        depletedAge: project.depleted_age,
+        successRate: sim.success_rate,
+        affordableMonthly: sim.affordable_monthly_expense,
+        rows: project.rows,
+        variants: compare.variants,
+      });
+      const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }));
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'RetireNest-全周期现金流.pdf';
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.alert('导出失败，请稍后重试。');
+    } finally {
+      button.disabled = false;
+      button.textContent = '导出 PDF';
+    }
+  });
   host('edit-button').addEventListener('click', () => {
     const form = document.querySelector<HTMLFormElement>('#plan-form');
     if (form) form.hidden = false;

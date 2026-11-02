@@ -197,3 +197,22 @@ def test_选项值转数值():
     assert tier_amount(tiers.INCOME, "12k20k") == pytest.approx(16_000)
     with pytest.raises(ProfileError):
         tier_amount(tiers.INCOME, 12_000)
+
+
+def test_女性未给岗位类别时默认管理技术():
+    profile = build_profile(
+        age=35,
+        sex="女",
+        city="成都",
+        income_tier="12k20k",
+        expense_tier="6k10k",
+        asset_tier="50w100w",
+        debt_tier="none",
+        retirement_expense_tier="4k6k",
+        travel_tier="once",
+        entertainment_tier="mid",
+        children_tier="none",
+        birth_date=birth_for(35),
+    )
+    assert profile.category == "管理技术"
+    assert profile.retirement_age >= 55

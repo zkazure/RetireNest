@@ -44,12 +44,12 @@ def build_profile(
     if age is None:
         today = date.today()
         age = (today - birth_date).days // 365
+    if category is None and sex == "女":
+        category = "管理技术"
     if retirement_age is None:
         retirement_age = statutory_retirement_age(birth_date, sex, category)
     if plan_until is None:
         plan_until = realistic_plan_until(age, sex)
-    if category is None and sex == "女":
-        category = "管理技术"
     years = contribution_years(retirement_age)
     return Profile(
         age=age,
