@@ -125,15 +125,19 @@ export class FormRenderer {
       entry.control.setAttribute('aria-invalid',String(!!error)); entry.custom?.setAttribute('aria-invalid',String(!!error));
     }
   }
+  setFieldErrors(errors: FieldError[]) {
+    this.showErrors(errors);
+    const first = errors[0];
+    if (!first) return;
+    const entry = this.entries.get(first.field);
+    if (!entry) return;
+    const details = entry.wrapper.closest('details'); if (details) details.open = true;
+    const target = entry.custom && entry.control.value === '__custom__' ? entry.custom : entry.control;
+    target.focus();
+  }
   collect() {
     this.attempted=true; this.refresh();
-    const result=collectValues(this.template,this.readRaw()); this.showErrors(result.errors);
-    if (result.errors.length) {
-      const entry=this.entries.get(result.errors[0].field)!;
-      const details=entry.wrapper.closest('details'); if (details) details.open=true;
-      const target=entry.custom && entry.control.value==='__custom__' ? entry.custom : entry.control;
-      target.focus();
-    }
+    const result=collectValues(this.template,this.readRaw()); this.setFieldErrors(result.errors);
     return result;
   }
 }
