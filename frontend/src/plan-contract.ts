@@ -1,6 +1,7 @@
 import type { PlanInput, PlanResult } from './model';
 
-// 前端与服务端的响应契约。页面只消费这里的字段，不在本地重新计算。
+// 页面消费的退休规划结果。它由 plan.retirement 命令的输出映射而来，
+// 页面只读这里的数据，不在本地重新计算。
 export interface PlanScenario {
   id: 'conservative' | 'baseline' | 'optimistic';
   label: string;
@@ -10,17 +11,9 @@ export interface PlanScenario {
   gap: number;
 }
 export interface PlanResponse {
-  template_id: string;
-  schema_version: string;
-  mode: 'demo' | 'backend';
   plan_input: PlanInput;
   result: PlanResult;
   scenarios: PlanScenario[];
   explanation: string;
   warnings: string[];
-}
-export interface PlanErrorResponse {
-  code: 'VALIDATION_ERROR' | 'SCHEMA_VERSION_MISMATCH' | 'CALCULATION_ERROR';
-  message: string;
-  field_errors?: { field: string; message: string }[];
 }

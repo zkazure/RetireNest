@@ -1,14 +1,17 @@
 import './style.css';
 import type { PlanInput, PlanResult } from './model';
 import type { PlanResponse } from './plan-contract';
-import templateJson from './form-template.json';
-import { validateTemplate, buildRequest } from './form-data';
+import type { FormValues } from './form-types';
+import type { PageManifest } from './page-types';
+import { loadPage, PageLoadError } from './page-client';
+import { pageToTemplate } from './page-to-template';
+import { PageRunError, runPage } from './page-runner';
+import { toPlanResponse } from './plan-adapter';
+import { CommandApiError } from './command-client';
 import { FormRenderer } from './form-renderer';
-import { requestPlan, PlanApiError } from './plan-client';
-import type { PlanRequest } from './form-types';
-validateTemplate(templateJson);
-const template = templateJson;
-let submittedRequest: PlanRequest | null = null;
+let page: PageManifest | null = null;
+let renderer: FormRenderer | null = null;
+let submittedValues: FormValues | null = null;
 let currentPlan: PlanResponse | null = null;
 
 const icons: Record<string, string> = {
@@ -67,7 +70,7 @@ app.innerHTML = `
 
     </main>
   </div><div class="toast" id="toast" role="status" hidden></div>
-  <dialog id="help-dialog"><div class="dialog-top"><h2>关于这份退休测算</h2><button class="icon-button" id="close-help" aria-label="关闭说明">×</button></div><p>结果由本地后端按基础字段计算，尚未连接 AI；医疗、养老、存款等扩展信息暂未参与。</p><p>所有金额以今天的购买力展示。实际年回报 = (1 + 名义年回报) ÷ (1 + 通胀率) − 1。工作期间的年结余和退休后的支出缺口统一按年末计入。</p><p>退休资金目标为退休后各年支出减养老金的折现总额；退休时预计资产为当前净资产与未来结余的累积值。</p><p>假设收支及养老金随通胀同步变化，负债直接抵减资产，不另算利息；不计税费、收益波动或政策变化。城市不参与计算。结果用于展示与学习，不构成投资或养老金政策建议。</p><button class="button button-primary" id="understood-button">了解了</button></dialog>
+  <dialog id="help-dialog"><div class="dialog-top"><h2>关于这份退休测算</h2><button class="icon-button" id="close-help" aria-label="关闭说明">×</button></div><p>结果由本地后端按命令逐个计算，尚未连接 AI。医疗、养老、存款与生活支出是独立命令的测算结果，不并入退休资金目标。</p><p>所有金额以今天的购买力展示。实际年回报 = (1 + 名义年回报) ÷ (1 + 通胀率) − 1。工作期间的年结余和退休后的支出缺口统一按年末计入。</p><p>退休资金目标为退休后各年支出减养老金的折现总额；退休时预计资产为当前净资产与未来结余的累积值。</p><p>假设收支及养老金随通胀同步变化，负债直接抵减资产，不另算利息；不计税费、收益波动或政策变化。城市不参与退休资金计算。结果用于展示与学习，不构成投资或养老金政策建议。</p><button class="button button-primary" id="understood-button">了解了</button></dialog>
 `;
 
 function chart(input: PlanInput, result: PlanResult): string {
@@ -89,14 +92,16 @@ function chart(input: PlanInput, result: PlanResult): string {
 function renderResults() {
   if (!currentPlan) return;
   const { plan_input: input, result, scenarios, explanation, warnings } = currentPlan;
-  const submittedCount = Object.keys(submittedRequest?.values ?? {}).length;
+  const submittedCount = Object.values(submittedValues ?? {}).filter(
+    value => value !== null && value !== undefined,
+  ).length;
   const savingExtra = Math.max(0, result.requiredMonthlySaving - result.monthlySurplus);
   const coverage = Math.min(100, result.coverage);
   const subtitles = ['更审慎地看待未来', '按当前假设稳步前行', '让时间释放更多可能'];
   const warningsText = warnings.length ? ` ${warnings.map(escapeHtml).join(' ')} ` : '';
   document.querySelector('#results')!.innerHTML = `
     <div class="results-toolbar"><div><span class="step-label">YOUR RETIREMENT PLAN</span><h1 id="result-title" tabindex="-1">你的退休规划</h1></div><button type="button" class="button button-outline" id="back-button">${icon('arrow', 'back-arrow')}返回修改</button></div>
-    <p class="result-template-note">本次按模板收集了 ${submittedCount} 项信息。当前结果由本地后端按基础字段计算；医疗、养老、存款等扩展模块尚未参与。</p>
+    <p class="result-template-note">本次按后端页面清单收集了 ${submittedCount} 项信息，并按命令逐个测算；医疗、养老、存款与生活支出的结果单独展示。</p>
     <section class="card result-summary"><div class="section-heading"><div><span class="step-label">02 / YOUR RETIREMENT OUTLOOK</span><h2>你的退休规划概览</h2></div><span class="subtle-badge">${escapeHtml(input.city)} · ${input.age}岁出发</span></div><div class="summary-subtitle">距离 ${input.retirementAge} 岁退休，还有 <strong>${result.yearsToRetirement} 年</strong> 的准备时间。</div><div class="metrics"><div class="metric"><div class="metric-label">${icon('target')}退休所需资金</div><div class="metric-value">${wan(result.target)}<span>万元</span></div><p>覆盖退休后 ${result.retirementYears} 年的支出缺口</p></div><div class="metric"><div class="metric-label">${icon('wallet')}退休时预计资产</div><div class="metric-value">${wan(result.projected)}<span>万元</span></div><p>按当前每月结余 ${money(result.monthlySurplus)} 元测算</p></div><div class="metric metric-gap"><div class="metric-label">${icon('leaf')}${result.gap > 0 ? '还需准备' : '预计资金余量'}</div><div class="metric-value">${wan(result.gap > 0 ? result.gap : result.projected-result.target)}<span>万元</span></div><p>${result.gap > 0 ? '把差距拆小，未来更有方向' : '当前假设下已覆盖退休目标'}</p></div></div><div class="coverage-row"><span>退休目标准备度</span><div class="progress-track"><span style="width:${coverage}%"></span></div><strong>${result.coverage.toFixed(0)}%</strong></div><div class="saving-note">${icon('info')}<span>${result.gap > 0 ? `若维持当前假设，每月结余达到 <strong>¥${money(result.requiredMonthlySaving)}</strong> 可覆盖目标，比现在多 <strong>¥${money(savingExtra)}</strong>。` : '按当前假设，你已走在实现退休目标的路径上。可以调整退休年龄，看看未来的更多可能。'}</span></div></section>
     <section class="card chart-card"><div class="section-heading"><div><h2>让未来的资产，有迹可循</h2><p class="section-description">从积累到退休，看看资金如何陪伴你的每个阶段。</p></div><span class="chart-unit">单位：万元</span></div><div class="chart-legend"><span><i class="legend-dot green"></i>资产积累期</span><span><i class="legend-dot sage"></i>退休支取期</span><span><i class="legend-dash"></i>退休资金目标</span></div>${chart(input,result)}<div class="chart-bottom">${icon('clock')}<span>${result.depletedAge ? `当前路径下，资产预计在 ${result.depletedAge} 岁出现不足，可尝试增加结余或调整退休计划。` : `按当前假设，资产可支持至规划终点 ${input.lifeExpectancy} 岁。`}</span></div></section>
     <section class="card scenario-section" id="scenarios"><div class="section-heading"><div><h2>同一个目标，看看不同的可能</h2><p class="section-description">仅调整名义年回报，其余条件保持不变。</p></div><span class="subtle-badge">3 种情景</span></div><div class="scenario-grid">${scenarios.map((scenario,index)=>`<button type="button" class="scenario-card ${index === activeScenario ? 'selected' : ''}" data-scenario="${index}" aria-pressed="${index === activeScenario}"><div class="scenario-title"><strong>${escapeHtml(scenario.label)}</strong><span class="scenario-radio">${index === activeScenario ? icon('check') : ''}</span></div><p>${subtitles[index] ?? ''}</p><div class="scenario-amount">${wan(scenario.projected)}<span>万元</span></div><div class="scenario-footer"><span>名义年回报 ${scenario.nominal_return.toFixed(1)}%</span><span>${scenario.gap > 0 ? '缺口 '+wan(scenario.gap)+'万' : '目标已覆盖'}</span></div></button>`).join('')}</div><div class="scenario-detail" id="scenario-detail"></div></section>
@@ -133,9 +138,36 @@ function toast(message: string) {
 function openHelp() { document.querySelector<HTMLDialogElement>('#help-dialog')!.showModal(); }
 const form = document.querySelector<HTMLFormElement>('#plan-form')!;
 form.noValidate = true;
-const renderer = new FormRenderer(document.querySelector<HTMLElement>('#template-fields')!, template);
-document.querySelector('#profile-title')!.textContent = template.title;
-document.querySelector('#template-description')!.textContent = template.description;
+const fieldsHost = document.querySelector<HTMLElement>('#template-fields')!;
+void bootstrap();
+
+async function bootstrap() {
+  try {
+    page = await loadPage();
+    const template = pageToTemplate(page);
+    renderer = new FormRenderer(fieldsHost, template);
+    document.querySelector('#profile-title')!.textContent = template.title;
+    document.querySelector('#template-description')!.textContent = template.description;
+  } catch (error) {
+    showLoadError(error);
+  }
+}
+
+function showLoadError(error: unknown) {
+  const message = error instanceof PageLoadError ? error.message : '页面清单加载失败。';
+  const paragraph = document.createElement('p');
+  paragraph.className = 'field-error';
+  paragraph.textContent = message;
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.className = 'button button-outline';
+  retry.textContent = '重新加载';
+  retry.addEventListener('click', () => {
+    retry.disabled = true;
+    void bootstrap();
+  });
+  fieldsHost.replaceChildren(paragraph, retry);
+}
 for (const eventName of ['input','change']) form.addEventListener(eventName,()=>{
   const summary = document.querySelector<HTMLElement>('#form-error')!;
   summary.hidden = true;
@@ -143,9 +175,10 @@ for (const eventName of ['input','change']) form.addEventListener(eventName,()=>
 });
 form.addEventListener('submit',async event=>{
   event.preventDefault();
-  if (isGenerating) return;
-  const collected = renderer.collect();
-  const request = buildRequest(template, collected.values);
+  if (isGenerating || !renderer || !page) return;
+  const formRenderer = renderer;
+  const currentPage = page;
+  const collected = formRenderer.collect();
   const errorElement = document.querySelector<HTMLParagraphElement>('#form-error')!;
   if (collected.errors.length) {
     errorElement.hidden = false; errorElement.textContent = collected.errors[0].message; return;
@@ -154,7 +187,7 @@ form.addEventListener('submit',async event=>{
   const submitButton = form.querySelector<HTMLButtonElement>('[type="submit"]')!;
   const panel = document.querySelector<HTMLElement>('#generation-panel')!;
   const message = document.querySelector<HTMLElement>('#generation-message')!;
-  const stages = ['正在整理你的规划信息…', '正在测算退休资金与资产轨迹…', '正在生成情景对比与规划解读…'];
+  const stages = ['正在整理你的规划信息…', '正在按命令测算退休资金与资产轨迹…', '正在汇总各模块结果…'];
   submitButton.disabled = true;
   document.querySelector<HTMLElement>('.profile-card')!.hidden = true;
   document.querySelector<HTMLElement>('#results')!.hidden = true;
@@ -174,8 +207,12 @@ form.addEventListener('submit',async event=>{
     }
   })();
   try {
-    const [response] = await Promise.all([requestPlan(request), animation]);
-    currentPlan = response; submittedRequest = request; activeScenario = 1;
+    const [results] = await Promise.all([runPage(currentPage, collected.values), animation]);
+    const planResult = results.find(item => item.execution.command === 'plan.retirement');
+    if (!planResult) throw new PageRunError('退休规划命令没有返回结果。');
+    currentPlan = toPlanResponse(planResult.outputs);
+    submittedValues = collected.values;
+    activeScenario = 1;
     renderResults(); hasGeneratedPlan = true;
     panel.classList.add('generation-exit');
     if (!reducedMotion) await new Promise<void>(resolve => setTimeout(resolve, 400));
@@ -186,8 +223,10 @@ form.addEventListener('submit',async event=>{
   } catch (error) {
     panel.hidden = true; showView('form');
     errorElement.hidden = false;
-    if (error instanceof PlanApiError) {
-      if (error.fieldErrors.length) renderer.setFieldErrors(error.fieldErrors);
+    if (error instanceof PageRunError) {
+      if (error.fieldErrors.length) formRenderer.setFieldErrors(error.fieldErrors);
+      errorElement.textContent = error.message;
+    } else if (error instanceof CommandApiError) {
       errorElement.textContent = error.message;
     } else {
       errorElement.textContent = '生成规划遇到问题，请稍后重试。';
