@@ -25,12 +25,13 @@ from datetime import date
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 from profit.errors import ProfitError
+from profit.rates import average_rate
 
 DAYS_PER_YEAR = Decimal(360)
 """人民币日利率按 360 天折算，不是 365。"""
 
-DEFAULT_ANNUAL_RATE = Decimal("0.0005")
-"""缺省年利率 0.05%，即 2025 年 5 月六大行活期挂牌利率，可按银行公告覆盖。"""
+DEFAULT_ANNUAL_RATE = average_rate()
+"""缺省年利率取利率快照的等权平均（当前 0.05%），来源见 profit.rates.SNAPSHOT。"""
 
 CENT = Decimal("0.01")
 _DAILY_RATE_QUANTUM = Decimal("0.0000000001")
