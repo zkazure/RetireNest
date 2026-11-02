@@ -10,7 +10,9 @@
 
 ## 一条命令运行
 
-前置工具：Python 3.12、[uv](https://docs.astral.sh/uv/)、Node.js（含 npm），以及 `make`（Linux/macOS 通常自带）。首次运行会自动执行 `uv sync --locked` 和 `npm ci`，需要网络。
+前置工具：Python 3.12、[uv](https://docs.astral.sh/uv/)、Node.js（含 npm），以及 GNU make。首次运行会自动执行 `uv sync --locked` 和 `npm ci`，需要网络。
+
+make 的安装：Linux 发行版通常自带；macOS 用 `xcode-select --install` 或 `brew install make`；Windows 用 `winget install ezwinports.make`，或 `choco install make`、`scoop install make`，装完重开终端。Windows 上 make 的 recipe 由 cmd.exe 执行，本项目只用最简单的命令，不需要 MSYS2。
 
 开发模式（FastAPI 8000 + Vite 5173，保留热更新）：
 
@@ -18,10 +20,15 @@
 make dev
 ```
 
-`make dev` 会先结束占用 8000/5173 的旧进程再启动，适合改完代码直接重启；`make stop` 只结束旧进程。跳过自动打开浏览器用 `make dev ARGS=--no-open`。没有 `make` 时用等价写法：
+`make dev` 会先结束占用 8000/5173 的旧进程再启动，Linux、macOS 与 Windows 行为一致，适合改完代码直接重启；`make stop` 只结束旧进程。跳过自动打开浏览器用 `make dev ARGS=--no-open`，演示模式用 `make dev ARGS=--prod`，只清理指定端口用 `make stop PORTS=18000`。
+
+端口清理由 `run.py --stop` 实现：Windows 用 `netstat -ano` 找 PID 再 `taskkill /F /T`，Linux/macOS 用 `lsof`（缺失时退 `ss`）。Windows 这条路径由单元测试覆盖，尚未在 Windows 实机验证。
+
+没有 make 时用等价写法：
 
 ```bash
 uv run --project src python run.py
+uv run --project src python run.py --stop
 ```
 
 演示模式（构建前端后由 FastAPI 在 8000 单端口托管页面和 API）：
