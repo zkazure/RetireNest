@@ -231,7 +231,7 @@ def run_dev(uv: str, npm: str, no_open: bool) -> int:
             FRONTEND,
         )
         wait_for_port("前端", WEB_PORT, frontend)
-        url = f"http://{HOST}:{WEB_PORT}/"
+        url = f"http://{HOST}:{WEB_PORT}/commands.html"
         say(f"开发模式已就绪：{url}")
         open_browser(url, no_open)
         return watch([("api", backend), ("web", frontend)])

@@ -30,7 +30,7 @@ uv run --project src python run.py
 uv run --project src python run.py --prod
 ```
 
-默认会自动打开浏览器；无桌面环境或远程服务器加 `--no-open`。Ctrl+C 会停止本次启动的所有进程。手动启动方式见 [frontend/README.md](frontend/README.md)。
+默认会自动打开浏览器：开发模式打开命令浏览器 `/commands.html`，演示模式打开主页。无桌面环境或远程服务器加 `--no-open`。Ctrl+C 会停止本次启动的所有进程。手动启动方式见 [frontend/README.md](frontend/README.md)。
 
 命令浏览器（开发者工具）：
 
