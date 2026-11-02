@@ -6,12 +6,14 @@
 用法：
     uv run --project src python run.py
     uv run --project src python run.py --prod
+    uv run --project src python run.py --stop
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import signal
 import socket
@@ -30,6 +32,8 @@ HOST = "127.0.0.1"
 API_PORT = 8000
 WEB_PORT = 5173
 STARTUP_TIMEOUT = 60.0
+STOP_TIMEOUT = 5.0
+IS_WINDOWS = os.name == "nt"
 
 
 def say(message: str) -> None:
@@ -50,7 +54,7 @@ def find_tool(name: str, hint: str) -> str:
 
 def npm_command(npm: str, *args: str) -> list[str]:
     """Windows 上 npm 是 .cmd，需要经过 cmd.exe 才能启动。"""
-    if os.name == "nt":
+    if IS_WINDOWS:
         return [os.environ.get("COMSPEC", "cmd.exe"), "/d", "/c", npm, *args]
     return [npm, *args]
 
@@ -86,7 +90,115 @@ def port_in_use(port: int) -> bool:
 
 def ensure_port_free(port: int, label: str) -> None:
     if port_in_use(port):
-        fail(f"{label}端口 {port} 已被占用，请先停止占用该端口的进程。")
+        fail(
+            f"{label}端口 {port} 已被占用，请先执行 make stop"
+            f" 或 uv run --project src python run.py --stop。"
+        )
+
+
+def run_capture(command: list[str]) -> str:
+    """执行只读的查询命令并返回 stdout；命令不存在或失败时返回空串。"""
+    try:
+        result = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            errors="replace",
+            check=False,
+        )
+    except OSError:
+        return ""
+    return result.stdout or ""
+
+
+def parse_windows_netstat(text: str, port: int) -> list[int]:
+    """从 `netstat -ano` 的 LISTENING 行里取出监听指定端口的 PID。"""
+    pids: set[int] = set()
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) < 5 or parts[0].upper() != "TCP":
+            continue
+        local, state, pid = parts[1], parts[3].upper(), parts[4]
+        if state != "LISTENING" or local.rsplit(":", 1)[-1] != str(port):
+            continue
+        if pid.isdigit():
+            pids.add(int(pid))
+    return sorted(pids)
+
+
+def parse_lsof(text: str) -> list[int]:
+    """`lsof -ti` 每行一个 PID。"""
+    return sorted({int(line.strip()) for line in text.splitlines() if line.strip().isdigit()})
+
+
+def parse_ss(text: str) -> list[int]:
+    """从 `ss -ltnp` 的 users:(("proc",pid=1234,fd=5)) 里取 PID。"""
+    return sorted({int(pid) for pid in re.findall(r"pid=(\d+)", text)})
+
+
+def listener_pids(port: int) -> list[int]:
+    """返回监听指定端口的进程 PID，按平台选择 netstat / lsof / ss。"""
+    if IS_WINDOWS:
+        return parse_windows_netstat(run_capture(["netstat", "-ano", "-p", "tcp"]), port)
+    if shutil.which("lsof"):
+        return parse_lsof(run_capture(["lsof", "-ti", f"tcp:{port}", "-sTCP:LISTEN"]))
+    if shutil.which("ss"):
+        return parse_ss(run_capture(["ss", "-ltnp"]))
+    return []
+
+
+def kill_pids(pids: list[int], force: bool = False) -> None:
+    """结束进程；Windows 用 taskkill 连同子进程，POSIX 先 SIGTERM 后 SIGKILL。"""
+    for pid in pids:
+        if IS_WINDOWS:
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            continue
+        try:
+            os.kill(pid, signal.SIGKILL if force else signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        except PermissionError:
+            say(f"无法结束进程 {pid}：权限不足。")
+
+
+def wait_until_free(port: int, timeout: float) -> list[int]:
+    """等端口释放，返回超时后仍占用的 PID。"""
+    deadline = time.monotonic() + timeout
+    while True:
+        pids = listener_pids(port)
+        if not pids or time.monotonic() >= deadline:
+            return pids
+        time.sleep(0.2)
+
+
+def stop_port(port: int, timeout: float = STOP_TIMEOUT) -> bool:
+    """结束监听指定端口的进程；没有监听进程时静默返回 False。"""
+    pids = listener_pids(port)
+    if not pids:
+        return False
+    show = "、".join(str(pid) for pid in pids)
+    say(f"停止端口 {port}：{show}")
+    kill_pids(pids)
+    left = wait_until_free(port, timeout)
+    if left:
+        say(f"强制结束端口 {port}：" + "、".join(str(pid) for pid in left))
+        kill_pids(left, force=True)
+        wait_until_free(port, timeout)
+    return True
+
+
+def stop_ports(ports: list[int], timeout: float = STOP_TIMEOUT) -> None:
+    if not IS_WINDOWS and not shutil.which("lsof") and not shutil.which("ss"):
+        say("找不到 lsof 或 ss，无法按端口查找进程；请安装 lsof 后重试。")
+        return
+    for port in ports:
+        stop_port(port, timeout)
 
 
 def pump(name: str, process: subprocess.Popen[str]) -> None:
@@ -102,7 +214,7 @@ def pump(name: str, process: subprocess.Popen[str]) -> None:
 def spawn(name: str, command: list[str], cwd: Path) -> subprocess.Popen[str]:
     say(f"启动 {name}：{' '.join(command)}")
     options: dict[str, object] = {}
-    if os.name == "nt":
+    if IS_WINDOWS:
         options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
     else:
         options["start_new_session"] = True
@@ -138,7 +250,7 @@ def terminate(name: str, process: subprocess.Popen[str] | None) -> None:
     if process is None or process.poll() is not None:
         return
     say(f"停止 {name}…")
-    if os.name == "nt":
+    if IS_WINDOWS:
         subprocess.run(
             ["taskkill", "/F", "/T", "/PID", str(process.pid)],
             stdout=subprocess.DEVNULL,
@@ -154,7 +266,7 @@ def terminate(name: str, process: subprocess.Popen[str] | None) -> None:
     try:
         process.wait(timeout=5)
     except (subprocess.TimeoutExpired, KeyboardInterrupt):
-        if os.name == "nt":
+        if IS_WINDOWS:
             process.kill()
         else:
             try:
@@ -278,6 +390,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "  uv run --project src python run.py\n"
             "  uv run --project src python run.py --prod\n"
             "  uv run --project src python run.py --prod --no-open\n"
+            "  uv run --project src python run.py --stop\n"
         ),
     )
     parser.add_argument(
@@ -289,6 +402,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--no-open",
         action="store_true",
         help="不自动打开浏览器",
+    )
+    parser.add_argument(
+        "--stop",
+        action="store_true",
+        help="只结束占用开发端口的进程后退出",
+    )
+    parser.add_argument(
+        "--ports",
+        nargs="+",
+        type=int,
+        metavar="PORT",
+        help="配合 --stop 使用，默认 8000 5173",
     )
     return parser.parse_args(argv)
 
@@ -309,6 +434,12 @@ def install_signal_handlers() -> None:
 def main(argv: list[str] | None = None) -> int:
     install_signal_handlers()
     args = parse_args(argv)
+    if args.ports and not args.stop:
+        fail("--ports 只能配合 --stop 使用。")
+    if args.stop:
+        stop_ports(args.ports or [API_PORT, WEB_PORT])
+        return 0
+
     uv = find_tool("uv", "请先安装 uv：https://docs.astral.sh/uv/")
     npm = find_tool("npm", "请先安装 Node.js（含 npm）：https://nodejs.org/")
     find_tool("node", "请先安装 Node.js（含 npm）：https://nodejs.org/")
