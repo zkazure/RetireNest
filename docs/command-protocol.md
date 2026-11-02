@@ -197,6 +197,8 @@ GET  /api/pages/{page_id}
 
 字段的 `label` 必须等于来源命令 manifest 的 `question`。同一字段被多个命令消费时，`min`/`max`/`precision`/`max_length` 取交集，且每次请求现算，前端不持有数值常量。
 
+字段的 `required` 由页面清单声明：默认必答，`false` 表示可留空。页面标 `false` 的字段，其所有消费命令的对应输入也必须可选，否则解析失败。命令的 `required_when` 只作用于命令输入，不在页面上推导；条件必填用 `visibleWhen`，字段只在条件成立时出现，出现即必答。
+
 ```json
 {
   "id": "retirement",
@@ -300,7 +302,7 @@ const response = await runCommand('medical.estimate', {
 ### plan.retirement
 
 - 问题：按现在的收入和支出，退休时能攒下多少、还差多少。
-- 输入：`city`、`age`、`retire_age`、`life_expectancy`、`monthly_income`、`monthly_expense`、`assets`、`debt`、`retirement_expense`、`monthly_pension`、`nominal_return`、`inflation`。
+- 输入：`city`、`age`、`retire_age`、`life_expectancy`、`monthly_income`、`monthly_expense`、`assets`、`retirement_expense`、`nominal_return`、`inflation`；`debt`、`monthly_pension` 可省略，按 0 计。
 - 输出：`target`、`projected`、`gap`、`coverage`、`required_monthly_saving`、`monthly_surplus`，以及 `points`、`scenarios`、`explanation`、`warnings`、`plan_input`。
 - `points`、`scenarios`、`plan_input` 等结构字段标 `visible: false`，只供页面组合使用。
 

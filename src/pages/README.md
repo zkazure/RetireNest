@@ -17,7 +17,7 @@
 
 - `label` 只能来自来源命令的 `question`；页面模块不写问题文案。
 - 同一字段被多个命令消费时，`min`/`max`/`precision`/`max_length` 取所有消费命令的交集，每次请求现算；交集为空直接报错。
-- `required` 取所有消费命令的并集；带 `required_when` 的输入按必填处理，可见性由 `visible_when` 控制。
+- `required` 由页面字段自己声明，默认 `True`；写 `required=False` 才允许留空。标了 `False` 的字段，其所有消费命令的对应输入也必须可选，否则解析直接报错，避免“表单放行、后端 422”。命令的 `required_when` 不参与页面的必填判断；条件必填用 `visible_when`，只在满足条件时可见，可见即必答。
 - `defaultValue` 优先取来源命令，其次取任一消费命令的默认值。
 - 渲染类型取来源命令的类型；消费命令必须能接受这个类型（`integer` 可被 `number` 接受，`enum` 可被 `text` 接受，反之不行）。
 - 每个字段至少被一条执行引用，每条执行的每个参数都能落到字段；出现死字段或悬空参数即报错。
@@ -27,8 +27,9 @@
 
 1. 确认目标命令的 `input` 已存在（没有就先加命令输入）。
 2. 在 `retirement.py` 对应 `PageSection.fields` 里加 `PageField(name=..., command=...)`。
-3. 如果字段要提交给别的命令，在相应 `PageExecution.inputs` 里加映射。
-4. 运行 `uv run pytest tests/test_pages.py`，它会检查引用、交集和夹具。
+3. 如果这个问题可以留空，加 `required=False`，并确认消费命令的对应输入也是 `required=False`。
+4. 如果字段要提交给别的命令，在相应 `PageExecution.inputs` 里加映射。
+5. 运行 `uv run pytest tests/test_pages.py`，它会检查引用、交集和夹具。
 
 `tests/fixtures/retirement-page.json` 是页面响应的快照，由
 `tests/test_pages.py::test_page_fixture_matches_endpoint` 对比；改页面后重新生成：
