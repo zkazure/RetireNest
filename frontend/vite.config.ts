@@ -21,6 +21,7 @@ export default defineConfig({
       input: {
         app: resolve(root, 'index.html'),
         commands: resolve(root, 'commands.html'),
+        settings: resolve(root, 'settings.html'),
         plan: resolve(root, 'plan.html'),
       },
     },

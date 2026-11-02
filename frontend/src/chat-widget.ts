@@ -1,6 +1,7 @@
 // 悬浮对话框：全站右下角入口，点开是一个不离开当前页面的对话面板。
 import './chat-widget.css';
 import { SseParser, type SseEvent } from './agent-stream';
+import { hasModelKey, loadSettings } from './settings-store';
 
 interface StreamPayload {
   type?: string;
@@ -41,9 +42,8 @@ function mount(): void {
         <button class="chat-send" type="submit">发送</button>
       </form>
       <div class="chat-foot">
-        <span class="chat-status" aria-live="policy">未配置模型</span>
-        <button class="chat-token-toggle" type="button">令牌</button>
-        <input class="chat-token" type="password" placeholder="Bearer 令牌（仅本次会话）" hidden />
+        <span class="chat-status" aria-live="polite">未配置模型</span>
+        <a class="chat-settings" href="/settings.html">模型设置</a>
       </div>
     </section>`;
   document.body.append(root);
@@ -55,8 +55,6 @@ function mount(): void {
   const input = root.querySelector<HTMLTextAreaElement>('.chat-input')!;
   const send = root.querySelector<HTMLButtonElement>('.chat-send')!;
   const status = root.querySelector<HTMLElement>('.chat-status')!;
-  const tokenInput = root.querySelector<HTMLInputElement>('.chat-token')!;
-  const tokenToggle = root.querySelector<HTMLButtonElement>('.chat-token-toggle')!;
 
   let busy = false;
   let started = false;
@@ -95,9 +93,12 @@ function mount(): void {
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !panel.hidden) close();
   });
-  tokenToggle.addEventListener('click', () => {
-    tokenInput.hidden = !tokenInput.hidden;
-    if (!tokenInput.hidden) tokenInput.focus();
+  // Enter 直接发送，Shift+Enter 换行；输入法组合中的回车不发送。
+  input.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    if (event.isComposing || event.keyCode === 229) return;
+    event.preventDefault();
+    form.requestSubmit();
   });
   if (sessionStorage.getItem(STORAGE_KEY) === '1') open();
 
@@ -142,10 +143,16 @@ function mount(): void {
     tone(text, 'user');
     input.value = '';
     setBusy(true);
+    if (!hasModelKey(loadSettings())) setStatus('未配置模型，去「模型设置」填写', 'error');
     try {
+      const settings = loadSettings();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      const token = tokenInput.value.trim();
-      if (token) headers.Authorization = `Bearer ${token}`;
+      if (settings.apiKey) {
+        headers['X-LLM-Api-Key'] = settings.apiKey;
+        if (settings.model) headers['X-LLM-Model'] = settings.model;
+        if (settings.baseUrl) headers['X-LLM-Base-Url'] = settings.baseUrl;
+      }
+      if (settings.token) headers.Authorization = `Bearer ${settings.token}`;
       const response = await fetch('/api/agent/chat/stream', {
         method: 'POST',
         headers,
@@ -154,7 +161,7 @@ function mount(): void {
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as { message?: string } | null;
         if (response.status === 503) {
-          tone('后端没有配置模型，暂时不能对话。设置 RETIRENEST_LLM_API_KEY 与 RETIRENEST_LLM_MODEL 后重启服务即可。', 'error');
+          tone('还没有配置模型。点右下角的「模型设置」填好 API Key 与模型名即可，不用重启服务。', 'error');
         } else {
           tone(body?.message ?? `对话失败（${response.status}）。`, 'error');
         }

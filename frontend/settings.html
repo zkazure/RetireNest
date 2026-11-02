@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>退有所算 · 设置</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23184e3c'/%3E%3Cpath d='M10 27V17l10-7 10 7v10M15 25l5 3 5-3M15 20l5 3 5-3' fill='none' stroke='%23e5f0b3' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">退有所算</a>
+      <nav class="site-nav">
+        <a href="/">全周期</a>
+        <a href="/commands.html">命令浏览器</a>
+        <a href="/settings.html" aria-current="page">设置</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="intro">
+        <h1>模型设置</h1>
+        <p>密钥只保存在这个浏览器里，发消息时随请求带给后端，用完即弃；服务端不会存，也不会回显。</p>
+      </section>
+      <form class="profile-card settings-card" id="settings-form" novalidate>
+        <section class="form-group">
+          <h3>模型服务</h3>
+          <div class="fields">
+            <label class="field">
+              <span class="field-label">API Key</span>
+              <div class="input-wrap">
+                <input id="api-key" type="password" autocomplete="off" placeholder="sk-…" />
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Base URL（可空，默认官方地址）</span>
+              <div class="input-wrap">
+                <input id="base-url" type="url" autocomplete="off" placeholder="https://api.openai.com/v1" />
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">模型名</span>
+              <div class="input-wrap">
+                <input id="model" type="text" autocomplete="off" placeholder="例如 gpt-4o-mini" />
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">访问令牌（可空，服务端启用 Bearer 时填）</span>
+              <div class="input-wrap">
+                <input id="token" type="password" autocomplete="off" placeholder="可选" />
+              </div>
+            </label>
+          </div>
+          <label class="checkbox-label settings-checkbox">
+            <input id="show-key" type="checkbox" /> 显示密钥
+          </label>
+        </section>
+        <p class="field-hint" id="server-status">正在读取服务端状态…</p>
+        <p class="field-error" id="settings-error" hidden></p>
+        <p class="field-hint" id="settings-ok" hidden></p>
+        <div class="settings-actions">
+          <button class="button button-primary" type="submit">保存</button>
+          <button class="button button-outline" type="button" id="test-button">测试连接</button>
+          <button class="button button-outline" type="button" id="clear-button">清除</button>
+          <a class="button button-outline" href="/">返回测算</a>
+        </div>
+      </form>
+    </main>
+    <script type="module" src="/src/settings.ts"></script>
+    <script type="module" src="/src/chat-widget.ts"></script>
+  </body>
+</html>
