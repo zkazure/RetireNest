@@ -205,3 +205,15 @@ uv run pytest tests/test_agent_schema.py tests/test_agent_loop.py \
 - 多进程共享会话与生产级数据库迁移。
 - 税务工具、交易执行。
 - 让模型自己算任何数字。
+
+
+## 全周期页的深度链接
+
+Agent 可以在回复里给出 `/plan.html?...` 的链接，点开就带着参数渲染同一份画像：
+
+- 参数名与档位值取自 `lifecycle.project` 等命令的 schema 枚举，Agent 不允许自造
+- `view` 取 `spending`、`income`、`cashflow`、`risk`、`strategy`，打开后只显示该视图
+- 页面只认 URL 里出现的参数，缺任何必填项就停在表单上，不会用默认值凑数
+
+这是当前的「Agent 改参数」实现方式：改动由 Agent 提议、用户点一下生效，而不是
+Agent 直接改前端状态。真正的双向绑定（SSE 推 `param` 事件、前端即时应用）还没做。

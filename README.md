@@ -44,10 +44,22 @@ uv run --project src python run.py --prod
 - 开发模式：http://127.0.0.1:5173/commands.html
 - 单端口模式：http://127.0.0.1:8000/commands.html
 
+全周期现金流页：
+
+- 开发模式：http://127.0.0.1:5173/plan.html
+- 单端口模式：http://127.0.0.1:8000/plan.html
+
+支持深度链接，例如 `/plan.html?sex=男&city=上海&birth_date=1991-01-01&income=20k30k&expense=10k15k&assets=100w200w&debt=none&retirement_expense=6k10k&travel=once&entertainment=mid&children=none&view=risk`，
+打开后自动填好并只显示指定视图。参数与档位值见 `lifecycle.project` 的命令 schema。
+
 规划对话页：
 
 - 开发模式：http://127.0.0.1:5173/agent.html
 - 单端口模式：http://127.0.0.1:8000/agent.html
+
+全周期页由 `lifecycle.project`、`lifecycle.simulate`、`strategy.compare` 三条命令驱动：确定性现金流、
+三档资产配置的蒙特卡洛（成功率、破产年龄分位、可支撑支出）与五个预设策略的并排对比。表单以选择题为主，
+数值走档位并在选中后回显计算取值；养老金四个参数由城市、收入档与年龄推导，不向用户提问。
 
 命令清单由 `GET /api/commands` 提供，单个命令通过 `POST /api/commands/{id}` 执行；退休规划主页由 `GET /api/pages/retirement` 的页面清单驱动，提交时逐个调用命令。protocol、manifest、页面清单和错误格式见 [docs/command-protocol.md](docs/command-protocol.md)。`POST /api/retirement/plan` 保留为过渡接口。
 
@@ -56,6 +68,8 @@ uv run --project src python run.py --prod
 命令层另有六个计算原语：`savings.project`（储蓄增长）、`savings.goal`（目标倒推）、`inflation.convert`（通胀换算）、`simulation.retirement`（蒙特卡洛）、`withdrawal.safe_rate`（安全提取率）、`longevity.estimate`（Gompertz 寿命估计）。它们不进入主页表单，可在命令浏览器中单独执行，供 Agent 层调用；口径与 `plan.retirement` 一致，并有 `rel=1e-12` 的交叉校验。
 
 Agent 层已接入但默认关闭：设置 `RETIRENEST_LLM_API_KEY` 与 `RETIRENEST_LLM_MODEL`（可选 `RETIRENEST_LLM_BASE_URL`）后，`/agent.html`、`POST /api/agent/chat` 与 SSE 端点可用；未配置时返回 503，命令、页面和旧接口都不受影响。没有 key 时可用 `RETIRENEST_AGENT_FAKE=1` 跑固定演示。可选 `RETIRENEST_AGENT_TOKEN(S)` 启用 Bearer 访问控制，`RETIRENEST_AGENT_DB` 启用 SQLite 会话持久化。配置、隐私、SSE 事件与错误说明见 [docs/agent.md](docs/agent.md)。
+
+数据来源、年份与口径见 [docs/data-sources.md](docs/data-sources.md)。其中重疾发生率仍是临时值，标了 `[待转录]`，拿到重疾表附件后整表替换。
 
 运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
 
