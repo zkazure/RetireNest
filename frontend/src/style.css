@@ -22,11 +22,12 @@ h1:focus { outline: none; }
 .shell { min-height: 100vh; }
 main { max-width: 1160px; padding: 30px 40px 32px; margin: auto; }
 .page-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-bottom: 26px; margin-bottom: 28px; border-bottom: 1px solid var(--line); }
+.page-actions { display: flex; align-items: center; gap: 8px; }
 .brand { display: inline-flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 750; letter-spacing: 1px; }
 .brand-icon { width: 44px; height: 46px; border-radius: 13px; background: var(--green); color: #e2edb4; display: grid; place-items: center; }
 .brand-icon .icon { width: 30px; height: 30px; }
 .brand small { display: block; font-size: 9px; letter-spacing: 2.5px; font-weight: 500; margin-top: 5px; color: #798579; }
-.button { border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 12px 18px; font-size: 12px; font-weight: 500; transition: background .18s, transform .18s; white-space: nowrap; }
+.button { border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 12px 18px; font-size: 12px; font-weight: 500; transition: background .18s, transform .18s; white-space: nowrap; text-decoration: none; }
 .button .icon { width: 15px; height: 15px; }
 .button:active:not(:disabled) { transform: translateY(1px); }
 .button-outline { border: 1px solid #dce3d5; background: #fcfdf9; color: #63725a; }

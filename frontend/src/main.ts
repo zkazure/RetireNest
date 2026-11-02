@@ -50,7 +50,7 @@ app.innerHTML = `
   </section>
   <div class="shell" inert>
     <main id="overview">
-      <header class="page-heading"><a class="brand" href="#overview" aria-label="退有所算首页"><span class="brand-icon">${icon('nest')}</span><span>退有所算<small>RETIRENEST</small></span></a><button class="button button-outline" id="export-button" hidden disabled title="生成规划后可导出">${icon('download')}导出规划</button></header>
+      <header class="page-heading"><a class="brand" href="#overview" aria-label="退有所算首页"><span class="brand-icon">${icon('nest')}</span><span>退有所算<small>RETIRENEST</small></span></a><div class="page-actions"><a class="button button-outline" href="/agent.html">规划对话</a><button class="button button-outline" id="export-button" hidden disabled title="生成规划后可导出">${icon('download')}导出规划</button></div></header>
       <div class="workspace-grid">
         <section class="card profile-card" aria-labelledby="profile-title"><div class="section-heading"><div><span class="step-label">01 / YOUR PROFILE</span><h1 id="profile-title" tabindex="-1">我的规划信息</h1></div></div>
           <form id="plan-form">
