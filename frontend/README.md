@@ -2,7 +2,25 @@
 
 HTML + CSS + 原生 TypeScript，使用 Vite 开发和构建，不依赖 UI 框架或外部字体。
 
-## 启动
+## 一键启动
+
+在仓库根目录执行：
+
+```bash
+uv run --project src python run.py
+```
+
+会启动 FastAPI（8000）和 Vite（5173），保留热更新，并自动打开 http://127.0.0.1:5173/。首次运行会自动安装依赖。
+
+演示模式（单端口 8000，不需要 Vite）：
+
+```bash
+uv run --project src python run.py --prod
+```
+
+无桌面环境加 `--no-open`；Ctrl+C 会停止本次启动的所有进程。
+
+## 手动启动（排错）
 
 先启动后端（见 [../src/api/README.md](../src/api/README.md)），再在 frontend 目录执行：
 

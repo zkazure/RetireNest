@@ -8,23 +8,23 @@
 
 代码在 `src/` 下，每个目录的用途见 [src/INDEX.md](src/INDEX.md)。
 
-## 本地运行
+## 一条命令运行
 
-先启动后端，再启动前端。开发期由 Vite 把 `/api` 代理到 `127.0.0.1:8000`。
+前置工具：Python 3.12、[uv](https://docs.astral.sh/uv/)、Node.js（含 npm）。首次运行会自动执行 `uv sync --locked` 和 `npm ci`，需要网络。
 
-```bash
-cd src
-uv sync
-uv run uvicorn api.app:app --host 127.0.0.1 --port 8000
-```
+开发模式（FastAPI 8000 + Vite 5173，保留热更新）：
 
 ```bash
-cd frontend
-npm install
-npm run dev
+uv run --project src python run.py
 ```
 
-默认访问 http://127.0.0.1:5173/。运行 `npm run build` 执行类型检查和生产构建。
+演示模式（构建前端后由 FastAPI 在 8000 单端口托管页面和 API）：
+
+```bash
+uv run --project src python run.py --prod
+```
+
+默认会自动打开浏览器；无桌面环境或远程服务器加 `--no-open`。Ctrl+C 会停止本次启动的所有进程。手动启动方式见 [frontend/README.md](frontend/README.md)。
 
 已实现规划信息表单、退休资金概览、资产曲线、三种情景对比、规则解读与 PDF 报告导出。基础 12 个字段已接入本地 FastAPI 后端；医疗、养老、存款等扩展信息仍只收集，尚未参与计算；LLM 未接入。运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
 

@@ -4,13 +4,22 @@ FastAPI 提供 `POST /api/retirement/plan`，把前端动态表单的 `values` �
 
 ## 启动
 
+日常推荐在仓库根目录用一键启动器：
+
+```bash
+uv run --project src python run.py          # 开发模式，5173
+uv run --project src python run.py --prod   # 单端口演示，8000
+```
+
+手动启动：
+
 ```bash
 cd src
 uv sync
 uv run uvicorn api.app:app --host 127.0.0.1 --port 8000
 ```
 
-前端开发服务器通过 `/api` 代理访问这里，见 `frontend/vite.config.ts`；本层不开启 CORS。
+前端开发服务器通过 `/api` 代理访问这里，见 `frontend/vite.config.ts`；本层不开启 CORS。生产模式由 `run.py --prod` 先构建前端；`api/app.py` 在 `frontend/dist` 存在时会把它挂载到 `/`，API 和 `/docs` 仍优先匹配。
 
 ## 请求
 
