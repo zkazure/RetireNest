@@ -1,6 +1,6 @@
 # 动态表单模板与后端对接约定
 
-这是前端先行定义的协议，不代表当前 Python 仓库已经实现 HTTP 接口。
+这是前端定义、后端已实现基础版本的协议。当前 `POST /api/retirement/plan` 只消费 12 个基础字段；医疗、养老、存款、生活偏好等扩展字段仍只收集，不参与计算。
 
 ## 先看哪些文件
 
@@ -8,8 +8,9 @@
 - `src/form-types.ts`：模板、字段、请求、字段错误的 TypeScript 类型。
 - `src/form-renderer.ts`：通用渲染和错误定位，不写具体业务字段名。
 - `src/form-data.ts`：模板检查、条件过滤、类型转换与请求构造。
-- `src/form-adapter.ts`：暂时把基础字段映射到原本的本地演示引擎。
-- `src/plan-contract.ts`：建议的规划成功/失败响应类型。
+- `src/plan-client.ts`：调用 `POST /api/retirement/plan`，处理超时、错误和响应结构校验。
+- `src/plan-contract.ts`：规划成功/失败响应类型。
+- `vite.config.ts`：开发期与 preview 的 `/api` 代理。
 - `contracts/plan-request.example.json`：默认表单的实际请求示例。
 - `contracts/plan-request-all-modules.example.json`：所有可选模块开启的实际请求示例。
 - `contracts/plan-response.example.json`：基于默认值计算的完整响应示例。
@@ -31,7 +32,7 @@
 
 界面自动出现输入框；填写后自动进入 `values.desired_hobby`。不需要改 main.ts、渲染器或请求字段白名单。前端模板与后端处理规则一并升级版本。
 
-支持的控件：`text`、`number`、`decimal`、`date`、`select`、`checkbox`、`textarea`。增加全新控件类型仍需扩展渲染器和校验逻辑；增加同类型字段只改 JSON。新增字段不自动参与本地演示计算，也不会自动增加图表或 PDF 结果项。
+支持的控件：`text`、`number`、`decimal`、`date`、`select`、`checkbox`、`textarea`。增加全新控件类型仍需扩展渲染器和校验逻辑；增加同类型字段只改 JSON。新增字段不会自动参与后端计算，也不会自动增加图表或 PDF 结果项。
 
 字段 name 必须唯一，使用小写 snake_case；只允许字母开头和字母、数字、下划线。模板作为纯数据处理，不支持 HTML、JS 表达式或动态脚本。
 
@@ -83,7 +84,7 @@ select 的 `options` 和 `optionsSource` 二选一。后者引用顶层 `optionS
 
 ## 请求格式
 
-建议后续实现 `POST /api/retirement/plan`，Content-Type 为 application/json。路径是本协议建议，当前未发网络请求。
+已实现 `POST /api/retirement/plan`，Content-Type 为 application/json。开发期前端通过 Vite 的 `/api` 代理访问 `http://127.0.0.1:8000`。
 
 ```json
 {
@@ -105,48 +106,55 @@ select 的 `options` 和 `optionsSource` 二选一。后者引用顶层 `optionS
 序列化规则：
 
 - number 提交 JSON number；`integer: true` 要求安全整数。
-- decimal 提交 JSON string，保留输入精度，例如 `"100000.20"`；不接受科学计数法。后端转换为 Decimal，不能先转 float。
+- decimal 提交 JSON string，保留输入精度，例如 `"100000.20"`；不接受科学计数法。对应模块接入时再转换为 Decimal，不能先转 float。
 - checkbox 提交真正的 true/false，不是字符串。
 - date 提交 `YYYY-MM-DD` 字符串；后端转为 date。
 - text、select、textarea 去掉首尾空格后提交 string；选项提交 value。
-- 可见且非必填的空值提交 null；后端调用有缺省值的 Python 函数前，应省略这些 null 项，让函数使用默认值。
+- 可见且非必填的空值提交 null；当前基础接口忽略扩展字段，后续接入有缺省值的 Python 函数前应省略这些 null 项，让函数使用默认值。
 - 关闭模块、条件隐藏字段从 values 中省略，之前输入的内容保留在页面以便切回，但不会提交。
 - 模块开关本身始终提交。折叠与关闭模块不同：折叠字段仍然提交和校验。
-- API Key 是独立输入，不在模板、业务 payload、请求示例或 PDF 中。
+- 页面不收集 API Key；密钥不应进入模板、业务 payload、请求示例或 PDF。
 
 金额默认单位为元；带 unit 的字段以该单位解释。`nominal_return` 和 `inflation` 用百分数（3 表示 3%）；`annual_rate` 和 `annual_adjustment` 用十进制比例字符串（"0.02" 表示 2%），界面有明确提示。
 
 ## 后端怎么接
 
-后端负责校验 template_id/schema_version、类型、枚举、范围和跨字段关系，再按模块分发。不要把整个 values 原样传给目前的每个 Python 函数：生活支出模块会拒绝未知字段。
+当前已实现的部分在 `src/api/`：校验 template_id/schema_version，只读取 12 个基础字段，扩展字段静默忽略，返回 PlanResponse。以下是扩展模块接入时的分发计划；不要把整个 values 原样传给现有 Python 函数，生活支出模块会拒绝未知字段。
 
 - 生活支出：取 age、city、monthly_expense、retire_age、life_expectancy 以及 living 分组字段。
 - 医疗：medical_enabled 为 true 时取 age、city、insurance。
 - 养老金：pension_enabled 为 true 时取 pension 分组字段；把日期转 date，decimal 字符串转 Decimal。女性时 category 必填。
 - 存款：deposit_enabled 为 true 时取 principal、annual_rate、start_date、end_date，转换 Decimal 与 date。
-- 前端 city 允许自定义城市，后端需补充城市处理策略，不能直接沿用生活模块的严格 44 城限制而无提示。
+- 前端 city 允许自定义城市。本期基础接口只校验非空和最多 30 字，不套用生活模块的 44 城白名单；接入生活模块时需要单独决定策略，不能直接拒绝自定义城市而无提示。
 - 自填 age 与出生日期的口径由后端统一校验；期望退休年龄与养老金模块的法定退休年龄不能直接混用。
 - 支出、医疗和养老金不同模块的计价年份、通胀口径及时间序列起点，需在综合规划层统一，避免重复计入支出。
 
-如果后续由后端提供表单配置，建议 `GET /api/retirement/form-schema` 返回与 form-template.json 相同的结构；前端把本地 JSON 来源替换成请求结果，仍使用同一个 validateTemplate 和 FormRenderer。当前尚未实现远程加载或计算 HTTP 请求。
+如果后续由后端提供表单配置，建议 `GET /api/retirement/form-schema` 返回与 form-template.json 相同的结构；前端把本地 JSON 来源替换成请求结果，仍使用同一个 validateTemplate 和 FormRenderer。当前尚未实现远程加载。
 
 ## 响应格式
 
-成功响应建议返回 plan-contract.ts 定义的 PlanResponse：template_id、schema_version、mode、plan_input、result、scenarios、explanation、warnings。完整示例在 contracts/plan-response.example.json。
+成功响应返回 plan-contract.ts 定义的 PlanResponse：template_id、schema_version、mode、plan_input、result、scenarios、explanation、warnings。完整示例在 contracts/plan-response.example.json。
 
 - plan_input 沿用现有 PlanInput 的 camelCase 字段，只表示用于结果摘要和 PDF 的标准化基础假设，不包含扩展原始信息。
 - result 使用现有 PlanResult：target/projected/gap 单位元，coverage 为百分数，realReturn 为小数比例，points 按年龄递增，depletedAge 无资金不足时为 null。
-- scenarios 返回三种情景的目标、预计资产和缺口；真实结果接入后，前端应直接显示后端返回结果，不能继续用本地公式重算。
+- scenarios 返回三种情景的目标、预计资产和缺口；前端已直接显示后端结果，不再用本地公式重算。
 - explanation 与 warnings 是纯文本，前端展示时不当作 HTML。
-- 输入错误建议 HTTP 422，返回 code/message/field_errors，field 使用 values 中的同名字段。版本不匹配建议 HTTP 409；未知版本不应悄悄按另一个版本计算。
+- 输入错误返回 HTTP 422，返回 code/message/field_errors，field 使用 values 中的同名字段。版本不匹配返回 HTTP 409；未知版本不会悄悄按另一个版本计算。
 
-当前页面依旧使用 form-adapter.ts 和 model.ts 的基础字段进行本地演示；扩展信息已完整收集，但没有接入 Python 或 AI。结果页明确提示这一点。现有 PDF 同样导出基础演示结果。后端接入时再将本地计算与结果渲染入口替换为真实响应。
+当前页面通过 `plan-client.ts` 调用后端基础接口，结果页和 PDF 都使用响应的 `plan_input/result/scenarios`。扩展信息已完整收集，但没有接入 Python 模块或 AI；结果页和 PDF 都明确提示这一点。
 
 ## 验证
 
-```powershell
+```bash
+cd src
+uv run pytest
+uv run ruff check
+```
+
+```bash
+cd frontend
 npm test
 npm run build
 ```
 
-测试包含：新增模板字段自动进入请求、模块开关与条件字段、日期与年龄跨字段校验、十进制精度、自定义城市、API Key 排除、无效配置及循环条件。
+前端测试包含：新增模板字段自动进入请求、模块开关与条件字段、日期与年龄跨字段校验、十进制精度、自定义城市、任意非模板字段排除、无效配置及循环条件。后端测试包含：契约示例对拍、points 连续性、三情景、422/409、非法 JSON 与扩展字段忽略。

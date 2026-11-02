@@ -8,11 +8,17 @@
 
 代码在 `src/` 下，每个目录的用途见 [src/INDEX.md](src/INDEX.md)。
 
-## 前端预览
+## 本地运行
 
-前端位于 `frontend/`，采用 HTML + CSS + TypeScript，使用 Vite。
+先启动后端，再启动前端。开发期由 Vite 把 `/api` 代理到 `127.0.0.1:8000`。
 
-```powershell
+```bash
+cd src
+uv sync
+uv run uvicorn api.app:app --host 127.0.0.1 --port 8000
+```
+
+```bash
 cd frontend
 npm install
 npm run dev
@@ -20,6 +26,6 @@ npm run dev
 
 默认访问 http://127.0.0.1:5173/。运行 `npm run build` 执行类型检查和生产构建。
 
-已实现规划信息表单、退休资金概览、资产曲线、三种情景对比、规则解读与 PDF 报告导出。目前使用本地演示计算，未接入后端和 LLM。运行方法、计算口径与接口接入说明见 [frontend/README.md](frontend/README.md)。
+已实现规划信息表单、退休资金概览、资产曲线、三种情景对比、规则解读与 PDF 报告导出。基础 12 个字段已接入本地 FastAPI 后端；医疗、养老、存款等扩展信息仍只收集，尚未参与计算；LLM 未接入。运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
 
-前端填写栏已支持动态 JSON 模板。后端对接以 [frontend/FORM_TEMPLATE.md](frontend/FORM_TEMPLATE.md) 及 frontend/contracts/ 中的示例为准。
+前端填写栏已支持动态 JSON 模板。接口契约以 [frontend/FORM_TEMPLATE.md](frontend/FORM_TEMPLATE.md) 及 `frontend/contracts/` 中的示例为准。
