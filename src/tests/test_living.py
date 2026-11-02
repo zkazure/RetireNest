@@ -1,6 +1,6 @@
 """衣食住行模块的 pytest 用例：参数自洽、各项支出、逐年序列与 JSON 入口。"""
 
-from yishizhuxing import (
+from living import (
     AVG_HOUSEHOLD_SIZE,
     CHILD_EQUIV,
     EDU_INFLATION,

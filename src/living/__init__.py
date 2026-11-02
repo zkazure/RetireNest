@@ -1,19 +1,19 @@
-"""衣食住行 · 退休后五项逐年支出计算。
+"""living：退休前后衣食住行的五项逐年支出计算。
 
 对外用法：
 
-    from yishizhuxing import calculate
+    from living import calculate
     result = calculate({"age": 30, "city": "珠海", "monthly_expense": 9000})
 
 命令行：
 
-    python -m yishizhuxing
-    python -m yishizhuxing --json '{"age":30,"city":"珠海","monthly_expense":9000}'
+    python -m living
+    python -m living --json '{"age":30,"city":"珠海","monthly_expense":9000}'
 """
 
-from yishizhuxing.api import calculate, profile_from_dict
-from yishizhuxing.constants import *
-from yishizhuxing.costs import (
+from living.api import calculate, profile_from_dict
+from living.constants import *
+from living.costs import (
     adults_at,
     annual_mortgage,
     child_age_at,
@@ -32,8 +32,8 @@ from yishizhuxing.costs import (
     total_living_cost,
     transport_cost,
 )
-from yishizhuxing.errors import LivingCostError
-from yishizhuxing.profile import LivingProfile
+from living.errors import LivingCostError
+from living.profile import LivingProfile
 
 __version__ = "1.0.0"
 

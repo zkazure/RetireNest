@@ -2,8 +2,8 @@
 
 from dataclasses import fields
 
-from yishizhuxing.constants import EDU_INFLATION, INFLATION
-from yishizhuxing.costs import (
+from living.constants import EDU_INFLATION, INFLATION
+from living.costs import (
     clothing_cost,
     education_cost,
     food_cost,
@@ -11,8 +11,8 @@ from yishizhuxing.costs import (
     to_real,
     transport_cost,
 )
-from yishizhuxing.errors import LivingCostError
-from yishizhuxing.profile import LivingProfile
+from living.errors import LivingCostError
+from living.profile import LivingProfile
 
 
 def profile_from_dict(d: dict) -> LivingProfile:

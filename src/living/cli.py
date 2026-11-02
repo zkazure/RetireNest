@@ -3,15 +3,15 @@
 import json
 import sys
 
-from yishizhuxing.api import calculate
-from yishizhuxing.constants import (
+from living.api import calculate
+from living.constants import (
     CHILD_EQUIV,
     EXPECTED_CHILDREN,
     LOAN_YEARS,
     PARTNER_BASE,
     STAT_LIVING_SHARE,
 )
-from yishizhuxing.costs import (
+from living.costs import (
     clothing_cost,
     education_cost,
     food_cost,
@@ -21,7 +21,7 @@ from yishizhuxing.costs import (
     to_real,
     transport_cost,
 )
-from yishizhuxing.profile import LivingProfile
+from living.profile import LivingProfile
 
 
 def main_json(arg: str) -> None:

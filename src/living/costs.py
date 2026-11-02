@@ -4,7 +4,7 @@
 金额为名义值（已含通胀）。
 """
 
-from yishizhuxing.constants import (
+from living.constants import (
     CHILD_BIRTH_AGE,
     CHILD_EQUIV,
     CHILD_MARGINAL,
@@ -34,7 +34,7 @@ from yishizhuxing.constants import (
     TRIP_ANNUAL,
     VISIT_HOME_ANNUAL,
 )
-from yishizhuxing.profile import LivingProfile
+from living.profile import LivingProfile
 
 # ============================================================
 # 辅助函数

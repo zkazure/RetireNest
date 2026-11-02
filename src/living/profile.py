@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from yishizhuxing.constants import (
+from living.constants import (
     CITY_TIER,
     CLOTHING_FREQ,
     CLOTHING_GRADE,
@@ -15,7 +15,7 @@ from yishizhuxing.constants import (
     TRIP_ANNUAL,
     VISIT_HOME_ANNUAL,
 )
-from yishizhuxing.errors import LivingCostError
+from living.errors import LivingCostError
 
 
 @dataclass

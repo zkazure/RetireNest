@@ -6,8 +6,8 @@ from typing import Any
 
 from commands.errors import CommandInputError
 from commands.models import Command, CommandManifest, InputSpec, OutputSpec
-from yishizhuxing import calculate
-from yishizhuxing.constants import (
+from living import calculate
+from living.constants import (
     CITY_TIER,
     CLOTHING_FREQ,
     CLOTHING_GRADE,
@@ -20,7 +20,7 @@ from yishizhuxing.constants import (
     TRIP_ANNUAL,
     VISIT_HOME_ANNUAL,
 )
-from yishizhuxing.errors import LivingCostError
+from living.errors import LivingCostError
 
 CITIES = tuple(CITY_TIER)
 """当前生活支出模块支持的 44 个城市。"""

@@ -1,4 +1,4 @@
-# Yishizhuxing
+# Living
 
 衣食住行：退休前后逐年测算穿衣、饮食、住房、交通、子女教育五项支出。只管花钱，不管收入和投资收益，医疗预算见 `medical/`。
 
@@ -7,7 +7,7 @@
 ## 使用方法
 
 ```python
-from yishizhuxing import calculate
+from living import calculate
 
 result = calculate({
     "age": 30,
@@ -25,8 +25,8 @@ result["real"]["total"][0]  # 第一年的总支出，今天的购买力
 命令行看一份演示：
 
 ```
-uv run python -m yishizhuxing
-uv run python -m yishizhuxing --json '{"age":30,"city":"珠海","monthly_expense":9000}'
+uv run python -m living
+uv run python -m living --json '{"age":30,"city":"珠海","monthly_expense":9000}'
 ```
 
 `--json` 后面可以跟 JSON 字符串、`.json` 文件路径，或者 `-` 从标准输入读。
@@ -50,5 +50,5 @@ uv run python -m yishizhuxing --json '{"age":30,"city":"珠海","monthly_expense
 在 `src/` 下执行：
 
 ```
-uv run pytest tests/test_yishizhuxing.py
+uv run pytest tests/test_living.py
 ```
