@@ -1,5 +1,7 @@
 /* 悬浮对话框：不挤占页面布局，靠右下角一个气泡展开 */
 .chat-root { position: fixed; right: 24px; bottom: 24px; z-index: 60; }
+/* 命令浏览器没有主样式表，收起的面板必须自己保证 hidden 生效 */
+.chat-panel[hidden] { display: none !important; }
 .chat-bubble {
   width: 56px; height: 56px; border-radius: 50%; border: 0; cursor: pointer;
   background: #24573f; color: #e5f0b3; display: grid; place-items: center;
