@@ -207,6 +207,23 @@ uv run pytest tests/test_agent_schema.py tests/test_agent_loop.py \
 - 让模型自己算任何数字。
 
 
+## 密钥：设置页优先，环境变量兜底
+
+模型密钥有两种来源，按优先级：
+
+1. 设置页（`/settings.html`）填好后存在浏览器 localStorage，发消息时放在请求头里：
+   `X-LLM-Api-Key`、`X-LLM-Model`、`X-LLM-Base-Url`。后端只用这一轮，不写进 service 配置、不落盘，
+   日志与响应里都不出现 key
+2. 服务端环境变量 `RETIRENEST_LLM_API_KEY` / `RETIRENEST_LLM_MODEL`，作为兜底
+
+`GET /api/agent/config` 返回 `enabled`、`model`、`base_url_host` 与缺失项，供设置页显示状态，永远不回显 key。
+
+安全边界：
+
+- 请求头里的 key 可能进反向代理访问日志，只适合本地或被信任的代理
+- localStorage 同源可读，页面不得引入第三方脚本
+- 「测试连接」是一次真实调用，会产生计费
+
 ## 全周期页的深度链接
 
 Agent 可以在回复里给出 `/plan.html?...` 的链接，点开就带着参数渲染同一份画像：
