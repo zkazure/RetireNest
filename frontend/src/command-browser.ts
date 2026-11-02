@@ -97,7 +97,7 @@ function selectCommand(command: CommandManifest) {
         ${command.as_of ? `<span>as of ${escapeHtml(command.as_of)}</span>` : ''}
       </div>
     </div>
-    <form id="command-form" class="cmd-form" novalidate>
+    <form id="command-form" class="cmd-form">
       <div class="cmd-grid">
         ${command.inputs.map(renderInput).join('')}
       </div>
@@ -131,8 +131,12 @@ function selectCommand(command: CommandManifest) {
   const form = detail.querySelector<HTMLFormElement>('#command-form')!;
   form.addEventListener('submit', event => {
     event.preventDefault();
+    if (!form.reportValidity()) return;
     void executeSelected(command);
   });
+  form.addEventListener('change', () => syncRequiredFields(command, form));
+  form.addEventListener('input', () => syncRequiredFields(command, form));
+
   const example = command.examples?.[0]?.inputs;
   const fillButton = detail.querySelector<HTMLButtonElement>('#command-fill')!;
   fillButton.disabled = !example;
@@ -141,15 +145,17 @@ function selectCommand(command: CommandManifest) {
   detail.querySelector<HTMLButtonElement>('#command-clear')!.addEventListener('click', () =>
     fillValues(command, form, {}),
   );
+  syncRequiredFields(command, form);
 }
 
 function renderInput(spec: CommandInputSpec): string {
   const id = `cmd-input-${spec.name}`;
   const required = spec.required ? 'required' : '';
   const unit = spec.unit ? `<span class="cmd-unit">${escapeHtml(spec.unit)}</span>` : '';
+  const mark = `<em class="cmd-required-mark" data-required-mark="${escapeHtml(spec.name)}"${spec.required ? '' : ' hidden'}>*</em>`;
   const label = `
     <label class="cmd-label" for="${id}">
-      <span>${escapeHtml(spec.question)}${spec.required ? '<em>*</em>' : ''}</span>
+      <span>${escapeHtml(spec.question)}${mark}</span>
       ${unit}
     </label>`;
   const attrs = `id="${id}" name="${escapeHtml(spec.name)}" data-input="${escapeHtml(spec.name)}" ${required}`;
@@ -218,6 +224,33 @@ function findControl(form: HTMLFormElement, name: string): FormControl | null {
   return form.querySelector<FormControl>(`[data-input="${name}"]`);
 }
 
+function controlValue(form: HTMLFormElement, name: string): unknown {
+  const element = findControl(form, name);
+  if (!element) return undefined;
+  if (element instanceof HTMLInputElement && element.type === 'checkbox') return element.checked;
+  return element.value;
+}
+
+function isRequired(spec: CommandInputSpec, form: HTMLFormElement): boolean {
+  if (spec.required) return true;
+  const when = spec.required_when;
+  if (!when) return false;
+  const actual = controlValue(form, when.field);
+  return actual !== undefined && String(actual) === String(when.equals);
+}
+
+/** required_when 只在控制字段等于 equals 时生效；星号与原生 required 同步更新。 */
+function syncRequiredFields(command: CommandManifest, form: HTMLFormElement) {
+  for (const spec of command.inputs) {
+    const element = findControl(form, spec.name);
+    if (!element) continue;
+    const required = isRequired(spec, form);
+    element.required = required;
+    const mark = form.querySelector<HTMLElement>(`[data-required-mark="${spec.name}"]`);
+    if (mark) mark.hidden = !required;
+  }
+}
+
 function setControlValue(spec: CommandInputSpec, element: FormControl, value: unknown) {
   if (spec.type === 'boolean') {
     (element as HTMLInputElement).checked = value === true;
@@ -241,6 +274,7 @@ function fillValues(
     const hasValue = Object.prototype.hasOwnProperty.call(values, spec.name);
     setControlValue(spec, element, hasValue ? values[spec.name] : spec.default);
   }
+  syncRequiredFields(command, form);
 }
 
 function renderOutputs(command: CommandManifest, response: CommandExecutionResponse) {
