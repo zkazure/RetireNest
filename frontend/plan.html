@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>退有所算 · 一辈子的现金流</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">退有所算</a>
+      <nav class="site-nav">
+        <a href="/">经典测算</a>
+        <a href="/plan.html" aria-current="page">全周期</a>
+        <a href="/agent.html">规划对话</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="intro">
+        <h1>一辈子的现金流</h1>
+        <p>填几个选择题，看工作期与退休期的收支、资产轨迹，以及不同活法的差别。所有档位都按区间中值计算，选中后会在下方回显。</p>
+      </section>
+      <form id="plan-form" class="profile-card" novalidate>
+        <div id="form-host"></div>
+        <p class="field-error" id="form-error" hidden></p>
+        <button class="button" type="submit">开始测算</button>
+      </form>
+      <section id="results" hidden>
+        <div id="summary-host"></div>
+        <div id="views-host"></div>
+        <div id="strategy-host"></div>
+      </section>
+    </main>
+    <script type="module" src="/src/plan-page.ts"></script>
+  </body>
+</html>

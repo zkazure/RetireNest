@@ -19,7 +19,7 @@ export function validateTemplate(value: unknown): asserts value is FormTemplate 
   const template = value as FormTemplate;
   if (!template || typeof template.id !== 'string' || typeof template.version !== 'string' || !Array.isArray(template.sections) || !template.optionSets || !Array.isArray(template.rules)) throw new Error('表单模板格式无效。');
   const ids = new Set<string>(), names = new Set<string>();
-  const supported = new Set(['text','number','decimal','date','select','checkbox','textarea']);
+  const supported = new Set(['text','number','decimal','date','select','checkbox','textarea','tier']);
   for (const section of template.sections) {
     if (!section || typeof section.id !== 'string' || typeof section.title !== 'string' || ids.has(section.id) || !Array.isArray(section.fields)) throw new Error('模板分组无效或重复。');
     ids.add(section.id);
@@ -28,6 +28,11 @@ export function validateTemplate(value: unknown): asserts value is FormTemplate 
   for (const field of allFields(template)) {
     if (!/^[a-z][a-z0-9_]*$/.test(field.name) || ['constructor','prototype','__proto__'].includes(field.name) || names.has(field.name) || typeof field.label !== 'string' || !supported.has(field.type)) throw new Error('模板字段无效、重复或类型不受支持：' + field.name);
     names.add(field.name);
+    if (field.type === 'tier') {
+      const tiers = field.tiers ?? [];
+      const values = tiers.map((tier: {value: string}) => tier.value);
+      if (!tiers.length || tiers.some(tier => typeof tier.label !== 'string' || typeof tier.value !== 'string' || typeof tier.amount !== 'number' || !tier.value) || new Set(values).size !== values.length) throw new Error('档位配置无效：' + field.name);
+    }
     if (field.type === 'select') {
       if (field.optionsSource && !Array.isArray(template.optionSets[field.optionsSource])) throw new Error('缺少选项集：' + field.optionsSource);
       const options = fieldOptions(template,field);

@@ -2,7 +2,15 @@ import { activeFieldNames, collectValues, defaultValues, fieldOptions, validateT
 import type { FieldError, FormField, FormTemplate, RawValues } from './form-types';
 
 type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-interface Entry { field: FormField; control: Control; wrapper: HTMLElement; error: HTMLElement; custom?: HTMLInputElement; customWrapper?: HTMLElement }
+interface Entry {
+  field: FormField; control: Control; wrapper: HTMLElement; error: HTMLElement;
+  custom?: HTMLInputElement; customWrapper?: HTMLElement;
+  radios?: HTMLInputElement[]; echo?: HTMLElement;
+}
+const amountText = (value: number, unit?: string) => {
+  const text = value >= 10000 ? `${(value / 10000).toFixed(value >= 100000 ? 0 : 2).replace(/\.?0+$/, '')} 万` : String(Math.round(value));
+  return unit ? `${text}${unit}` : text;
+};
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className = '', text = '') => {
   const node = document.createElement(tag); node.className = className; node.textContent = text; return node;
 };
@@ -47,6 +55,41 @@ export class FormRenderer {
     if (field.required && field.type !== 'checkbox') label.append(el('span','required-mark',' *'));
     const inputWrap = el('div','input-wrap');
     let control: Control;
+    if (field.type === 'tier') {
+      const hidden = el('input'); hidden.type = 'hidden';
+      const group = el('div', 'tier-group'); group.setAttribute('role', 'radiogroup');
+      const echo = el('small', 'tier-echo');
+      const radios: HTMLInputElement[] = [];
+      (field.tiers ?? []).forEach(tier => {
+        const option = el('label', 'tier-option');
+        const radio = el('input'); radio.type = 'radio'; radio.name = field.name; radio.value = tier.value;
+        option.append(radio, document.createTextNode(tier.label));
+        group.append(option); radios.push(radio);
+        radio.addEventListener('change', () => {
+          if (!radio.checked) return;
+          hidden.value = tier.value;
+          radios.forEach(item => item.closest('.tier-option')?.classList.toggle('selected', item.checked));
+          echo.textContent = `按 ${amountText(tier.amount, field.unit)} 计算`;
+        });
+      });
+      control = hidden; inputWrap.append(group, echo);
+      if (field.hint) { const hint = el('p', 'field-hint', field.hint); hint.id = id + '-hint'; wrapper.append(hint); }
+      wrapper.append(label, inputWrap);
+      const entry: Entry = { field, control, wrapper, radios, echo, error: el('small', 'field-error') };
+      entry.error.id = id + '-error'; entry.error.hidden = true;
+      const initial = defaults[field.name];
+      if (typeof initial === 'string') {
+        const match = radios.find(item => item.value === initial);
+        if (match) {
+          match.checked = true; control.value = initial;
+          match.closest('.tier-option')?.classList.add('selected');
+          const tier = (field.tiers ?? []).find(item => item.value === initial);
+          if (tier) echo.textContent = `按 ${amountText(tier.amount, field.unit)} 计算`;
+        }
+      }
+      wrapper.append(entry.error); this.entries.set(field.name, entry);
+      return entry;
+    }
     if (field.type === 'select') {
       const select = el('select');
       const placeholder = el('option','',field.required ? '请选择' : '请选择（可留空）'); placeholder.value = ''; select.append(placeholder);
@@ -109,6 +152,7 @@ export class FormRenderer {
       entry.wrapper.hidden=!enabled;
       entry.control.disabled=!enabled;
       entry.control.required=enabled && (entry.field.required ?? false);
+      entry.radios?.forEach(radio => { radio.disabled = !enabled; radio.required = enabled && (entry.field.required ?? false); });
       if (entry.custom && entry.customWrapper) {
         const custom=entry.control.value==='__custom__';
         entry.customWrapper.hidden=!custom;

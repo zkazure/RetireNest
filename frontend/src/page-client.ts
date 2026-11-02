@@ -9,6 +9,7 @@ const FIELD_TYPES = new Set([
   'select',
   'checkbox',
   'textarea',
+  'tier',
 ]);
 
 export class PageLoadError extends Error {

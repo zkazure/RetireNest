@@ -19,7 +19,7 @@ from typing import Any
 
 def build_profile(
     *,
-    age: int,
+    age: int | None = None,
     sex: str,
     city: str,
     income_tier: str,
@@ -39,17 +39,24 @@ def build_profile(
     """选项进、画像出。未给退休年龄时按法定规则推导。"""
     income = tiers.INCOME.get(income_tier).amount
     base_wage = city_base_wage(city)
+    if birth_date is None:
+        raise ProfileError("画像需要出生日期。")
+    if age is None:
+        today = date.today()
+        age = (today - birth_date).days // 365
     if retirement_age is None:
-        if birth_date is None:
-            raise ProfileError("推导退休年龄需要出生日期。")
         retirement_age = statutory_retirement_age(birth_date, sex, category)
     if plan_until is None:
         plan_until = realistic_plan_until(age, sex)
+    if category is None and sex == "女":
+        category = "管理技术"
     years = contribution_years(retirement_age)
     return Profile(
         age=age,
         sex=sex,
         city=city,
+        birth_date=birth_date,
+        category=category,
         retirement_age=retirement_age,
         plan_until=plan_until,
         monthly_income=income,

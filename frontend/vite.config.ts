@@ -22,6 +22,7 @@ export default defineConfig({
         main: resolve(root, 'index.html'),
         commands: resolve(root, 'commands.html'),
         agent: resolve(root, 'agent.html'),
+        plan: resolve(root, 'plan.html'),
       },
     },
   },
