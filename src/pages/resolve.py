@@ -127,6 +127,7 @@ def resolve(page: PageManifest, lookup: _LOOKUP = get_command) -> dict[str, Any]
                         "type": output.type,
                         "unit": output.unit,
                         "precision": output.precision,
+                        "semantic": output.semantic,
                         "visible": output.visible,
                         **(
                             {}

@@ -52,6 +52,7 @@ export interface PageOutputSpec {
   type: string;
   unit?: string | null;
   precision?: number | null;
+  semantic?: string | null;
   visible: boolean;
   time_axis?: Record<string, unknown> | null;
 }

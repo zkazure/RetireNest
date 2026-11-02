@@ -1141,6 +1141,7 @@
           "type": "number",
           "unit": "元",
           "precision": 0,
+          "semantic": "money_target_real",
           "visible": true
         },
         {
@@ -1149,6 +1150,7 @@
           "type": "number",
           "unit": "元",
           "precision": 0,
+          "semantic": "money_projected_real",
           "visible": true
         },
         {
@@ -1157,6 +1159,7 @@
           "type": "number",
           "unit": "元",
           "precision": 0,
+          "semantic": "money_gap_real",
           "visible": true
         },
         {
@@ -1165,6 +1168,7 @@
           "type": "number",
           "unit": "%",
           "precision": 1,
+          "semantic": "ratio",
           "visible": true
         },
         {
@@ -1173,6 +1177,7 @@
           "type": "number",
           "unit": "元/月",
           "precision": 0,
+          "semantic": "money_per_month_real",
           "visible": true
         },
         {
@@ -1181,6 +1186,7 @@
           "type": "number",
           "unit": "元/月",
           "precision": 0,
+          "semantic": "money_per_month_real",
           "visible": true
         },
         {
@@ -1189,6 +1195,7 @@
           "type": "integer",
           "unit": "年",
           "precision": null,
+          "semantic": null,
           "visible": false
         },
         {
@@ -1197,6 +1204,7 @@
           "type": "integer",
           "unit": "年",
           "precision": null,
+          "semantic": null,
           "visible": false
         },
         {
@@ -1205,6 +1213,7 @@
           "type": "number",
           "unit": null,
           "precision": null,
+          "semantic": "ratio",
           "visible": false
         },
         {
@@ -1213,6 +1222,7 @@
           "type": "integer",
           "unit": "岁",
           "precision": null,
+          "semantic": null,
           "visible": false
         },
         {
@@ -1221,6 +1231,7 @@
           "type": "object",
           "unit": null,
           "precision": null,
+          "semantic": "money_per_year_real",
           "visible": false,
           "time_axis": {
             "start": "age",
@@ -1233,6 +1244,7 @@
           "type": "object",
           "unit": null,
           "precision": null,
+          "semantic": null,
           "visible": false
         },
         {
@@ -1241,6 +1253,7 @@
           "type": "text",
           "unit": null,
           "precision": null,
+          "semantic": null,
           "visible": false
         },
         {
@@ -1249,6 +1262,7 @@
           "type": "object",
           "unit": null,
           "precision": null,
+          "semantic": null,
           "visible": false
         },
         {
@@ -1257,6 +1271,7 @@
           "type": "object",
           "unit": null,
           "precision": null,
+          "semantic": null,
           "visible": false
         }
       ]
@@ -1294,6 +1309,7 @@
           "type": "integer",
           "unit": "年",
           "precision": null,
+          "semantic": null,
           "visible": true
         },
         {
@@ -1302,6 +1318,7 @@
           "type": "integer",
           "unit": null,
           "precision": null,
+          "semantic": null,
           "visible": false
         },
         {
@@ -1310,6 +1327,7 @@
           "type": "number",
           "unit": null,
           "precision": null,
+          "semantic": "ratio",
           "visible": true
         },
         {
@@ -1318,6 +1336,7 @@
           "type": "number",
           "unit": null,
           "precision": null,
+          "semantic": "ratio",
           "visible": true
         },
         {
@@ -1326,6 +1345,7 @@
           "type": "object",
           "unit": "元/年",
           "precision": null,
+          "semantic": "money_per_year_nominal",
           "visible": true,
           "time_axis": {
             "start": "age",
@@ -1339,6 +1359,7 @@
           "type": "object",
           "unit": "元/年",
           "precision": null,
+          "semantic": "money_per_year_real",
           "visible": true,
           "time_axis": {
             "start": "age",
@@ -1366,6 +1387,7 @@
           "type": "text",
           "unit": null,
           "precision": null,
+          "semantic": null,
           "visible": true
         },
         {
@@ -1374,6 +1396,7 @@
           "type": "number",
           "unit": "元/年",
           "precision": null,
+          "semantic": "money_per_year_nominal",
           "visible": true
         },
         {
@@ -1382,6 +1405,7 @@
           "type": "number",
           "unit": "元/月",
           "precision": null,
+          "semantic": "money_per_month_nominal",
           "visible": true
         },
         {
@@ -1390,6 +1414,7 @@
           "type": "text",
           "unit": null,
           "precision": null,
+          "semantic": null,
           "visible": true
         }
       ]
@@ -1418,6 +1443,7 @@
           "type": "integer",
           "unit": "月",
           "precision": null,
+          "semantic": null,
           "visible": true
         },
         {
@@ -1426,6 +1452,7 @@
           "type": "integer",
           "unit": "月",
           "precision": null,
+          "semantic": null,
           "visible": true
         },
         {
@@ -1434,6 +1461,7 @@
           "type": "decimal",
           "unit": "元/月",
           "precision": null,
+          "semantic": "money_per_month_nominal",
           "visible": true
         },
         {
@@ -1442,6 +1470,7 @@
           "type": "decimal",
           "unit": "元/月",
           "precision": null,
+          "semantic": "money_per_month_nominal",
           "visible": true
         },
         {
@@ -1450,6 +1479,7 @@
           "type": "decimal",
           "unit": "元/月",
           "precision": null,
+          "semantic": "money_per_month_nominal",
           "visible": true
         },
         {
@@ -1458,6 +1488,7 @@
           "type": "decimal",
           "unit": null,
           "precision": null,
+          "semantic": "ratio",
           "visible": true
         },
         {
@@ -1466,6 +1497,7 @@
           "type": "decimal",
           "unit": null,
           "precision": null,
+          "semantic": "ratio",
           "visible": true
         },
         {
@@ -1474,6 +1506,7 @@
           "type": "decimal",
           "unit": "元/月",
           "precision": null,
+          "semantic": null,
           "visible": true
         },
         {
@@ -1482,6 +1515,7 @@
           "type": "decimal",
           "unit": null,
           "precision": null,
+          "semantic": null,
           "visible": true
         },
         {
@@ -1490,6 +1524,7 @@
           "type": "decimal",
           "unit": "年",
           "precision": null,
+          "semantic": null,
           "visible": true
         }
       ]
@@ -1513,6 +1548,7 @@
           "type": "decimal",
           "unit": "元",
           "precision": null,
+          "semantic": null,
           "visible": true
         },
         {
@@ -1521,6 +1557,7 @@
           "type": "decimal",
           "unit": null,
           "precision": null,
+          "semantic": "ratio",
           "visible": true
         },
         {
@@ -1529,6 +1566,7 @@
           "type": "integer",
           "unit": "天",
           "precision": null,
+          "semantic": null,
           "visible": true
         },
         {
@@ -1537,6 +1575,7 @@
           "type": "decimal",
           "unit": "元",
           "precision": null,
+          "semantic": "money_total_nominal",
           "visible": true
         },
         {
@@ -1545,6 +1584,7 @@
           "type": "decimal",
           "unit": "元",
           "precision": null,
+          "semantic": "money_total_nominal",
           "visible": true
         }
       ]
