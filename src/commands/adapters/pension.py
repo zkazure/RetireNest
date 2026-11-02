@@ -21,7 +21,7 @@ MANIFEST = CommandManifest(
     description="按法定退休年龄、缴费年限、平均缴费指数和个人账户余额测算。",
     when_to_use="用户问城镇职工基本养老金金额时用。",
     when_not_to_use=(
-        "养老金只是收入侧；问退休总资金缺口时用 plan.retirement，"
+        "养老金只是收入侧；问全周期现金流或总缺口时用 lifecycle.project，"
         "不要用养老金金额代替完整规划。"
     ),
     as_of="2025",

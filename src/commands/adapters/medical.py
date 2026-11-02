@@ -14,7 +14,7 @@ MANIFEST = CommandManifest(
     question="在当前年龄、城市和医保类型下，医疗预算大概多少？",
     description="按 2025 年参考价格估算年度和月度医疗消费；调整系数为演示假设。",
     when_to_use="用户问当前年龄、城市和医保类型下的医疗预算时用。",
-    when_not_to_use="用户问退休资金总缺口时用 plan.retirement；医疗预算只是支出侧的一部分。",
+    when_not_to_use="用户问全周期现金流或退休资金总缺口时用 lifecycle.project；医疗预算只是支出侧的一部分。",
     as_of="2025",
     inputs=(
         InputSpec(

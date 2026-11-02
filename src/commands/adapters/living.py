@@ -32,7 +32,7 @@ MANIFEST = CommandManifest(
     question="退休前后每年衣食住行要花多少钱？",
     description="逐年测算穿衣、饮食、住房、交通和子女教育，给出名义值与实际值。",
     when_to_use="用户问退休前后衣食住行的年度支出时用。",
-    when_not_to_use="生活支出只是支出侧；问退休资金目标或缺口时用 plan.retirement。",
+    when_not_to_use="生活支出只是支出侧；问全周期现金流或退休资金缺口时用 lifecycle.project。",
     inputs=(
         InputSpec(
             name="age",

@@ -2,9 +2,8 @@
 
 RetireNest 后端把领域能力暴露为**命令**：一个命令回答一个明确的问题，接收一组输入，返回领域输出。前端不通过页面级聚合接口取数据，而是从命令清单里选择命令，在页面代码里自由组合。
 
-本期协议版本：`1.1.0`。当前注册十一个命令：
+本期协议版本：`1.1.0`。当前注册十三个命令：
 
-- `plan.retirement`
 - `medical.estimate`
 - `pension.basic`
 - `deposit.demand`
@@ -15,10 +14,13 @@ RetireNest 后端把领域能力暴露为**命令**：一个命令回答一个�
 - `simulation.retirement`
 - `withdrawal.safe_rate`
 - `longevity.estimate`
+- `lifecycle.project`
+- `lifecycle.simulate`
+- `strategy.compare`
 
-后六个是退休规划的计算原语：储蓄增长、目标倒推、通胀换算、蒙特卡洛、安全提取率与寿命估计。它们不进入主页表单，供命令浏览器、开发者和 Agent 层直接调用；主页仍使用前五个命令。
+其中 `savings.*`、`inflation.convert`、`simulation.retirement`、`withdrawal.safe_rate`、`longevity.estimate` 是计算原语，不进入页面表单，供命令浏览器、开发者和 Agent 层直接调用；首页只使用 `lifecycle.project`、`lifecycle.simulate`、`strategy.compare`。
 
-退休规划主页由页面清单驱动：`GET /api/pages/retirement` 告诉前端有哪些字段、怎么分组、提交时调用哪些命令；前端逐个执行命令并组合结果。`POST /api/retirement/plan` 保留为过渡接口。
+首页由页面清单驱动：`GET /api/pages/retirement.lifecycle` 告诉前端有哪些字段、怎么分组、提交时调用哪些命令；前端逐个执行命令并组合结果。
 
 ## 1. 端点
 
@@ -52,7 +54,7 @@ GET  /api/pages/{page_id}
       "outputs": [],
       "examples": [],
       "when_to_use": "用户问医疗预算时用。",
-      "when_not_to_use": "用户问退休资金缺口时用 plan.retirement。"
+      "when_not_to_use": "用户问全周期现金流或退休资金缺口时用 lifecycle.project。"
     }
   ]
 }
@@ -226,25 +228,27 @@ GET  /api/pages/{page_id}
       "title": "基本情况",
       "fields": [
         {
-          "name": "age",
-          "label": "你现在多少岁？",
-          "type": "number",
-          "integer": true,
+          "name": "income",
+          "label": "你现在每月的税后收入？",
+          "type": "tier",
           "required": true,
-          "unit": "岁",
-          "min": 18,
-          "max": 80,
-          "source": { "command": "plan.retirement", "input": "age" }
+          "unit": "元/月",
+          "tiers": [
+            { "value": "12k20k", "label": "1.2 万到 2 万", "amount": 16000 },
+            { "value": "20k30k", "label": "2 万到 3 万", "amount": 25000 }
+          ],
+          "allowCustom": false,
+          "source": { "command": "lifecycle.project", "input": "income" }
         }
       ]
     }
   ],
   "executions": [
     {
-      "command": "plan.retirement",
+      "command": "lifecycle.project",
       "version": "1.0.0",
-      "question": "按现在的收入和支出，退休时能攒下多少、还差多少？",
-      "inputs": { "age": "age" },
+      "question": "按现在的收支，一辈子能不能撑住？",
+      "inputs": { "income": "income" },
       "toggle": null,
       "outputs": []
     }
@@ -291,7 +295,9 @@ GET  /api/pages/{page_id}
 
 ```ts
 const ENABLED_COMMANDS = new Set([
-  'plan.retirement',
+  'lifecycle.project',
+  'lifecycle.simulate',
+  'strategy.compare',
   'medical.estimate',
   'pension.basic',
   'deposit.demand',
@@ -323,12 +329,25 @@ const response = await runCommand('medical.estimate', {
 
 ## 9. 现有命令
 
-### plan.retirement
+### lifecycle.project
 
-- 问题：按现在的收入和支出，退休时能攒下多少、还差多少。
-- 输入：`city`、`age`、`retire_age`、`life_expectancy`、`monthly_income`、`monthly_expense`、`assets`、`retirement_expense`、`nominal_return`、`inflation`；`debt`、`monthly_pension` 可省略，按 0 计。
-- 输出：`target`、`projected`、`gap`、`coverage`、`required_monthly_saving`、`monthly_surplus`，以及 `points`、`scenarios`、`explanation`、`warnings`、`plan_input`。
-- `points`、`scenarios`、`plan_input` 等结构字段标 `visible: false`，只供页面组合使用。
+- 问题：按现在的收支，一辈子能不能撑住。
+- 输入：`sex`、`city`、`birth_date`，可选 `age`、`category`、`retirement_age`；`income`、`expense`、`assets`、`debt`、`retirement_expense`、`travel`、`entertainment`、`children` 为 `type="tier"` 的档位值。
+- 输出：`pension_monthly`、`break_even_age`、`depleted_age`、`final_assets`、`peak_assets`，以及 `rows`（逐年现金流，`visible: false`）。
+- 档位到数值的映射由 `profile` 包完成，命令 handler 只接收数值。
+
+### lifecycle.simulate
+
+- 问题：按三档资产配置，成功概率有多大。
+- 输入：与 `lifecycle.project` 相同，另有可选 `paths`（100–20000，默认 1000）与 `seed`。
+- 输出：`success_rate`、`depleted_p10/p50/p90`、`terminal_p10/p50/p90`、`affordable_monthly_expense`。
+- 固定 `seed` 时结果可复现。
+
+### strategy.compare
+
+- 问题：换一种活法，结果差多少。
+- 输入：与 `lifecycle.project` 相同。
+- 输出：`variants`，每个元素含 `preset_id`、`label`、`retirement_age`、`success_rate`、`final_assets`、`affordable_monthly_expense`。
 
 ### medical.estimate
 
@@ -358,7 +377,7 @@ const response = await runCommand('medical.estimate', {
 - 输出：`years`、`retire_index`、`inflation`、`edu_inflation`、`nominal`、`real`。
 - `nominal`/`real` 是对象，内含 `clothing`、`food`、`housing`、`transport`、`education`、`total` 数组；时间轴从 `age` 起，步长 1 年。
 
-以下六个是 1.1 新增的计算原语，默认口径与 `plan.retirement` 一致：实际购买力、按年、年末投入。
+以下六个是 1.1 新增的计算原语，默认口径与 `lifecycle` 一致：实际购买力、按年、年末投入。
 
 ### savings.project
 
@@ -403,12 +422,11 @@ const response = await runCommand('medical.estimate', {
 - 输出：`median_age_at_death`、`p10/p25/p75/p90_age_at_death`、`probability_to_85`、`probability_to_90`、`probability_to_95`、`median_remaining_years`、`life_expectancy_at_birth_used`、`assumptions`。
 - `as_of`：`2020`。基准寿命、Gompertz 离散参数和健康档位平移都是演示假设，不是生命表或医学预测；概率用百分数（21.4 表示 21.4%）。
 
-## 10. 与旧接口的关系
+## 10. 页面组合
 
-- `POST /api/retirement/plan` 保留为过渡接口，仍返回页面级 `PlanResponse`；新前端不再调用。
-- `plan.retirement` 与旧接口共用 `plan/payload.py` 的构造器，结果字段结构一致。
-- 主页通过页面清单逐个调用命令；医疗、养老、存款、生活支出的结果单独展示，不并入退休资金目标。
-- 不在本期提供 `plan.projection`、命令 DAG 或后端页面组合器。
+- 首页通过页面清单逐个调用 `lifecycle.project`、`lifecycle.simulate`、`strategy.compare`，再把三个输出交给五个视图渲染。
+- 医疗、养老、存款、生活支出的命令仍可单独执行，结果不并进全周期现金流。
+- 不在本期提供命令 DAG 或后端页面组合器。
 
 ## 11. 非目标
 

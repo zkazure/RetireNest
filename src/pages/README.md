@@ -40,7 +40,7 @@ uv run python - <<'PY'
 import json
 from fastapi.testclient import TestClient
 from api.app import app
-body = TestClient(app).get("/api/pages/retirement").json()
+body = TestClient(app).get("/api/pages/retirement.lifecycle").json()
 with open("tests/fixtures/retirement-page.json", "w", encoding="utf-8") as handle:
     json.dump(body, handle, ensure_ascii=False, indent=2)
     handle.write("\n")

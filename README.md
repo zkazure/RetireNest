@@ -58,16 +58,16 @@ uv run --project src python run.py --prod
 三档资产配置的蒙特卡洛（成功率、破产年龄分位、可支撑支出）与五个预设策略的并排对比。表单以选择题为主，
 数值走档位并在选中后回显计算取值；养老金四个参数由城市、收入档与年龄推导，不向用户提问。
 
-命令清单由 `GET /api/commands` 提供，单个命令通过 `POST /api/commands/{id}` 执行；退休规划主页由 `GET /api/pages/retirement` 的页面清单驱动，提交时逐个调用命令。protocol、manifest、页面清单和错误格式见 [docs/command-protocol.md](docs/command-protocol.md)。`POST /api/retirement/plan` 保留为过渡接口。
+命令清单由 `GET /api/commands` 提供，单个命令通过 `POST /api/commands/{id}` 执行；首页由 `GET /api/pages/retirement.lifecycle` 的页面清单驱动，提交时逐个调用命令。protocol、manifest、页面清单和错误格式见 [docs/command-protocol.md](docs/command-protocol.md)。
 
 已实现全周期现金流表单、五类视图（支出结构、收入曲线、收支对比、风险与生活分布、策略对比）与两页 PDF 报告导出。
 
 命令层另有六个计算原语：`savings.project`（储蓄增长）、`savings.goal`（目标倒推）、`inflation.convert`（通胀换算）、`simulation.retirement`（蒙特卡洛）、`withdrawal.safe_rate`（安全提取率）、`longevity.estimate`（Gompertz 寿命估计）。它们不进入主页表单，可在命令浏览器中单独执行，供 Agent 层调用；口径与 `lifecycle` 一致，并有 `rel=1e-12` 的交叉校验。
 
-Agent 层已接入但默认关闭：设置 `RETIRENEST_LLM_API_KEY` 与 `RETIRENEST_LLM_MODEL`（可选 `RETIRENEST_LLM_BASE_URL`）后，右下角的悬浮对话框、`POST /api/agent/chat` 与 SSE 端点可用；未配置时返回 503，命令、页面和旧接口都不受影响。没有 key 时可用 `RETIRENEST_AGENT_FAKE=1` 跑固定演示。可选 `RETIRENEST_AGENT_TOKEN(S)` 启用 Bearer 访问控制，`RETIRENEST_AGENT_DB` 启用 SQLite 会话持久化。配置、隐私、SSE 事件与错误说明见 [docs/agent.md](docs/agent.md)。
+Agent 层已接入但默认关闭：设置 `RETIRENEST_LLM_API_KEY` 与 `RETIRENEST_LLM_MODEL`（可选 `RETIRENEST_LLM_BASE_URL`）后，右下角的悬浮对话框、`POST /api/agent/chat` 与 SSE 端点可用；未配置时返回 503，命令与页面都不受影响。没有 key 时可用 `RETIRENEST_AGENT_FAKE=1` 跑固定演示。可选 `RETIRENEST_AGENT_TOKEN(S)` 启用 Bearer 访问控制，`RETIRENEST_AGENT_DB` 启用 SQLite 会话持久化。配置、隐私、SSE 事件与错误说明见 [docs/agent.md](docs/agent.md)。
 
 数据来源、年份与口径见 [docs/data-sources.md](docs/data-sources.md)。其中重疾发生率仍是临时值，标了 `[待转录]`，拿到重疾表附件后整表替换。
 
 运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
 
-前端不再保存字段配置：表单的问题、类型、选项、约束与分组全部来自后端页面清单。契约示例见 `frontend/contracts/`。
+前端不再保存字段配置：表单的问题、类型、选项、约束与分组全部来自后端页面清单。页面清单的完整示例见 `src/tests/fixtures/lifecycle-page.json`。

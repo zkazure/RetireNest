@@ -4,7 +4,9 @@
 
 ## 当前命令
 
-- `plan.retirement` → `plan` 包的 `validate` / `calculate` / `build_scenarios` / `build_explanation`
+- `lifecycle.project` → `lifecycle.project`（确定性全周期现金流）
+- `lifecycle.simulate` → `lifecycle.simulate`（蒙特卡洛成功率与分位）
+- `strategy.compare` → `lifecycle.compare`（五个预设并排）
 - `medical.estimate` → `medical.estimate_medical_cost`
 - `pension.basic` → `pension.BasicPensionInput` / `pension.calculate`
 - `deposit.demand` → `deposit.DemandDeposit` / `deposit.calculate`
