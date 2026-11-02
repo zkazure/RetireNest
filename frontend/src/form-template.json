@@ -1,0 +1,833 @@
+{
+  "id": "retirenest-retirement",
+  "version": "1.0.0",
+  "title": "我的规划信息",
+  "description": "基础信息用于本地演示测算。生活偏好和可选模块会按模板收集，接入后端后参与综合规划。",
+  "optionSets": {
+    "cities": [
+      {
+        "label": "北京",
+        "value": "北京"
+      },
+      {
+        "label": "上海",
+        "value": "上海"
+      },
+      {
+        "label": "广州",
+        "value": "广州"
+      },
+      {
+        "label": "深圳",
+        "value": "深圳"
+      },
+      {
+        "label": "成都",
+        "value": "成都"
+      },
+      {
+        "label": "杭州",
+        "value": "杭州"
+      },
+      {
+        "label": "重庆",
+        "value": "重庆"
+      },
+      {
+        "label": "武汉",
+        "value": "武汉"
+      },
+      {
+        "label": "西安",
+        "value": "西安"
+      },
+      {
+        "label": "苏州",
+        "value": "苏州"
+      },
+      {
+        "label": "南京",
+        "value": "南京"
+      },
+      {
+        "label": "天津",
+        "value": "天津"
+      },
+      {
+        "label": "长沙",
+        "value": "长沙"
+      },
+      {
+        "label": "郑州",
+        "value": "郑州"
+      },
+      {
+        "label": "东莞",
+        "value": "东莞"
+      },
+      {
+        "label": "青岛",
+        "value": "青岛"
+      },
+      {
+        "label": "合肥",
+        "value": "合肥"
+      },
+      {
+        "label": "佛山",
+        "value": "佛山"
+      },
+      {
+        "label": "宁波",
+        "value": "宁波"
+      },
+      {
+        "label": "昆明",
+        "value": "昆明"
+      },
+      {
+        "label": "厦门",
+        "value": "厦门"
+      },
+      {
+        "label": "福州",
+        "value": "福州"
+      },
+      {
+        "label": "无锡",
+        "value": "无锡"
+      },
+      {
+        "label": "大连",
+        "value": "大连"
+      },
+      {
+        "label": "沈阳",
+        "value": "沈阳"
+      },
+      {
+        "label": "济南",
+        "value": "济南"
+      },
+      {
+        "label": "哈尔滨",
+        "value": "哈尔滨"
+      },
+      {
+        "label": "长春",
+        "value": "长春"
+      },
+      {
+        "label": "石家庄",
+        "value": "石家庄"
+      },
+      {
+        "label": "南昌",
+        "value": "南昌"
+      },
+      {
+        "label": "太原",
+        "value": "太原"
+      },
+      {
+        "label": "南宁",
+        "value": "南宁"
+      },
+      {
+        "label": "贵阳",
+        "value": "贵阳"
+      },
+      {
+        "label": "兰州",
+        "value": "兰州"
+      },
+      {
+        "label": "乌鲁木齐",
+        "value": "乌鲁木齐"
+      },
+      {
+        "label": "温州",
+        "value": "温州"
+      },
+      {
+        "label": "珠海",
+        "value": "珠海"
+      },
+      {
+        "label": "中山",
+        "value": "中山"
+      },
+      {
+        "label": "惠州",
+        "value": "惠州"
+      },
+      {
+        "label": "泉州",
+        "value": "泉州"
+      },
+      {
+        "label": "常州",
+        "value": "常州"
+      },
+      {
+        "label": "南通",
+        "value": "南通"
+      },
+      {
+        "label": "徐州",
+        "value": "徐州"
+      },
+      {
+        "label": "烟台",
+        "value": "烟台"
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "basic",
+      "title": "基本情况",
+      "fields": [
+        {
+          "name": "city",
+          "label": "居住城市",
+          "type": "select",
+          "required": true,
+          "optionsSource": "cities",
+          "allowCustom": true,
+          "maxLength": 30,
+          "defaultValue": "广州"
+        },
+        {
+          "name": "age",
+          "label": "当前年龄",
+          "type": "number",
+          "required": true,
+          "min": 18,
+          "max": 80,
+          "step": 1,
+          "defaultValue": 28,
+          "integer": true,
+          "unit": "岁"
+        },
+        {
+          "name": "retire_age",
+          "label": "期望退休年龄",
+          "type": "number",
+          "required": true,
+          "min": 19,
+          "max": 85,
+          "step": 1,
+          "defaultValue": 55,
+          "integer": true,
+          "unit": "岁"
+        },
+        {
+          "name": "life_expectancy",
+          "label": "规划至年龄",
+          "type": "number",
+          "required": true,
+          "min": 20,
+          "max": 110,
+          "step": 1,
+          "defaultValue": 90,
+          "integer": true,
+          "unit": "岁"
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "title": "收支与资产",
+      "fields": [
+        {
+          "name": "monthly_income",
+          "label": "当前月收入",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 1000000000,
+          "step": 1,
+          "defaultValue": 15000,
+          "unit": "元"
+        },
+        {
+          "name": "monthly_expense",
+          "label": "当前月支出",
+          "type": "number",
+          "required": true,
+          "min": 0.01,
+          "max": 1000000000,
+          "step": 0.01,
+          "defaultValue": 10000,
+          "unit": "元"
+        },
+        {
+          "name": "assets",
+          "label": "现有总资产",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 1000000000,
+          "step": 1,
+          "defaultValue": 180000,
+          "unit": "元"
+        },
+        {
+          "name": "debt",
+          "label": "现有总负债",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 1000000000,
+          "step": 1,
+          "defaultValue": 30000,
+          "unit": "元"
+        }
+      ]
+    },
+    {
+      "id": "retirement",
+      "title": "期待的退休生活",
+      "description": "以下金额按今天的购买力填写；预估养老金为自行估计值。",
+      "fields": [
+        {
+          "name": "retirement_expense",
+          "label": "退休后月支出",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 1000000000,
+          "step": 1,
+          "defaultValue": 10000,
+          "unit": "元"
+        },
+        {
+          "name": "monthly_pension",
+          "label": "预估月养老金",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 1000000000,
+          "step": 1,
+          "defaultValue": 2500,
+          "unit": "元"
+        }
+      ]
+    },
+    {
+      "id": "living",
+      "title": "生活与家庭偏好",
+      "collapsible": true,
+      "description": "扩展模块，当前仅收集信息，暂不改变本地演示结果。",
+      "fields": [
+        {
+          "name": "partner",
+          "label": "退休生活安排",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "独自生活",
+              "value": "独自生活"
+            },
+            {
+              "label": "有伴侣",
+              "value": "有伴侣"
+            },
+            {
+              "label": "还没想好",
+              "value": "还没想好"
+            }
+          ],
+          "defaultValue": "还没想好"
+        },
+        {
+          "name": "children",
+          "label": "子女计划",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "想要",
+              "value": "想要"
+            },
+            {
+              "label": "不想要",
+              "value": "不想要"
+            },
+            {
+              "label": "还没想好",
+              "value": "还没想好"
+            }
+          ],
+          "defaultValue": "还没想好"
+        },
+        {
+          "name": "child_age_now",
+          "label": "现有孩子年龄",
+          "type": "number",
+          "integer": true,
+          "min": 0,
+          "max": 50,
+          "unit": "岁",
+          "hint": "没有孩子可留空。"
+        },
+        {
+          "name": "housing_plan",
+          "label": "住房打算",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "一直租房",
+              "value": "一直租房"
+            },
+            {
+              "label": "买房自住",
+              "value": "买房自住"
+            },
+            {
+              "label": "已有房",
+              "value": "已有房"
+            },
+            {
+              "label": "还没想",
+              "value": "还没想"
+            }
+          ],
+          "defaultValue": "还没想"
+        },
+        {
+          "name": "lifestyle",
+          "label": "生活水平",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "节俭",
+              "value": "节俭"
+            },
+            {
+              "label": "舒适",
+              "value": "舒适"
+            },
+            {
+              "label": "宽裕",
+              "value": "宽裕"
+            }
+          ],
+          "defaultValue": "舒适"
+        },
+        {
+          "name": "retire_city",
+          "label": "退休居住城市",
+          "type": "select",
+          "optionsSource": "cities",
+          "allowCustom": true,
+          "maxLength": 30,
+          "hint": "留空表示与现在同城。"
+        },
+        {
+          "name": "clothing_freq",
+          "label": "购衣频率",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "很少",
+              "value": "很少"
+            },
+            {
+              "label": "一般",
+              "value": "一般"
+            },
+            {
+              "label": "经常",
+              "value": "经常"
+            }
+          ],
+          "defaultValue": "一般"
+        },
+        {
+          "name": "clothing_grade",
+          "label": "衣物档次",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "平价",
+              "value": "平价"
+            },
+            {
+              "label": "品牌",
+              "value": "品牌"
+            },
+            {
+              "label": "奢侈品",
+              "value": "奢侈品"
+            }
+          ],
+          "defaultValue": "品牌"
+        },
+        {
+          "name": "cooking",
+          "label": "饮食方式",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "主要自己做",
+              "value": "主要自己做"
+            },
+            {
+              "label": "一半一半",
+              "value": "一半一半"
+            },
+            {
+              "label": "主要外食",
+              "value": "主要外食"
+            }
+          ],
+          "defaultValue": "一半一半"
+        },
+        {
+          "name": "extra_food",
+          "label": "有三餐外饮食需求",
+          "type": "checkbox",
+          "defaultValue": false
+        },
+        {
+          "name": "retire_commute",
+          "label": "退休后出行",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "公交地铁",
+              "value": "公交地铁"
+            },
+            {
+              "label": "打车",
+              "value": "打车"
+            },
+            {
+              "label": "自己开车",
+              "value": "自己开车"
+            },
+            {
+              "label": "骑车步行",
+              "value": "骑车步行"
+            }
+          ],
+          "defaultValue": "公交地铁"
+        },
+        {
+          "name": "trip_level",
+          "label": "旅游频率",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "很少出门",
+              "value": "很少出门"
+            },
+            {
+              "label": "偶尔国内",
+              "value": "偶尔国内"
+            },
+            {
+              "label": "经常旅行",
+              "value": "经常旅行"
+            }
+          ],
+          "defaultValue": "偶尔国内"
+        },
+        {
+          "name": "visits_home",
+          "label": "探亲频率",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "不回",
+              "value": "不回"
+            },
+            {
+              "label": "一年一两次",
+              "value": "一年一两次"
+            },
+            {
+              "label": "三次以上",
+              "value": "三次以上"
+            }
+          ],
+          "defaultValue": "一年一两次"
+        }
+      ]
+    },
+    {
+      "id": "medical",
+      "title": "医疗预算信息",
+      "description": "启用后补充医保情况。当前扩展信息尚未接入测算。",
+      "toggle": {
+        "name": "medical_enabled",
+        "label": "填写医保信息",
+        "defaultValue": false
+      },
+      "fields": [
+        {
+          "name": "insurance",
+          "label": "医保类型",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "职工医保",
+              "value": "职工医保"
+            },
+            {
+              "label": "居民医保",
+              "value": "居民医保"
+            },
+            {
+              "label": "无医保",
+              "value": "无医保"
+            }
+          ],
+          "defaultValue": "职工医保"
+        }
+      ]
+    },
+    {
+      "id": "pension",
+      "title": "养老金详细信息",
+      "description": "账户余额和计发基数均为退休时点假设；本模块信息暂不替代上方的预估养老金。",
+      "toggle": {
+        "name": "pension_enabled",
+        "label": "填写养老金信息",
+        "defaultValue": false
+      },
+      "fields": [
+        {
+          "name": "birth_date",
+          "label": "出生日期",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "gender",
+          "label": "性别",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "男",
+              "value": "男"
+            },
+            {
+              "label": "女",
+              "value": "女"
+            }
+          ],
+          "defaultValue": "男"
+        },
+        {
+          "name": "category",
+          "label": "岗位类别",
+          "type": "select",
+          "required": true,
+          "options": [
+            {
+              "label": "管理技术",
+              "value": "管理技术"
+            },
+            {
+              "label": "工人",
+              "value": "工人"
+            }
+          ],
+          "defaultValue": "管理技术",
+          "visibleWhen": [
+            {
+              "field": "gender",
+              "equals": "女"
+            }
+          ]
+        },
+        {
+          "name": "contribution_years",
+          "label": "缴费年限",
+          "type": "decimal",
+          "required": true,
+          "min": 0.01,
+          "precision": 2,
+          "maxLength": 24,
+          "max": 50,
+          "unit": "年"
+        },
+        {
+          "name": "average_index",
+          "label": "平均缴费指数",
+          "type": "decimal",
+          "required": true,
+          "min": 0.6,
+          "precision": 4,
+          "maxLength": 24,
+          "max": 3,
+          "defaultValue": "1.0"
+        },
+        {
+          "name": "account_balance",
+          "label": "退休时个人账户余额",
+          "type": "decimal",
+          "required": true,
+          "min": 0,
+          "precision": 2,
+          "maxLength": 24,
+          "unit": "元"
+        },
+        {
+          "name": "calculation_base",
+          "label": "月养老金计发基数",
+          "type": "decimal",
+          "required": true,
+          "min": 0.01,
+          "precision": 2,
+          "maxLength": 24,
+          "unit": "元/月"
+        },
+        {
+          "name": "prior_monthly_wage",
+          "label": "退休前月工资",
+          "type": "decimal",
+          "required": false,
+          "min": 0.01,
+          "precision": 2,
+          "maxLength": 24,
+          "unit": "元"
+        },
+        {
+          "name": "annual_adjustment",
+          "label": "养老金年调整率",
+          "type": "decimal",
+          "required": false,
+          "min": 0,
+          "precision": 6,
+          "maxLength": 24,
+          "max": 1,
+          "hint": "小数比例，例如 0.02 表示 2%；留空由后端取默认值。"
+        }
+      ]
+    },
+    {
+      "id": "deposit",
+      "title": "存款收益信息",
+      "description": "本金与利率按十进制字符串提交，避免金额精度损失；当前仅收集信息。",
+      "toggle": {
+        "name": "deposit_enabled",
+        "label": "填写存款信息",
+        "defaultValue": false
+      },
+      "fields": [
+        {
+          "name": "principal",
+          "label": "存款本金",
+          "type": "decimal",
+          "required": true,
+          "min": 0.01,
+          "precision": 2,
+          "maxLength": 24,
+          "unit": "元"
+        },
+        {
+          "name": "annual_rate",
+          "label": "存款年利率",
+          "type": "decimal",
+          "required": false,
+          "min": 0,
+          "precision": 8,
+          "maxLength": 24,
+          "max": 1,
+          "hint": "小数比例，例如 0.0005 表示 0.05%；留空由后端取默认值。"
+        },
+        {
+          "name": "start_date",
+          "label": "存款开始日期",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "end_date",
+          "label": "存款结束日期",
+          "type": "date",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "assumptions",
+      "title": "测算假设",
+      "collapsible": true,
+      "description": "以下回报与通胀以百分数填写；城市在本地演示中不参与计算。",
+      "fields": [
+        {
+          "name": "nominal_return",
+          "label": "名义年回报",
+          "type": "number",
+          "required": true,
+          "min": -5,
+          "max": 15,
+          "step": 0.1,
+          "defaultValue": 3,
+          "unit": "%"
+        },
+        {
+          "name": "inflation",
+          "label": "年通胀率",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 10,
+          "step": 0.1,
+          "defaultValue": 2,
+          "unit": "%"
+        },
+        {
+          "name": "planning_notes",
+          "label": "其他规划需求",
+          "type": "textarea",
+          "maxLength": 1000,
+          "placeholder": "可补充其他退休生活安排（选填）"
+        }
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "type": "lessThan",
+      "left": "age",
+      "right": "retire_age",
+      "message": "期望退休年龄需要大于当前年龄。"
+    },
+    {
+      "type": "lessThan",
+      "left": "retire_age",
+      "right": "life_expectancy",
+      "message": "规划至年龄需要大于期望退休年龄。"
+    },
+    {
+      "type": "minimumDifference",
+      "left": "age",
+      "right": "child_age_now",
+      "minimum": 15,
+      "message": "当前年龄与孩子年龄至少相差 15 岁。"
+    },
+    {
+      "type": "dateBefore",
+      "left": "start_date",
+      "right": "end_date",
+      "message": "存款结束日期需要晚于开始日期。"
+    }
+  ]
+}
