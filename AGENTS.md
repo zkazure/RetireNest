@@ -19,3 +19,8 @@
    - 新功能添加应当在本地新建分支开发，而不是直接在 main 分支开发。
    - 完成 feature 开发之后，合并分支之前应当先 pull main 分支，确保 main 分支是最新。
    - 确认本地分支和 main 分支没有冲突之后，才合并后推送。
+6. Python 依赖管理一律使用 uv，禁止绕开它。
+   - 加依赖、同步环境、执行脚本统一用 =uv add=、=uv sync=、=uv run=。
+   - 不要用 pip、poetry、conda 直接安装依赖，也不要手写 requirements.txt。
+   - 依赖声明只写在 =src/pyproject.toml=，=src/uv.lock= 必须随仓库提交。
+   - 仅开发期使用的工具放进 dev 依赖组，不混入运行时依赖。
