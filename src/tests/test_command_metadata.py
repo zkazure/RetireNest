@@ -56,7 +56,7 @@ def test_new_commands_have_examples() -> None:
 
 def test_no_duplicate_command_ids() -> None:
     ids = [command.manifest.id for command in list_commands()]
-    assert len(ids) == len(set(ids)) == 11
+    assert len(ids) == len(set(ids)) == 14
 
 
 @pytest.mark.parametrize("command_id", sorted(NEW_COMMANDS))

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import date
 from profile.errors import ProfileError
 
 RISK_TIERS = ("high", "mid", "low")
@@ -26,6 +27,8 @@ class Profile:
     age: int
     sex: str
     city: str
+    birth_date: date
+    category: str | None
     retirement_age: int
     plan_until: int
     monthly_income: float
@@ -46,6 +49,11 @@ class Profile:
             raise ProfileError("退休年龄不能早于当前年龄。")
         if self.retirement_age > self.plan_until:
             raise ProfileError("退休年龄不能晚于规划终点。")
+        expected_age = (date.today() - self.birth_date).days // 365
+        if abs(expected_age - self.age) > 1:
+            raise ProfileError(f"出生日期与年龄不一致：{expected_age} 岁 vs {self.age} 岁。")
+        if self.sex == "女" and self.category is None:
+            raise ProfileError("女性需要岗位类别（管理技术或工人）。")
         for name in ("monthly_income", "monthly_expense", "assets", "debt", "retirement_expense"):
             if getattr(self, name) < 0:
                 raise ProfileError(f"{name} 不能为负。")

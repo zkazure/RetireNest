@@ -21,6 +21,12 @@ from profile.schema import DEFAULT_ALLOCATION, PensionParams, Profile
 
 import pytest
 
+
+def birth_for(age: int) -> date:
+    today = date.today()
+    return today.replace(year=today.year - age)
+
+
 TABLES = (
     tiers.INCOME,
     tiers.EXPENSE,
@@ -148,6 +154,8 @@ def test_配比之和不为一报错():
             age=35,
             sex="男",
             city="上海",
+            birth_date=birth_for(35),
+            category=None,
             retirement_age=60,
             plan_until=85,
             monthly_income=10_000,
@@ -169,6 +177,8 @@ def test_退休早于当前年龄报错():
             age=60,
             sex="男",
             city="上海",
+            birth_date=birth_for(60),
+            category=None,
             retirement_age=55,
             plan_until=85,
             monthly_income=10_000,

@@ -19,7 +19,7 @@ CITIES = tuple(CITY_TIER)
 def _profile_inputs(extra: tuple[InputSpec, ...] = ()) -> tuple[InputSpec, ...]:
     return (
         InputSpec(name="age", question="你现在多少岁？", type="integer", unit="岁",
-                  constraints={"min": 18, "max": 100}),
+                  required=False, constraints={"min": 18, "max": 100}),
         InputSpec(name="sex", question="性别？", type="enum", options=("男", "女")),
         InputSpec(name="city", question="你现在居住的城市？", type="enum", options=CITIES),
         InputSpec(name="birth_date", question="你的出生日期？", type="date"),
@@ -53,7 +53,7 @@ def _build(inputs: dict[str, Any]) -> Profile:
     if tier is not None:
         retirement_age = int(profile_tiers.RETIRE_AGE.get(tier).amount)
     return build_profile(
-        age=inputs["age"],
+        age=inputs.get("age"),
         sex=inputs["sex"],
         city=inputs["city"],
         birth_date=inputs["birth_date"],

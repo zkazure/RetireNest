@@ -18,7 +18,7 @@ def catalog():
 
 
 def test_catalog_covers_all_commands(catalog) -> None:
-    assert len(catalog.specs) == 11
+    assert len(catalog.specs) == 14
     assert set(catalog.by_command_id) == {
         "plan.retirement",
         "medical.estimate",
@@ -31,6 +31,9 @@ def test_catalog_covers_all_commands(catalog) -> None:
         "simulation.retirement",
         "withdrawal.safe_rate",
         "longevity.estimate",
+        "lifecycle.project",
+        "lifecycle.simulate",
+        "strategy.compare",
     }
 
 
