@@ -28,6 +28,8 @@ export interface CommandOutputSpec {
   semantic?: string | null;
   precision?: number | null;
   time_axis?: Record<string, unknown> | null;
+  /** false 表示实现细节（数组下标、回显输入），命令浏览器不展示。 */
+  visible?: boolean;
 }
 
 export interface CommandManifest {
