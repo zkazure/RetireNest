@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from api.command_routes import router as command_router
 from api.errors import ApiError
 from api.schemas import PlanRequest
 from api.service import build_plan_response
@@ -56,6 +57,9 @@ async def unexpected_error_handler(_: Request, exc: Exception) -> JSONResponse:
 @app.post("/api/retirement/plan")
 def create_plan(request: PlanRequest) -> dict[str, object]:
     return build_plan_response(request)
+
+
+app.include_router(command_router)
 
 
 # 生产模式由 run.py 先执行 npm run build，再由这里托管构建产物。
