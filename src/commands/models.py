@@ -23,6 +23,8 @@ class InputSpec:
     constraints: Mapping[str, Any] = field(default_factory=dict)
     semantic: str | None = None
     required_when: Mapping[str, Any] | None = None
+    # 给 LLM 看的参数说明：单位、口径、与其它参数的关系；页面不展示。
+    description: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +38,7 @@ class OutputSpec:
     time_axis: Mapping[str, Any] | None = None
     # False 表示这是实现细节（数组下标、回显输入），页面不展示。
     visible: bool = True
+    description: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +52,9 @@ class CommandManifest:
     deterministic: bool = True
     as_of: str | None = None
     examples: tuple[Mapping[str, Any], ...] = ()
+    # 工具选择指引；阶段十九生成 LLM 工具 schema 时使用，页面不展示。
+    when_to_use: str = ""
+    when_not_to_use: str = ""
 
 
 @dataclass(frozen=True, slots=True)

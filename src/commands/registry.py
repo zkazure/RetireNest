@@ -10,8 +10,13 @@ from commands.errors import CommandInputError, CommandNotFound, CommandVersionMi
 from commands.models import Command, CommandManifest
 from commands.validation import coerce_inputs
 
-PROTOCOL_VERSION = "1.0.0"
-"""命令清单协议的版本，不等同于单个命令的版本。"""
+PROTOCOL_VERSION = "1.1.0"
+"""命令清单协议的版本，不等同于单个命令的版本。
+
+1.1 增加 InputSpec.description、OutputSpec.description 与
+CommandManifest.when_to_use / when_not_to_use，供 LLM 工具 schema 使用；
+新增字段都是可选的，命令的执行语义不变。
+"""
 
 _COMMANDS: dict[str, Command] = {command.manifest.id: command for command in COMMANDS}
 
