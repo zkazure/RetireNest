@@ -38,3 +38,23 @@ class AgentUpstreamError(AgentError):
 
     def __init__(self, message: str = "模型服务暂时不可用，请稍后重试。") -> None:
         super().__init__(message)
+
+
+class AgentUnauthorized(AgentError):
+    """缺少或无效的 Bearer token。"""
+
+    status = 401
+    code = "AGENT_UNAUTHORIZED"
+
+    def __init__(self, message: str = "缺少或无效的访问令牌。") -> None:
+        super().__init__(message)
+
+
+class AgentSessionNotFound(AgentError):
+    """会话不存在，或不属于当前用户。"""
+
+    status = 404
+    code = "AGENT_SESSION_NOT_FOUND"
+
+    def __init__(self, message: str = "会话不存在或不属于当前用户。") -> None:
+        super().__init__(message)

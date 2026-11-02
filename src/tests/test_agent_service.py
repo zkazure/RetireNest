@@ -163,7 +163,7 @@ def test_session_store_generates_and_reuses_ids() -> None:
 
 def test_session_store_expires_by_ttl(monkeypatch) -> None:
     now = [0.0]
-    monkeypatch.setattr(session_module.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(session_module.time, "time", lambda: now[0])
     store = SessionStore(ttl_seconds=10, max_sessions=5)
     store.get_or_create("a")
     assert store.count == 1
@@ -173,7 +173,7 @@ def test_session_store_expires_by_ttl(monkeypatch) -> None:
 
 def test_session_store_evicts_oldest(monkeypatch) -> None:
     now = [0.0]
-    monkeypatch.setattr(session_module.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(session_module.time, "time", lambda: now[0])
     store = SessionStore(ttl_seconds=100, max_sessions=2)
     store.get_or_create("a")
     now[0] = 1

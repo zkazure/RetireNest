@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from agent.models import (
@@ -17,6 +18,7 @@ from agent.models import (
     ToolCall,
     ToolCatalog,
 )
+from agent.verify import numeric_warnings
 from commands import execute_command, get_command
 from commands.errors import CommandError, CommandInputError
 
@@ -25,6 +27,18 @@ logger = logging.getLogger(__name__)
 MAX_TOOL_ROUNDS = 8
 MAX_TOOL_CONTENT_CHARS = 8000
 TRUNCATED_SUFFIX = "…（工具输出已截断）"
+
+
+def _emit(
+    on_event: Callable[[dict[str, Any]], None] | None,
+    event: dict[str, Any],
+) -> None:
+    if on_event is None:
+        return
+    try:
+        on_event(event)
+    except Exception:
+        logger.exception("Agent 事件回调失败")
 
 
 def _assistant_message(turn: AssistantTurn) -> dict[str, Any]:
@@ -53,6 +67,7 @@ def _tool_error(
     field_errors: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     return {
+        "tool_call_id": call.id,
         "tool_name": call.name,
         "command_id": command_id,
         "version": version,
@@ -142,6 +157,7 @@ def _execute_tool_call(
         )
 
     return {
+        "tool_call_id": call.id,
         "tool_name": call.name,
         "command_id": spec.command_id,
         "version": spec.version,
@@ -183,6 +199,7 @@ def run_agent(
     catalog: ToolCatalog,
     *,
     max_rounds: int = MAX_TOOL_ROUNDS,
+    on_event: Callable[[dict[str, Any]], None] | None = None,
 ) -> AgentRun:
     """执行循环；原地追加 assistant/tool 消息，返回最终文本与轨迹。"""
     if max_rounds <= 0:
@@ -194,15 +211,27 @@ def run_agent(
     for _ in range(max_rounds):
         turn = client.complete(conversation, catalog.schemas)
         if not turn.tool_calls:
-            conversation.append({"role": "assistant", "content": turn.content or ""})
+            reply = turn.content or ""
+            warnings.extend(numeric_warnings(reply, trace))
+            conversation.append({"role": "assistant", "content": reply})
             return AgentRun(
-                reply=turn.content or "",
+                reply=reply,
                 tool_calls=tuple(trace),
                 warnings=tuple(warnings),
             )
 
         conversation.append(_assistant_message(turn))
         for call in turn.tool_calls:
+            spec = catalog.by_name.get(call.name)
+            _emit(
+                on_event,
+                {
+                    "type": "tool_call",
+                    "tool_call_id": call.id,
+                    "tool_name": call.name,
+                    "command_id": spec.command_id if spec else None,
+                },
+            )
             record = _execute_tool_call(catalog, call)
             trace.append(record)
             conversation.append(
@@ -212,6 +241,7 @@ def run_agent(
                     "content": tool_content(record),
                 }
             )
+            _emit(on_event, {"type": "tool_result", **record})
 
     warnings.append(f"工具调用超过 {max_rounds} 轮，已停止继续调用。")
     conversation.append(
@@ -222,5 +252,6 @@ def run_agent(
     )
     final = client.complete(conversation, [])
     reply = final.content or "工具调用次数过多，请缩小问题范围后重试。"
+    warnings.extend(numeric_warnings(reply, trace))
     conversation.append({"role": "assistant", "content": reply})
     return AgentRun(reply=reply, tool_calls=tuple(trace), warnings=tuple(warnings))
