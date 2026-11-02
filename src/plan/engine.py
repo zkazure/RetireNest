@@ -11,11 +11,11 @@ max(退休月支出 - 月养老金, 0) × 12。负债直接抵减资产，不另
 
 from __future__ import annotations
 
-import math
 from dataclasses import replace
 
 from plan.models import PlanInput, PlanResult, ProjectionPoint, Scenario
 from plan.validation import validate
+from savings import TIMING_END, annuity_factor, real_rate
 
 SCENARIO_SPECS = (
     ("conservative", "保守情景", -1.0),
@@ -32,12 +32,10 @@ def calculate(plan_input: PlanInput) -> PlanResult:
 
     years_to_retirement = plan_input.retirement_age - plan_input.age
     retirement_years = plan_input.life_expectancy - plan_input.retirement_age
-    real_return = (1 + plan_input.nominal_return / 100) / (1 + plan_input.inflation / 100) - 1
+    real_return = real_rate(plan_input.nominal_return, plan_input.inflation)
 
     def annuity(years: int) -> float:
-        if abs(real_return) < 1e-9:
-            return float(years)
-        return math.expm1(years * math.log1p(real_return)) / real_return
+        return annuity_factor(real_return, years, TIMING_END)
 
     annual_need = max(0.0, plan_input.retirement_expense - plan_input.monthly_pension) * 12
     target = annual_need * annuity(retirement_years) / (1 + real_return) ** retirement_years

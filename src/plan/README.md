@@ -5,8 +5,9 @@
 ## 口径
 
 - 金额单位为元；`nominal_return` 与 `inflation` 用百分数（3 表示 3%）。
-- 实际回报率 = (1 + 名义回报率) / (1 + 通胀率) - 1。
+- 实际回报率 = (1 + 名义回报率) / (1 + 通胀率) - 1；由 `savings.rates.real_rate` 计算。
 - 金额统一用今天的购买力；工作期每年年末计入 12 个月结余，退休后每年年末支取 max(退休月支出 - 月养老金, 0) × 12。
+- 年金系数由 `savings.rates.annuity_factor` 计算，与 `savings.project` / `savings.goal` 共用；`tests/test_plan_engine.py` 有 `rel=1e-12` 的交叉校验。
 - 负债直接抵减资产，不另算利息；不计税费、收益波动和政策变化。
 - `points` 从当前年龄到规划终点逐年连续，负资产保留在曲线上用于暴露缺口。
 - `coverage` 是百分数，`gap` 不小于 0；`target` 为 0 时 `coverage` 记 100。

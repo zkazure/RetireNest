@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from plan import PlanInput, build_explanation, build_scenarios, calculate, validate
+from savings import SavingsGoalInput, SavingsProjectInput, project, required_contribution
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS = ROOT / "frontend" / "contracts"
@@ -124,3 +125,43 @@ def test_explanation_mentions_gap_or_coverage() -> None:
     covered = replace(plan_input, assets=5_000_000)
     covered_result = calculate(covered)
     assert "覆盖" in build_explanation(covered, covered_result)
+
+
+def test_savings_projection_matches_plan_projected() -> None:
+    """同口径下，独立的储蓄增长工具必须与主页的预计资产逐位对齐。"""
+    plan_input = example_input()
+    result = calculate(plan_input)
+    net_assets = plan_input.assets - plan_input.debt
+
+    projected = project(
+        SavingsProjectInput(
+            current_savings=net_assets,
+            monthly_contribution=result.monthly_surplus,
+            annual_return_pct=plan_input.nominal_return,
+            inflation_pct=plan_input.inflation,
+            years=result.years_to_retirement,
+        )
+    )
+    assert projected.future_balance_real == pytest.approx(result.projected, rel=1e-12)
+    assert projected.real_return_pct == pytest.approx(result.real_return * 100, rel=1e-12)
+
+
+def test_savings_goal_matches_plan_required_saving() -> None:
+    """目标倒推工具必须与主页的“覆盖目标所需月结余”逐位对齐。"""
+    plan_input = example_input()
+    result = calculate(plan_input)
+    net_assets = plan_input.assets - plan_input.debt
+
+    goal = required_contribution(
+        SavingsGoalInput(
+            target_amount=result.target,
+            current_savings=net_assets,
+            annual_return_pct=plan_input.nominal_return,
+            inflation_pct=plan_input.inflation,
+            years=result.years_to_retirement,
+        )
+    )
+    assert goal.required_monthly_contribution_real == pytest.approx(
+        result.required_monthly_saving,
+        rel=1e-12,
+    )
