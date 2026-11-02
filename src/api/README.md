@@ -1,10 +1,11 @@
 # api：退休规划 HTTP 接入层
 
-FastAPI 暴露三组端点：
+FastAPI 暴露以下端点：
 
 - `GET /api/pages/{page_id}`：返回页面清单，主页据此渲染表单并决定提交时执行哪些命令。
 - `GET /api/commands`：返回协议版本和十一个领域命令的 manifest。
 - `POST /api/commands/{command_id}`：执行单个命令，请求 `{version, inputs}`，返回 `{command_id, version, outputs, meta}`。
+- `POST /api/agent/chat`：Agent 对话端点，请求 `{session_id?, message}`；未配置模型服务时返回 503 `AGENT_DISABLED`，其它端点不受影响。细节见 [docs/agent.md](../../docs/agent.md)。
 - `POST /api/retirement/plan`：过渡接口，把旧请求的 `values` 映射成 12 个基础字段，返回与 `frontend/contracts/plan-response.example.json` 同构的响应；新前端不再调用。
 
 协议、页面清单、错误码和 manifest 字段见 [docs/command-protocol.md](../../docs/command-protocol.md)。页面清单只描述结构，执行业务仍走命令端点。
@@ -59,6 +60,9 @@ uv run uvicorn api.app:app --host 127.0.0.1 --port 8000
 - 409 `SCHEMA_VERSION_MISMATCH`：`template_id` 或 `schema_version` 不符。
 - 422 `VALIDATION_ERROR`：`{code, message, field_errors}`，`field` 用 `values` 的 snake_case 名。
 - 500 `CALCULATION_ERROR`：未预期异常，不返回堆栈。
+- 503 `AGENT_DISABLED`：`/api/agent/chat` 未配置模型服务；其它端点不受影响。
+- 502 `AGENT_UPSTREAM_ERROR`：`/api/agent/chat` 的模型服务调用失败。
+- Agent 请求体的 422 仍走 FastAPI 的 `VALIDATION_ERROR`（`field_errors` 为空）。
 
 ## 测试
 

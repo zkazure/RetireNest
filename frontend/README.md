@@ -79,7 +79,7 @@ build 同时执行 TypeScript 严格检查和生产构建，静态产物位于 d
 
 PlanInput 金额单位是元；nominalReturn 和 inflation 是百分数（3 表示 3%）；coverage 也是百分数（80 表示 80%）。points[].assets、target、projected 和 gap 的单位均为元。depletedAge 为首次在退休期出现负资产的年龄，未出现则为 null。
 
-AI 未接入。底部“规则解读”由后端的规则文本生成，不是 LLM 输出；不要把模型密钥放进前端。
+聊天页尚未接入。底部“规则解读”仍由后端的规则文本生成，不是 LLM 输出；后端 Agent 端点可选，模型密钥只放后端环境变量，绝不要放进前端。配置见 [../docs/agent.md](../docs/agent.md)。
 
 ## 测算口径
 

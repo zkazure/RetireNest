@@ -17,6 +17,7 @@
 ## 支撑
 
 - `commands/` — 可发现命令协议：manifest、输入校验、注册表，以及领域模块的适配器。协议见 `docs/command-protocol.md`。
+- `agent/` — LLM 编排：从 manifest 生成工具 schema，跑 ReAct 循环，维护内存会话；`POST /api/agent/chat`。未配置模型时返回 503。细节见 `agent/README.md` 与 `docs/agent.md`。
 - `pages/` — 页面清单：引用命令输入组成分组、开关与执行清单，由 `GET /api/pages/{page_id}` 提供给前端。细节见 `pages/README.md`。
 - `api/` — FastAPI 接入层：`POST /api/retirement/plan`、`GET/POST /api/commands` 与 `GET /api/pages/{page_id}`；负责请求校验、字段映射、错误映射与响应组装。
 - `tests/` — 全部 pytest 用例，按被测目录命名，例如 `test_rates.py` 对应 `deposit/rates.py`、`test_living.py` 对应 `living/`。在 `src/` 下执行 `uv run pytest`。

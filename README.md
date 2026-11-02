@@ -46,8 +46,12 @@ uv run --project src python run.py --prod
 
 命令清单由 `GET /api/commands` 提供，单个命令通过 `POST /api/commands/{id}` 执行；退休规划主页由 `GET /api/pages/retirement` 的页面清单驱动，提交时逐个调用命令。protocol、manifest、页面清单和错误格式见 [docs/command-protocol.md](docs/command-protocol.md)。`POST /api/retirement/plan` 保留为过渡接口。
 
-已实现规划信息表单、退休资金概览、资产曲线、三种情景对比、规则解读与 PDF 报告导出。退休资金由 `plan.retirement` 命令计算；医疗、养老、存款与生活支出由各自命令独立测算并在结果页单独展示，不并入退休资金目标；LLM 未接入。
+已实现规划信息表单、退休资金概览、资产曲线、三种情景对比、规则解读与 PDF 报告导出。退休资金由 `plan.retirement` 命令计算；医疗、养老、存款与生活支出由各自命令独立测算并在结果页单独展示，不并入退休资金目标。
 
-命令层另有六个计算原语：`savings.project`（储蓄增长）、`savings.goal`（目标倒推）、`inflation.convert`（通胀换算）、`simulation.retirement`（蒙特卡洛）、`withdrawal.safe_rate`（安全提取率）、`longevity.estimate`（Gompertz 寿命估计）。它们不进入主页表单，可在命令浏览器中单独执行，供后续 Agent 层调用；口径与 `plan.retirement` 一致，并有 `rel=1e-12` 的交叉校验。运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
+命令层另有六个计算原语：`savings.project`（储蓄增长）、`savings.goal`（目标倒推）、`inflation.convert`（通胀换算）、`simulation.retirement`（蒙特卡洛）、`withdrawal.safe_rate`（安全提取率）、`longevity.estimate`（Gompertz 寿命估计）。它们不进入主页表单，可在命令浏览器中单独执行，供 Agent 层调用；口径与 `plan.retirement` 一致，并有 `rel=1e-12` 的交叉校验。
+
+Agent 层已接入但默认关闭：设置 `RETIRENEST_LLM_API_KEY` 与 `RETIRENEST_LLM_MODEL`（可选 `RETIRENEST_LLM_BASE_URL`）后，`POST /api/agent/chat` 可用；未配置时返回 503，命令、页面和旧接口都不受影响。配置、隐私、工具轨迹与错误说明见 [docs/agent.md](docs/agent.md)。聊天页尚未提供，本轮只交付后端端点与测试。
+
+运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
 
 前端不再保存字段配置：表单的问题、类型、选项、约束与分组全部来自后端页面清单。契约示例见 `frontend/contracts/`。

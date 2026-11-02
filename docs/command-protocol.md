@@ -16,7 +16,7 @@ RetireNest 后端把领域能力暴露为**命令**：一个命令回答一个�
 - `withdrawal.safe_rate`
 - `longevity.estimate`
 
-后六个是退休规划的计算原语：储蓄增长、目标倒推、通胀换算、蒙特卡洛、安全提取率与寿命估计。它们不进入主页表单，供命令浏览器、开发者和后续 Agent 直接调用；主页仍使用前五个命令。
+后六个是退休规划的计算原语：储蓄增长、目标倒推、通胀换算、蒙特卡洛、安全提取率与寿命估计。它们不进入主页表单，供命令浏览器、开发者和 Agent 层直接调用；主页仍使用前五个命令。
 
 退休规划主页由页面清单驱动：`GET /api/pages/retirement` 告诉前端有哪些字段、怎么分组、提交时调用哪些命令；前端逐个执行命令并组合结果。`POST /api/retirement/plan` 保留为过渡接口。
 
@@ -31,6 +31,7 @@ GET  /api/pages/{page_id}
 - `GET /api/commands`：返回协议版本和全部命令 manifest。
 - `POST /api/commands/{command_id}`：执行一个命令。
 - `GET /api/pages/{page_id}`：返回页面清单，见第 5 节。
+- Agent 对话走 `POST /api/agent/chat`，不属于命令协议；它读取同一份 manifest 生成工具 schema，见 [docs/agent.md](agent.md)。
 - 没有鉴权头、Cookie 或 API Key。
 - 请求和响应都是 `application/json`。
 
@@ -295,10 +296,16 @@ const ENABLED_COMMANDS = new Set([
   'pension.basic',
   'deposit.demand',
   'living.calculate',
+  'savings.project',
+  'savings.goal',
+  'inflation.convert',
+  'simulation.retirement',
+  'withdrawal.safe_rate',
+  'longevity.estimate',
 ]);
 ```
 
-启动时读取 `GET /api/commands`，只注册允许列表内的命令。后端新增命令不会自动出现在页面里，前端开发者要显式放行。
+启动时读取 `GET /api/commands`，只注册允许列表内的命令。后端新增命令不会自动出现在页面里，前端开发者要显式放行。Agent 层直接读 `/api/commands`，不受这份允许列表限制。
 
 页面通过：
 
@@ -406,7 +413,7 @@ const response = await runCommand('medical.estimate', {
 ## 11. 非目标
 
 - 不做终端用户拖拽连线。
-- 命令层不调用 LLM；协议 1.1 的 `description`、`when_to_use`、`when_not_to_use` 是给后续 Agent 层生成工具 schema 用的，Agent 尚未接入。
+- 命令层不调用 LLM；协议 1.1 的 `description`、`when_to_use`、`when_not_to_use` 由 Agent 层用来生成工具 schema，Agent 未配置模型时返回 503，见 [docs/agent.md](agent.md)。
 - 不做税务工具；`pension.basic` 只覆盖社保养老金，税制是地区规则，等有明确地区后再加。
 - 后端不做批量执行或依赖 DAG；页面的顺序执行由前端按页面清单完成。
 - 不做动态枚举选项服务；选项写在 manifest，页面清单原样引用。
