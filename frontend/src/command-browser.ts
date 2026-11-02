@@ -1,7 +1,12 @@
 import './command-browser.css';
 import { CommandApiError } from './command-client';
+import { buildOutputRows } from './command-output';
 import { loadCommands, runCommand } from './command-registry';
-import type { CommandInputSpec, CommandManifest } from './command-types';
+import type {
+  CommandExecutionResponse,
+  CommandInputSpec,
+  CommandManifest,
+} from './command-types';
 
 const app = document.querySelector<HTMLDivElement>('#command-app')!;
 
@@ -105,17 +110,27 @@ function selectCommand(command: CommandManifest) {
     <section class="cmd-output-wrap">
       <div class="cmd-output-head">
         <h3>输出</h3>
-        <span class="cmd-hint">JSON，未做页面级渲染</span>
+        <span class="cmd-hint">按 manifest 渲染；原始 JSON 可展开</span>
       </div>
-      <pre class="cmd-output" id="command-output" hidden></pre>
       <p class="cmd-muted" id="command-empty">执行后在这里查看 outputs。</p>
+      <p class="cmd-run-meta" id="command-meta" hidden></p>
+      <table class="cmd-output-table" id="command-table" hidden>
+        <thead>
+          <tr><th scope="col">输出</th><th scope="col">值</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <details class="cmd-json" id="command-json-wrap" hidden>
+        <summary>原始 JSON</summary>
+        <pre class="cmd-output" id="command-json"></pre>
+      </details>
     </section>
   `;
-  detail.querySelector<HTMLFormElement>('#command-form')!.addEventListener('submit', event => {
+  const form = detail.querySelector<HTMLFormElement>('#command-form')!;
+  form.addEventListener('submit', event => {
     event.preventDefault();
     void executeSelected(command);
-  });
-}
+  });}
 
 function renderInput(spec: CommandInputSpec): string {
   const id = `cmd-input-${spec.name}`;
@@ -186,29 +201,67 @@ function collectInputs(command: CommandManifest): Record<string, unknown> {
   return inputs;
 }
 
+function renderOutputs(command: CommandManifest, response: CommandExecutionResponse) {
+  const table = document.querySelector<HTMLTableElement>('#command-table')!;
+  const body = table.querySelector<HTMLTableSectionElement>('tbody')!;
+  const rows = buildOutputRows(command, response.outputs);
+  body.innerHTML = rows.length
+    ? rows
+        .map(
+          row => `
+          <tr>
+            <th scope="row">
+              <span class="cmd-output-label">${escapeHtml(row.label)}</span>
+              <code class="cmd-output-name">${escapeHtml(row.name)}</code>
+            </th>
+            <td>
+              <span class="cmd-output-value">${escapeHtml(row.value)}</span>
+              ${row.unit ? `<span class="cmd-unit">${escapeHtml(row.unit)}</span>` : ''}
+            </td>
+          </tr>`,
+        )
+        .join('')
+    : '<tr><td colspan="2" class="cmd-muted">manifest 中没有可展示的输出。</td></tr>';
+  table.hidden = false;
+
+  const meta = document.querySelector<HTMLElement>('#command-meta')!;
+  const parts = [response.command_id, `v${response.version}`];
+  if (response.meta?.as_of) parts.push(`as of ${response.meta.as_of}`);
+  parts.push(response.meta?.deterministic === false ? '非确定性' : '确定性');
+  meta.textContent = parts.join(' · ');
+  meta.hidden = false;
+
+  const jsonWrap = document.querySelector<HTMLDetailsElement>('#command-json-wrap')!;
+  jsonWrap.open = false;
+  document.querySelector<HTMLElement>('#command-json')!.textContent = JSON.stringify(
+    response,
+    null,
+    2,
+  );
+  jsonWrap.hidden = false;
+}
+
 async function executeSelected(command: CommandManifest) {
   const form = document.querySelector<HTMLFormElement>('#command-form')!;
   const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
   const errorElement = document.querySelector<HTMLElement>('#command-error')!;
-  const outputElement = document.querySelector<HTMLElement>('#command-output')!;
   const emptyElement = document.querySelector<HTMLElement>('#command-empty')!;
+  const tableElement = document.querySelector<HTMLElement>('#command-table')!;
+  const metaElement = document.querySelector<HTMLElement>('#command-meta')!;
+  const jsonWrap = document.querySelector<HTMLElement>('#command-json-wrap')!;
 
   errorElement.hidden = true;
   errorElement.textContent = '';
-  outputElement.hidden = true;
-  outputElement.textContent = '';
   emptyElement.hidden = false;
+  tableElement.hidden = true;
+  metaElement.hidden = true;
+  jsonWrap.hidden = true;
   button.disabled = true;
   button.textContent = '执行中…';
 
   try {
     const response = await runCommand(command.id, collectInputs(command));
-    outputElement.textContent = JSON.stringify(
-      { outputs: response.outputs, meta: response.meta ?? null },
-      null,
-      2,
-    );
-    outputElement.hidden = false;
+    renderOutputs(command, response);
     emptyElement.hidden = true;
   } catch (error) {
     errorElement.hidden = false;

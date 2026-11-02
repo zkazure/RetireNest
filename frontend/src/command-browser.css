@@ -313,6 +313,60 @@ button, input, select { font: inherit; }
   word-break: break-word;
 }
 
+.cmd-run-meta {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+}
+
+.cmd-output-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.cmd-output-table thead th {
+  padding: 6px 10px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.cmd-output-table tbody th,
+.cmd-output-table tbody td {
+  padding: 9px 10px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.cmd-output-table tbody th { font-weight: 500; }
+
+.cmd-output-label { display: block; }
+
+.cmd-output-name {
+  display: block;
+  margin-top: 2px;
+  color: var(--sage);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.cmd-output-value { word-break: break-word; }
+
+.cmd-json { margin-top: 14px; }
+
+.cmd-json summary {
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.cmd-json .cmd-output { margin-top: 10px; }
+
 @media (max-width: 900px) {
   .cmd-header { align-items: flex-start; flex-direction: column; gap: 18px; }
   .cmd-heading { text-align: left; }
