@@ -88,6 +88,8 @@ MANIFEST = CommandManifest(
             question="你现在有多少负债？",
             type="number",
             unit="元",
+            required=False,
+            default=0,
             constraints={"min": 0, "max": 1_000_000_000},
         ),
         InputSpec(
@@ -102,6 +104,8 @@ MANIFEST = CommandManifest(
             question="你预计每月能领多少养老金？",
             type="number",
             unit="元/月",
+            required=False,
+            default=0,
             constraints={"min": 0, "max": 1_000_000_000},
         ),
         InputSpec(

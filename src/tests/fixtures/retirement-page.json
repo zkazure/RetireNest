@@ -295,12 +295,13 @@
           "name": "debt",
           "label": "你现在有多少负债？",
           "type": "number",
-          "required": true,
+          "required": false,
           "source": {
             "command": "plan.retirement",
             "input": "debt"
           },
           "unit": "元",
+          "defaultValue": 0,
           "min": 0,
           "max": 1000000000
         }
@@ -329,12 +330,13 @@
           "name": "monthly_pension",
           "label": "你预计每月能领多少养老金？",
           "type": "number",
-          "required": true,
+          "required": false,
           "source": {
             "command": "plan.retirement",
             "input": "monthly_pension"
           },
           "unit": "元/月",
+          "defaultValue": 0,
           "min": 0,
           "max": 1000000000
         }

@@ -198,6 +198,23 @@ def test_plan_retirement_requires_every_input() -> None:
     assert any(error["field"] == "assets" for error in response.json()["field_errors"])
 
 
+def test_plan_retirement_defaults_debt_and_pension() -> None:
+    inputs = {
+        name: value
+        for name, value in PLAN_INPUTS.items()
+        if name not in ("debt", "monthly_pension")
+    }
+    omitted = run("plan.retirement", inputs)
+    explicit = run("plan.retirement", {**inputs, "debt": 0, "monthly_pension": 0})
+
+    assert omitted.status_code == 200
+    assert omitted.json()["outputs"] == explicit.json()["outputs"]
+
+    plan_input = omitted.json()["outputs"]["plan_input"]
+    assert plan_input["debt"] == 0
+    assert plan_input["monthlyPension"] == 0
+
+
 def test_internal_outputs_are_marked_invisible() -> None:
     body = client.get("/api/commands").json()
     living = next(command for command in body["commands"] if command["id"] == "living.calculate")
