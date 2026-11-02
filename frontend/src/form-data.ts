@@ -103,6 +103,7 @@ export function collectValues(template: FormTemplate, raw: RawValues): { values:
       values[field.name] = text;
     } else {
       if (field.type === 'select' && !field.allowCustom && !fieldOptions(template,field).some(option => option.value === text)) error('请选择列表中的选项。');
+      if (field.type === 'tier' && !(field.tiers ?? []).some(tier => tier.value === text)) error('请选择列表中的选项。');
       values[field.name] = text;
     }
   }

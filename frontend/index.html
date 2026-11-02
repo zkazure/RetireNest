@@ -1,15 +1,35 @@
 <!doctype html>
 <html lang="zh-CN">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#184e3c" />
-    <meta name="description" content="退有所算 RetireNest：让退休规划从一个想法，变成看得见的未来。" />
-    <title>退有所算 · RetireNest</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>退有所算 · 一辈子的现金流</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23184e3c'/%3E%3Cpath d='M10 27V17l10-7 10 7v10M15 25l5 3 5-3M15 20l5 3 5-3' fill='none' stroke='%23e5f0b3' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <header class="site-header">
+      <a class="brand" href="/">退有所算</a>
+      <nav class="site-nav">
+        <a href="/" aria-current="page">全周期</a>
+        <a href="/commands.html">命令浏览器</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="intro">
+        <h1>一辈子的现金流</h1>
+        <p>填几个选择题，看工作期与退休期的收支、资产轨迹，以及不同活法的差别。所有档位都按区间中值计算，选中后会在下方回显。</p>
+      </section>
+      <form id="plan-form" class="profile-card" novalidate>
+        <div id="form-host"></div>
+        <p class="field-error" id="form-error" hidden></p>
+        <button class="button button-primary" type="submit">开始测算</button>
+      </form>
+      <section id="results" hidden>
+        <div id="summary-host"></div>
+        <div id="views-host"></div>
+        <div id="strategy-host"></div>
+      </section>
+    </main>
+    <script type="module" src="/src/app.ts"></script>
   </body>
 </html>

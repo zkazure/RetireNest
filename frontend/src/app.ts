@@ -4,6 +4,8 @@ import { pageToTemplate } from './page-to-template';
 import { PageRunError, runPage } from './page-runner';
 import { FormRenderer } from './form-renderer';
 import { CommandApiError } from './command-client';
+import { openGeneration } from './generation';
+import { playIntro } from './intro';
 import type { PageManifest } from './page-types';
 
 interface Row { age: number; phase: string; income: number; expense: number; medical: number; soft: number; assets: number }
@@ -189,7 +191,10 @@ function prefill(params: URLSearchParams): boolean {
   return complete;
 }
 
+const STAGES = ['正在整理你的画像…', '正在测算现金流与风险…', '正在对比五种活法…'];
+
 async function bootstrap() {
+  playIntro();
   const formHost = host('form-host');
   try {
     const page: PageManifest = await loadPage('retirement.lifecycle');
@@ -206,12 +211,15 @@ async function bootstrap() {
       }
       const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
       button.disabled = true; button.textContent = '正在算…';
+      const generation = openGeneration(STAGES);
       try {
         const results = await runPage(page, collected.values);
+        generation.close();
         const find = (command: string) => results.find(item => item.execution.command === command)?.outputs as unknown;
         render(find('lifecycle.project') as ProjectOutput, find('lifecycle.simulate') as SimulateOutput, find('strategy.compare') as CompareOutput);
         errorElement.hidden = true;
       } catch (error) {
+        generation.close();
         errorElement.hidden = false;
         if (error instanceof PageRunError) { renderer.setFieldErrors(error.fieldErrors); errorElement.textContent = error.message; }
         else if (error instanceof CommandApiError) errorElement.textContent = error.message;
