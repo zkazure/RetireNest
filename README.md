@@ -7,3 +7,19 @@
 ## 目录
 
 代码在 `src/` 下，每个目录的用途见 [src/INDEX.md](src/INDEX.md)。
+
+## 前端预览
+
+前端位于 `frontend/`，采用 HTML + CSS + TypeScript，使用 Vite。
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+默认访问 http://127.0.0.1:5173/。运行 `npm run build` 执行类型检查和生产构建。
+
+已实现规划信息表单、退休资金概览、资产曲线、三种情景对比、规则解读与 PDF 报告导出。目前使用本地演示计算，未接入后端和 LLM。运行方法、计算口径与接口接入说明见 [frontend/README.md](frontend/README.md)。
+
+前端填写栏已支持动态 JSON 模板。后端对接以 [frontend/FORM_TEMPLATE.md](frontend/FORM_TEMPLATE.md) 及 frontend/contracts/ 中的示例为准。
