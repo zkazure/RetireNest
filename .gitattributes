@@ -1,0 +1,2 @@
+# make 的 recipe 必须是制表符 + LF；Windows 检出成 CRLF 后 make 会直接报错。
+Makefile text eol=lf
