@@ -27,7 +27,7 @@ def run(command_id: str, inputs: dict, version: str = PROTOCOL):
     )
 
 
-def test_command_list_contains_four_manifests() -> None:
+def test_command_list_contains_five_manifests() -> None:
     response = client.get("/api/commands")
     assert response.status_code == 200
 
@@ -35,6 +35,7 @@ def test_command_list_contains_four_manifests() -> None:
     assert body["protocol_version"] == PROTOCOL_VERSION
     ids = [command["id"] for command in body["commands"]]
     assert ids == [
+        "plan.retirement",
         "medical.estimate",
         "pension.basic",
         "deposit.demand",
@@ -47,6 +48,7 @@ def test_command_list_contains_four_manifests() -> None:
         assert command["outputs"]
         assert all("question" in item for item in command["inputs"])
         assert all("question" in item for item in command["outputs"])
+        assert all("visible" in item for item in command["outputs"])
 
 
 def test_medical_matches_module() -> None:
@@ -132,6 +134,81 @@ def test_living_matches_module() -> None:
     assert outputs["real"]["total"][0] == pytest.approx(expected["real"]["total"][0])
 
 
+PLAN_INPUTS = {
+    "city": "珠海",
+    "age": 30,
+    "retire_age": 55,
+    "life_expectancy": 90,
+    "monthly_income": 20000,
+    "monthly_expense": 12000,
+    "assets": 500000,
+    "debt": 0,
+    "retirement_expense": 8000,
+    "monthly_pension": 3000,
+    "nominal_return": 5,
+    "inflation": 2,
+}
+
+
+def test_plan_retirement_matches_legacy_endpoint() -> None:
+    legacy = client.post(
+        "/api/retirement/plan",
+        json={
+            "template_id": "retirenest-retirement",
+            "schema_version": "1.0.0",
+            "values": PLAN_INPUTS,
+        },
+    )
+    assert legacy.status_code == 200
+    expected = legacy.json()
+
+    response = run("plan.retirement", PLAN_INPUTS)
+    assert response.status_code == 200
+    outputs = response.json()["outputs"]
+
+    assert outputs["plan_input"] == expected["plan_input"]
+    assert outputs["explanation"] == expected["explanation"]
+    for key in ("target", "projected", "gap", "coverage"):
+        assert outputs[key] == pytest.approx(expected["result"][key])
+    assert outputs["required_monthly_saving"] == pytest.approx(
+        expected["result"]["requiredMonthlySaving"]
+    )
+    assert outputs["monthly_surplus"] == pytest.approx(expected["result"]["monthlySurplus"])
+    assert outputs["years_to_retirement"] == expected["result"]["yearsToRetirement"]
+    assert outputs["retirement_years"] == expected["result"]["retirementYears"]
+    assert outputs["depleted_age"] == expected["result"]["depletedAge"]
+    assert outputs["points"] == expected["result"]["points"]
+    assert outputs["scenarios"] == expected["scenarios"]
+    assert len(outputs["warnings"]) == 2
+
+
+def test_plan_retirement_rejects_cross_field_error() -> None:
+    response = run("plan.retirement", {**PLAN_INPUTS, "retire_age": 30})
+    assert response.status_code == 422
+    body = response.json()
+    assert body["code"] == "INVALID_INPUT"
+    assert any(error["field"] == "retire_age" for error in body["field_errors"])
+
+
+def test_plan_retirement_requires_every_input() -> None:
+    inputs = dict(PLAN_INPUTS)
+    inputs.pop("assets")
+    response = run("plan.retirement", inputs)
+    assert response.status_code == 422
+    assert any(error["field"] == "assets" for error in response.json()["field_errors"])
+
+
+def test_internal_outputs_are_marked_invisible() -> None:
+    body = client.get("/api/commands").json()
+    living = next(command for command in body["commands"] if command["id"] == "living.calculate")
+    retire_index = next(item for item in living["outputs"] if item["name"] == "retire_index")
+    assert retire_index["visible"] is False
+
+    plan = next(command for command in body["commands"] if command["id"] == "plan.retirement")
+    points = next(item for item in plan["outputs"] if item["name"] == "points")
+    assert points["visible"] is False
+
+
 def test_unknown_command() -> None:
     response = run("nope.nope", {})
     assert response.status_code == 404
@@ -214,4 +291,4 @@ def test_command_list_inputs_include_conditional_rule() -> None:
     category = next(item for item in pension["inputs"] if item["name"] == "category")
     assert category["required"] is False
     assert category["required_when"] == {"field": "gender", "equals": "女"}
-    assert len(list_commands()) == 4
+    assert len(list_commands()) == 5

@@ -175,7 +175,12 @@ MANIFEST = CommandManifest(
     ),
     outputs=(
         OutputSpec(name="years", question="测算年数", type="integer", unit="年"),
-        OutputSpec(name="retire_index", question="退休在数组中的下标", type="integer"),
+        OutputSpec(
+            name="retire_index",
+            question="退休在数组中的下标",
+            type="integer",
+            visible=False,
+        ),
         OutputSpec(name="inflation", question="生活支出通胀假设", type="number", semantic="ratio"),
         OutputSpec(
             name="edu_inflation",

@@ -34,6 +34,8 @@ class OutputSpec:
     semantic: str | None = None
     precision: int | None = None
     time_axis: Mapping[str, Any] | None = None
+    # False 表示这是实现细节（数组下标、回显输入），页面不展示。
+    visible: bool = True
 
 
 @dataclass(frozen=True, slots=True)
