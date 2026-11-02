@@ -23,6 +23,8 @@ MANIFEST = CommandManifest(
     version="1.0.0",
     question="一笔活期存款到期能拿多少利息？",
     description="单利一次性计息，年利率按 360 天折算，天数算头不算尾。",
+    when_to_use="用户问一笔活期存款到期利息时用。",
+    when_not_to_use="不要把活期利率当成退休投资回报率；长期储蓄增长用 savings.project。",
     as_of=AS_OF,
     inputs=(
         InputSpec(

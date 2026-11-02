@@ -33,6 +33,11 @@ MANIFEST = CommandManifest(
     version="1.0.0",
     question="按现在的收入和支出，退休时能攒下多少、还差多少？",
     description="根据年龄、收支、资产与假设，测算退休资金目标、预计资产、缺口与三情景。",
+    when_to_use="需要一次性给出退休资金目标、预计资产、缺口、资产曲线和三情景时用。",
+    when_not_to_use=(
+        "只问未来余额或每月要存多少时用 savings.project / savings.goal；"
+        "问退休后资金耗尽风险时用 simulation.retirement。"
+    ),
     inputs=(
         # 与 living.calculate 共用的字段沿用同一套问法，避免同一语义出现两种措辞。
         InputSpec(
