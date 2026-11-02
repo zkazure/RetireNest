@@ -31,6 +31,35 @@
 期末本息 = 100050.69 元
 ```
 
+## 代码用法
+
+```python
+from datetime import date
+
+from profit import DemandDeposit, calculate
+
+deposit = DemandDeposit(
+    principal="100000",  # Decimal、int 或字符串；float 会被拒绝
+    annual_rate="0.0005",  # 省略则用默认的 0.05%
+    start_date=date(2026, 1, 1),
+    end_date=date(2027, 1, 1),
+)
+result = calculate(deposit)
+
+result.days  # 365
+result.interest  # Decimal('50.69')
+result.total  # Decimal('100050.69')
+result.daily_rate  # Decimal('0.0000013889')，仅供展示，不参与计算
+```
+
+金额一律用 Decimal，不要用 float；本金最多两位小数，超过直接报错。参数不合法时抛 `ProfitError`（`ValueError` 的子类），消息里写明是哪个参数、期望什么。
+
+测试在 `src/` 下执行：
+
+```
+uv run pytest
+```
+
 ## 已知取舍
 
 - 不复利：真实活期按季结息、利息并入本金，季度复利一年只差几毛钱，本期按单利处理；若要和银行对账单逐笔对齐，再改为按季结息。
