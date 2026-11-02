@@ -1,13 +1,15 @@
 import './style.css';
-import { calculatePlan, defaultInput, validateInput, type PlanInput, type PlanResult } from './model';
+import type { PlanInput, PlanResult } from './model';
+import type { PlanResponse } from './plan-contract';
 import templateJson from './form-template.json';
 import { validateTemplate, buildRequest } from './form-data';
 import { FormRenderer } from './form-renderer';
-import { toDemoInput } from './form-adapter';
+import { requestPlan, PlanApiError } from './plan-client';
 import type { PlanRequest } from './form-types';
 validateTemplate(templateJson);
 const template = templateJson;
 let submittedRequest: PlanRequest | null = null;
+let currentPlan: PlanResponse | null = null;
 
 const icons: Record<string, string> = {
   nest: '<path d="M4 13V8l8-5 8 5v5M6 13l6 3 6-3M4 17l8 4 8-4M8 10l4 2 4-2"/>',
@@ -27,7 +29,6 @@ const icons: Record<string, string> = {
 const icon = (name: string, cls = '') => `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] ?? icons.info}</svg>`;
 const money = (value: number) => Math.round(value).toLocaleString('zh-CN');
 const wan = (value: number) => (value / 10000).toFixed(1);
-let currentInput: PlanInput = { ...defaultInput };
 let activeScenario = 1;
 let hasGeneratedPlan = false;
 let isGenerating = false;
@@ -50,8 +51,7 @@ app.innerHTML = `
           <form id="plan-form">
             <p class="template-description" id="template-description"></p>
             <div id="template-fields"></div>
-            <div class="api-config"><label class="field" for="api-key"><span>API Key <span class="optional-label">可选</span></span><div class="input-wrap"><input type="password" id="api-key" name="apiKey" placeholder="填写你的 API Key" autocomplete="off" spellcheck="false" aria-describedby="api-key-hint" /></div></label><p class="field-hint" id="api-key-hint">当前仅提供输入栏，尚未接入接口；留空也可生成本地演示规划。</p></div>
-            <p class="form-error" id="form-error" role="alert" hidden></p><button type="submit" class="button button-primary calculate-button">生成我的退休规划 ${icon('arrow')}</button><div class="form-footer">${icon('check')}信息仅用于当前页面测算，不会上传</div>
+            <p class="form-error" id="form-error" role="alert" hidden></p><button type="submit" class="button button-primary calculate-button">生成我的退休规划 ${icon('arrow')}</button><div class="form-footer">${icon('check')}信息仅发送到本地测算服务，不保存</div>
           </form>
         </section>
         <section class="generation-panel card" id="generation-panel" hidden aria-labelledby="generation-title">
@@ -67,7 +67,7 @@ app.innerHTML = `
 
     </main>
   </div><div class="toast" id="toast" role="status" hidden></div>
-  <dialog id="help-dialog"><div class="dialog-top"><h2>关于这份退休测算</h2><button class="icon-button" id="close-help" aria-label="关闭说明">×</button></div><p>这是前端演示，所有结果由本地公式计算，尚未连接 AI 或后端。</p><p>所有金额以今天的购买力展示。实际年回报 = (1 + 名义年回报) ÷ (1 + 通胀率) − 1。工作期间的年结余和退休后的支出缺口统一按年末计入。</p><p>退休资金目标为退休后各年支出减养老金的折现总额；退休时预计资产为当前净资产与未来结余的累积值。</p><p>假设收支及养老金随通胀同步变化，负债直接抵减资产，不另算利息；不计税费、收益波动或政策变化。城市不参与计算。结果用于展示与学习，不构成投资或养老金政策建议。</p><button class="button button-primary" id="understood-button">了解了</button></dialog>
+  <dialog id="help-dialog"><div class="dialog-top"><h2>关于这份退休测算</h2><button class="icon-button" id="close-help" aria-label="关闭说明">×</button></div><p>结果由本地后端按基础字段计算，尚未连接 AI；医疗、养老、存款等扩展信息暂未参与。</p><p>所有金额以今天的购买力展示。实际年回报 = (1 + 名义年回报) ÷ (1 + 通胀率) − 1。工作期间的年结余和退休后的支出缺口统一按年末计入。</p><p>退休资金目标为退休后各年支出减养老金的折现总额；退休时预计资产为当前净资产与未来结余的累积值。</p><p>假设收支及养老金随通胀同步变化，负债直接抵减资产，不另算利息；不计税费、收益波动或政策变化。城市不参与计算。结果用于展示与学习，不构成投资或养老金政策建议。</p><button class="button button-primary" id="understood-button">了解了</button></dialog>
 `;
 
 function chart(input: PlanInput, result: PlanResult): string {
@@ -87,25 +87,26 @@ function chart(input: PlanInput, result: PlanResult): string {
 }
 
 function renderResults() {
-  const result = calculatePlan(currentInput);
+  if (!currentPlan) return;
+  const { plan_input: input, result, scenarios, explanation, warnings } = currentPlan;
   const submittedCount = Object.keys(submittedRequest?.values ?? {}).length;
   const savingExtra = Math.max(0, result.requiredMonthlySaving - result.monthlySurplus);
   const coverage = Math.min(100, result.coverage);
-  const scenarios = [{ name: '保守情景', subtitle: '更审慎地看待未来', delta: -1, mark: '01' }, { name: '基准情景', subtitle: '按当前假设稳步前行', delta: 0, mark: '02' }, { name: '乐观情景', subtitle: '让时间释放更多可能', delta: 1, mark: '03' }];
+  const subtitles = ['更审慎地看待未来', '按当前假设稳步前行', '让时间释放更多可能'];
+  const warningsText = warnings.length ? ` ${warnings.map(escapeHtml).join(' ')} ` : '';
   document.querySelector('#results')!.innerHTML = `
     <div class="results-toolbar"><div><span class="step-label">YOUR RETIREMENT PLAN</span><h1 id="result-title" tabindex="-1">你的退休规划</h1></div><button type="button" class="button button-outline" id="back-button">${icon('arrow', 'back-arrow')}返回修改</button></div>
-    <p class="result-template-note">本次按模板收集了 ${submittedCount} 项信息。当前结果为基础字段的本地演示；扩展模块待后端接入。</p>
-    <section class="card result-summary"><div class="section-heading"><div><span class="step-label">02 / YOUR RETIREMENT OUTLOOK</span><h2>你的退休规划概览</h2></div><span class="subtle-badge">${escapeHtml(currentInput.city)} · ${currentInput.age}岁出发</span></div><div class="summary-subtitle">距离 ${currentInput.retirementAge} 岁退休，还有 <strong>${result.yearsToRetirement} 年</strong> 的准备时间。</div><div class="metrics"><div class="metric"><div class="metric-label">${icon('target')}退休所需资金</div><div class="metric-value">${wan(result.target)}<span>万元</span></div><p>覆盖退休后 ${result.retirementYears} 年的支出缺口</p></div><div class="metric"><div class="metric-label">${icon('wallet')}退休时预计资产</div><div class="metric-value">${wan(result.projected)}<span>万元</span></div><p>按当前每月结余 ${money(result.monthlySurplus)} 元测算</p></div><div class="metric metric-gap"><div class="metric-label">${icon('leaf')}${result.gap > 0 ? '还需准备' : '预计资金余量'}</div><div class="metric-value">${wan(result.gap > 0 ? result.gap : result.projected-result.target)}<span>万元</span></div><p>${result.gap > 0 ? '把差距拆小，未来更有方向' : '当前假设下已覆盖退休目标'}</p></div></div><div class="coverage-row"><span>退休目标准备度</span><div class="progress-track"><span style="width:${coverage}%"></span></div><strong>${result.coverage.toFixed(0)}%</strong></div><div class="saving-note">${icon('info')}<span>${result.gap > 0 ? `若维持当前假设，每月结余达到 <strong>¥${money(result.requiredMonthlySaving)}</strong> 可覆盖目标，比现在多 <strong>¥${money(savingExtra)}</strong>。` : '按当前假设，你已走在实现退休目标的路径上。可以调整退休年龄，看看未来的更多可能。'}</span></div></section>
-    <section class="card chart-card"><div class="section-heading"><div><h2>让未来的资产，有迹可循</h2><p class="section-description">从积累到退休，看看资金如何陪伴你的每个阶段。</p></div><span class="chart-unit">单位：万元</span></div><div class="chart-legend"><span><i class="legend-dot green"></i>资产积累期</span><span><i class="legend-dot sage"></i>退休支取期</span><span><i class="legend-dash"></i>退休资金目标</span></div>${chart(currentInput,result)}<div class="chart-bottom">${icon('clock')}<span>${result.depletedAge ? `当前路径下，资产预计在 ${result.depletedAge} 岁出现不足，可尝试增加结余或调整退休计划。` : `按当前假设，资产可支持至规划终点 ${currentInput.lifeExpectancy} 岁。`}</span></div></section>
-    <section class="card scenario-section" id="scenarios"><div class="section-heading"><div><h2>同一个目标，看看不同的可能</h2><p class="section-description">仅调整名义年回报，其余条件保持不变。</p></div><span class="subtle-badge">3 种情景</span></div><div class="scenario-grid">${scenarios.map((scenario,index)=> {const rate = Math.max(-5,Math.min(15,currentInput.nominalReturn+scenario.delta)); const scenarioResult = calculatePlan({...currentInput,nominalReturn:rate});return `<button type="button" class="scenario-card ${index === activeScenario ? 'selected' : ''}" data-scenario="${index}" aria-pressed="${index === activeScenario}"><div class="scenario-title"><strong>${scenario.name}</strong><span class="scenario-radio">${index === activeScenario ? icon('check') : ''}</span></div><p>${scenario.subtitle}</p><div class="scenario-amount">${wan(scenarioResult.projected)}<span>万元</span></div><div class="scenario-footer"><span>名义年回报 ${rate.toFixed(1)}%</span><span>${scenarioResult.gap > 0 ? '缺口 '+wan(scenarioResult.gap)+'万' : '目标已覆盖'}</span></div></button>`;}).join('')}</div><div class="scenario-detail" id="scenario-detail"></div></section>
-    <section class="insight-card" id="insights"><span class="insight-icon">${icon('spark')}</span><div class="insight-content"><div class="insight-heading"><h2>把数字，变成下一步</h2><span>规则解读 · AI 待接入</span></div><p>${result.gap > 0 ? `你还有 ${result.yearsToRetirement} 年的准备时间。当前每月结余为 ${money(result.monthlySurplus)} 元，目标准备度约 ${result.coverage.toFixed(0)}%。先尝试在可承受范围内调整收支，再观察目标缺口如何变化。` : `你的当前路径已覆盖目标。距离退休还有 ${result.yearsToRetirement} 年，建议定期更新真实收支和养老金假设，观察计划是否仍符合期待。`}</p><button class="text-button" id="adjust-button">调整我的规划 ${icon('arrow')}</button></div></section>
-    <div class="disclaimer">${icon('info')}<span>金额均为今天的购买力。本地演示假设不代表未来实际收益；结果用于学习展示，不构成投资建议。<button class="inline-link" id="method-button">查看测算说明</button></span></div>
+    <p class="result-template-note">本次按模板收集了 ${submittedCount} 项信息。当前结果由本地后端按基础字段计算；医疗、养老、存款等扩展模块尚未参与。</p>
+    <section class="card result-summary"><div class="section-heading"><div><span class="step-label">02 / YOUR RETIREMENT OUTLOOK</span><h2>你的退休规划概览</h2></div><span class="subtle-badge">${escapeHtml(input.city)} · ${input.age}岁出发</span></div><div class="summary-subtitle">距离 ${input.retirementAge} 岁退休，还有 <strong>${result.yearsToRetirement} 年</strong> 的准备时间。</div><div class="metrics"><div class="metric"><div class="metric-label">${icon('target')}退休所需资金</div><div class="metric-value">${wan(result.target)}<span>万元</span></div><p>覆盖退休后 ${result.retirementYears} 年的支出缺口</p></div><div class="metric"><div class="metric-label">${icon('wallet')}退休时预计资产</div><div class="metric-value">${wan(result.projected)}<span>万元</span></div><p>按当前每月结余 ${money(result.monthlySurplus)} 元测算</p></div><div class="metric metric-gap"><div class="metric-label">${icon('leaf')}${result.gap > 0 ? '还需准备' : '预计资金余量'}</div><div class="metric-value">${wan(result.gap > 0 ? result.gap : result.projected-result.target)}<span>万元</span></div><p>${result.gap > 0 ? '把差距拆小，未来更有方向' : '当前假设下已覆盖退休目标'}</p></div></div><div class="coverage-row"><span>退休目标准备度</span><div class="progress-track"><span style="width:${coverage}%"></span></div><strong>${result.coverage.toFixed(0)}%</strong></div><div class="saving-note">${icon('info')}<span>${result.gap > 0 ? `若维持当前假设，每月结余达到 <strong>¥${money(result.requiredMonthlySaving)}</strong> 可覆盖目标，比现在多 <strong>¥${money(savingExtra)}</strong>。` : '按当前假设，你已走在实现退休目标的路径上。可以调整退休年龄，看看未来的更多可能。'}</span></div></section>
+    <section class="card chart-card"><div class="section-heading"><div><h2>让未来的资产，有迹可循</h2><p class="section-description">从积累到退休，看看资金如何陪伴你的每个阶段。</p></div><span class="chart-unit">单位：万元</span></div><div class="chart-legend"><span><i class="legend-dot green"></i>资产积累期</span><span><i class="legend-dot sage"></i>退休支取期</span><span><i class="legend-dash"></i>退休资金目标</span></div>${chart(input,result)}<div class="chart-bottom">${icon('clock')}<span>${result.depletedAge ? `当前路径下，资产预计在 ${result.depletedAge} 岁出现不足，可尝试增加结余或调整退休计划。` : `按当前假设，资产可支持至规划终点 ${input.lifeExpectancy} 岁。`}</span></div></section>
+    <section class="card scenario-section" id="scenarios"><div class="section-heading"><div><h2>同一个目标，看看不同的可能</h2><p class="section-description">仅调整名义年回报，其余条件保持不变。</p></div><span class="subtle-badge">3 种情景</span></div><div class="scenario-grid">${scenarios.map((scenario,index)=>`<button type="button" class="scenario-card ${index === activeScenario ? 'selected' : ''}" data-scenario="${index}" aria-pressed="${index === activeScenario}"><div class="scenario-title"><strong>${escapeHtml(scenario.label)}</strong><span class="scenario-radio">${index === activeScenario ? icon('check') : ''}</span></div><p>${subtitles[index] ?? ''}</p><div class="scenario-amount">${wan(scenario.projected)}<span>万元</span></div><div class="scenario-footer"><span>名义年回报 ${scenario.nominal_return.toFixed(1)}%</span><span>${scenario.gap > 0 ? '缺口 '+wan(scenario.gap)+'万' : '目标已覆盖'}</span></div></button>`).join('')}</div><div class="scenario-detail" id="scenario-detail"></div></section>
+    <section class="insight-card" id="insights"><span class="insight-icon">${icon('spark')}</span><div class="insight-content"><div class="insight-heading"><h2>把数字，变成下一步</h2><span>规则解读 · 后端生成</span></div><p>${escapeHtml(explanation)}</p><button class="text-button" id="adjust-button">调整我的规划 ${icon('arrow')}</button></div></section>
+    <div class="disclaimer">${icon('info')}<span>金额均为今天的购买力。${warningsText}结果用于学习展示。<button class="inline-link" id="method-button">查看测算说明</button></span></div>
   `;
   document.querySelectorAll<HTMLButtonElement>('[data-scenario]').forEach(button => button.addEventListener('click', () => { activeScenario = Number(button.dataset.scenario); renderResults(); }));
   const selected = scenarios[activeScenario];
-  const rate = Math.max(-5, Math.min(15,currentInput.nominalReturn + selected.delta));
-  const selectedResult = calculatePlan({...currentInput, nominalReturn: rate});
-  document.querySelector('#scenario-detail')!.textContent = `${selected.name}：实际年回报 ${(selectedResult.realReturn*100).toFixed(2)}%，退休资金目标 ${wan(selectedResult.target)} 万，预计退休资产 ${wan(selectedResult.projected)} 万。${selectedResult.gap > 0 ? `资金缺口 ${wan(selectedResult.gap)} 万。` : '预计可覆盖目标。'}点击卡片仅切换对比说明。`;
+  const realReturn = (1 + selected.nominal_return / 100) / (1 + input.inflation / 100) - 1;
+  document.querySelector('#scenario-detail')!.textContent = `${selected.label}：实际年回报 ${(realReturn*100).toFixed(2)}%，退休资金目标 ${wan(selected.target)} 万，预计退休资产 ${wan(selected.projected)} 万。${selected.gap > 0 ? `资金缺口 ${wan(selected.gap)} 万。` : '预计可覆盖目标。'}点击卡片仅切换对比说明。`;
   document.querySelector('#adjust-button')!.addEventListener('click', showForm);
   document.querySelector('#back-button')!.addEventListener('click', showForm);
   document.querySelector('#method-button')!.addEventListener('click',openHelp);
@@ -149,16 +150,6 @@ form.addEventListener('submit',async event=>{
   if (collected.errors.length) {
     errorElement.hidden = false; errorElement.textContent = collected.errors[0].message; return;
   }
-  let next: PlanInput;
-  try { next = toDemoInput(request); }
-  catch (error) {
-    errorElement.hidden = false;
-    errorElement.textContent = error instanceof Error ? error.message : '模板与本地演示字段不匹配。';
-    return;
-  }
-  const error = validateInput(next);
-  errorElement.hidden = !error; errorElement.textContent = error ?? '';
-  if (error) return;
   isGenerating = true;
   const submitButton = form.querySelector<HTMLButtonElement>('[type="submit"]')!;
   const panel = document.querySelector<HTMLElement>('#generation-panel')!;
@@ -172,7 +163,7 @@ form.addEventListener('submit',async event=>{
   panel.hidden = false;
   window.scrollTo({top: 0, behavior: 'instant'});
   document.querySelector<HTMLElement>('#generation-title')!.focus({preventScroll:true});
-  try {
+  const animation = (async () => {
     for (const [index, stage] of stages.entries()) {
       message.textContent = stage;
       panel.querySelectorAll('.generation-steps > span').forEach((item, step) => {
@@ -181,7 +172,10 @@ form.addEventListener('submit',async event=>{
       });
       await new Promise<void>(resolve => setTimeout(resolve, reducedMotion ? 0 : 600));
     }
-    currentInput = next; submittedRequest = request; activeScenario = 1;
+  })();
+  try {
+    const [response] = await Promise.all([requestPlan(request), animation]);
+    currentPlan = response; submittedRequest = request; activeScenario = 1;
     renderResults(); hasGeneratedPlan = true;
     panel.classList.add('generation-exit');
     if (!reducedMotion) await new Promise<void>(resolve => setTimeout(resolve, 400));
@@ -189,10 +183,15 @@ form.addEventListener('submit',async event=>{
     panel.classList.remove('generation-exit');
     showView('results');
     toast('规划已生成，可以随时返回修改信息。');
-  } catch {
+  } catch (error) {
     panel.hidden = true; showView('form');
     errorElement.hidden = false;
-    errorElement.textContent = '生成规划遇到问题，请检查填写信息后重试。';
+    if (error instanceof PlanApiError) {
+      if (error.fieldErrors.length) renderer.setFieldErrors(error.fieldErrors);
+      errorElement.textContent = error.message;
+    } else {
+      errorElement.textContent = '生成规划遇到问题，请稍后重试。';
+    }
   } finally {
     panel.classList.remove('generation-exit');
     isGenerating = false;
@@ -201,15 +200,15 @@ form.addEventListener('submit',async event=>{
 });
 let isExporting = false;
 document.querySelector('#export-button')!.addEventListener('click',async ()=>{
-  if (isExporting || !hasGeneratedPlan || document.querySelector<HTMLElement>('#results')!.hidden) return;
+  if (isExporting || !hasGeneratedPlan || !currentPlan || document.querySelector<HTMLElement>('#results')!.hidden) return;
   const button = document.querySelector<HTMLButtonElement>('#export-button')!;
-  const snapshot = {...currentInput};
+  const plan = currentPlan;
   isExporting = true; button.disabled = true;
   button.textContent = '正在生成 PDF…';
   button.setAttribute('aria-busy', 'true');
   try {
     const { createPlanPdf } = await import('./pdf-export');
-    const bytes = await createPlanPdf(snapshot);
+    const bytes = await createPlanPdf(plan.plan_input, plan.result, plan.scenarios, plan.explanation);
     const url = URL.createObjectURL(new Blob([new Uint8Array(bytes).buffer], {type:'application/pdf'}));
     const anchor = document.createElement('a');
     anchor.href = url; anchor.download = 'RetireNest-退休规划.pdf';

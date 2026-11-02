@@ -284,9 +284,6 @@ body.intro-active { overflow: hidden; }
 
 .generation-panel.generation-exit { opacity: 0; visibility: hidden; pointer-events: none; }
 
-.api-config { margin-top: 25px; padding-top: 23px; border-top: 1px solid #edf0e8; }
-.optional-label { margin-left: 7px; font-size: 10px; color: #a4ae98; }
-.api-config .input-wrap input { font-size: 14px; }
 .toast-enter { animation: toast-rise .35s cubic-bezier(.2,.8,.2,1) both; }
 .toast-exit { animation: toast-fade .3s ease both; pointer-events: none; }
 @keyframes toast-rise {
@@ -296,9 +293,6 @@ body.intro-active { overflow: hidden; }
 @keyframes toast-fade {
   from { opacity: 1; }
   to { opacity: 0; }
-}
-@media (max-width: 520px) {
-  .api-config .input-wrap input { font-size: 16px; }
 }
 
 .template-description, .result-template-note { font-size: 11px; line-height: 1.9; color: #91a082; margin: 18px 0 0; }

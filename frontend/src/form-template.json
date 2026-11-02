@@ -2,7 +2,7 @@
   "id": "retirenest-retirement",
   "version": "1.0.0",
   "title": "我的规划信息",
-  "description": "基础信息用于本地演示测算。生活偏好和可选模块会按模板收集，接入后端后参与综合规划。",
+  "description": "基础信息用于当前测算。生活偏好和可选模块会按模板收集，当前尚不参与综合规划。",
   "optionSets": {
     "cities": [
       {
@@ -319,7 +319,7 @@
       "id": "living",
       "title": "生活与家庭偏好",
       "collapsible": true,
-      "description": "扩展模块，当前仅收集信息，暂不改变本地演示结果。",
+      "description": "扩展模块，当前仅收集信息，暂不参与计算。",
       "fields": [
         {
           "name": "partner",
@@ -769,7 +769,7 @@
       "id": "assumptions",
       "title": "测算假设",
       "collapsible": true,
-      "description": "以下回报与通胀以百分数填写；城市在本地演示中不参与计算。",
+      "description": "以下回报与通胀以百分数填写；城市当前不参与计算。",
       "fields": [
         {
           "name": "nominal_return",

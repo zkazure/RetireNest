@@ -9,7 +9,6 @@ async function loadTs(file) {
   return import('data:text/javascript;base64,'+Buffer.from(outputText).toString('base64'));
 }
 const {validateTemplate,defaultValues,collectValues,buildRequest,activeFieldNames}=await loadTs('form-data.ts');
-const {toDemoInput}=await loadTs('form-adapter.ts');
 const fresh=()=>structuredClone(template);
 
 test('default request keeps numeric and boolean types, omits disabled module fields',()=>{
@@ -25,7 +24,7 @@ test('default request keeps numeric and boolean types, omits disabled module fie
   assert.ok(!('apiKey' in request.values));
   assert.ok(!('unknown' in request.values));
   assert.equal(request.schema_version,'1.0.0');
-  assert.equal(toDemoInput(request).retirementAge,55);
+  assert.equal(request.values.retire_age,55);
 });
 
 test('adding a field only in the template retains it in the request',()=>{

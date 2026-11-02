@@ -1,5 +1,6 @@
 import { PDFDocument, PageSizes } from 'pdf-lib';
-import { calculatePlan, type PlanInput, type PlanResult } from './model';
+import type { PlanInput, PlanResult } from './model';
+import type { PlanScenario } from './plan-contract';
 
 // Render at twice A4 CSS resolution to preserve local Chinese fonts without
 // shipping a large font file. Each page is embedded as a high-resolution image.
@@ -25,7 +26,7 @@ class ReportPage {
     this.rule(101);
     this.text(title, 48, 143, 23, green, true);
     this.rule(1069);
-    this.text('本地演示测算 · 金额均以今天的购买力计价 · 不构成投资建议', 48, 1092, 9, muted);
+    this.text('本地后端测算 · 金额均以今天的购买力计价 · 不构成投资建议', 48, 1092, 9, muted);
     this.text(`${page} / 2`, 746, 1092, 10, muted, false, 'right');
   }
   text(value: string, x: number, y: number, size = 12, color = '#344b37', bold = false, align: CanvasTextAlign = 'left', maxWidth?: number) {
@@ -89,9 +90,8 @@ function drawChart(page: ReportPage, input: PlanInput, result: PlanResult) {
   ctx.restore();
 }
 
-export async function createPlanPdf(input: PlanInput): Promise<Uint8Array> {
+export async function createPlanPdf(input: PlanInput, result: PlanResult, scenarios: PlanScenario[], explanation: string): Promise<Uint8Array> {
   await document.fonts.ready;
-  const result = calculatePlan(input);
   const date = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
   const first = new ReportPage('你的退休规划概览', 1, date);
   first.paragraph(`${input.city} · 当前 ${input.age} 岁 · 期望 ${input.retirementAge} 岁退休 · 规划至 ${input.lifeExpectancy} 岁`, 48, 174, 698, 12);
@@ -133,15 +133,13 @@ export async function createPlanPdf(input: PlanInput): Promise<Uint8Array> {
   const columns = [62, 197, 335, 493, 654];
   second.box(48, 240, 698, 39, green);
   headers.forEach((header, i) => second.text(header, columns[i], 265, 11, '#ffffff'));
-  ['保守情景', '基准情景', '乐观情景'].forEach((name, index) => {
-    const rate = Math.max(-5, Math.min(15, input.nominalReturn + index - 1));
-    const scenario = calculatePlan({...input, nominalReturn: rate});
+  scenarios.forEach((scenario, index) => {
     const y = 279 + index * 55;
     second.box(48, y, 698, 55, index % 2 === 0 ? '#f3f6ee' : '#ffffff');
-    [name, rate.toFixed(1) + '%', wan(scenario.target), wan(scenario.projected), scenario.gap > 0 ? wan(scenario.gap) : '已覆盖'].forEach((value, i) => second.text(value, columns[i], y + 33, 11, green, false, 'left', i === 4 ? 80 : 130));
+    [scenario.label, scenario.nominal_return.toFixed(1) + '%', wan(scenario.target), wan(scenario.projected), scenario.gap > 0 ? wan(scenario.gap) : '已覆盖'].forEach((value, i) => second.text(value, columns[i], y + 33, 11, green, false, 'left', i === 4 ? 80 : 130));
   });
   second.title('04 / 规划解读', 495);
-  second.paragraph(result.gap > 0 ? `当前准备度约 ${result.coverage.toFixed(0)}%，资金缺口约 ${wan(result.gap)}。在其他假设不变时，每月结余比现在增加约 ${yuan(Math.max(0, result.requiredMonthlySaving - result.monthlySurplus))} 可覆盖目标。请结合实际生活收支调整计划。` : '在当前假设下，预计退休资产可以覆盖目标。建议定期更新收支、退休年龄及养老金假设，确认规划仍符合期待。', 48, 526, 698, 12);
+  second.paragraph(explanation, 48, 526, 698, 12);
   second.title('05 / 测算口径与假设', 640);
   const notes = [
     '金额统一以今天的购买力表示。实际年回报 = (1 + 名义年回报) / (1 + 通胀率) - 1。',
@@ -153,7 +151,7 @@ export async function createPlanPdf(input: PlanInput): Promise<Uint8Array> {
   let y = 671;
   notes.forEach((note, index) => { y = second.paragraph(`${index + 1}. ${note}`, 48, y, 698, 11, muted, 21) + 10; });
   second.box(48, 961, 698, 73, '#f3f6ee');
-  second.paragraph('本报告由本地演示公式及规则生成，尚未接入后端或 AI。结果用于比赛展示和学习，不构成投资建议或真实养老金测算。', 64, 987, 666, 11, muted, 21);
+  second.paragraph('本报告由本地后端测算服务生成，尚未接入 AI。医疗、养老、存款等扩展信息本期未参与计算。结果用于比赛展示和学习，不构成投资建议或真实养老金测算。', 64, 987, 666, 11, muted, 21);
   const pdf = await PDFDocument.create();
   pdf.setTitle('退有所算 - 退休规划报告');
   pdf.setAuthor('RetireNest'); pdf.setSubject('个人退休规划与情景分析'); pdf.setLanguage('zh-CN');
