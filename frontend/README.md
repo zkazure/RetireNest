@@ -20,6 +20,17 @@ uv run --project src python run.py --prod
 
 无桌面环境加 `--no-open`；Ctrl+C 会停止本次启动的所有进程。
 
+## 命令浏览器
+
+现有退休页之外，新增一个开发者工具页面：
+
+- 开发模式：http://127.0.0.1:5173/commands.html
+- 单端口模式：http://127.0.0.1:8000/commands.html
+
+页面从 `GET /api/commands` 读取 manifest，自动生成输入表单，执行 `POST /api/commands/{id}` 并展示 JSON 输出。它只服务于命令调试，不做页面级组合；现有退休页不受影响。
+
+前端用 `src/command-registry.ts` 的显式允许列表决定暴露哪些命令；后台新增命令不会自动出现。协议见 [../docs/command-protocol.md](../docs/command-protocol.md)。
+
 ## 手动启动（排错）
 
 先启动后端（见 [../src/api/README.md](../src/api/README.md)），再在 frontend 目录执行：
@@ -53,6 +64,9 @@ build 同时执行 TypeScript 严格检查和生产构建，静态产物位于 d
 
 - `src/plan-client.ts`：`POST /api/retirement/plan`，20 秒超时，负责响应结构校验与错误分类。
 - `src/plan-contract.ts`：`PlanResponse`、`PlanScenario`、`PlanErrorResponse` 类型。
+- `src/command-types.ts`、`src/command-client.ts`：命令清单与单命令执行类型/客户端。
+- `src/command-registry.ts`：前端显式注册表，决定哪些命令进入应用。
+- `src/command-browser.ts`、`commands.html`：通用命令浏览器。
 - `src/model.ts`：只保留 `PlanInput`、`ProjectionPoint`、`PlanResult` 类型，不再本地计算。
 - `src/main.ts`：表单事件、请求、结果渲染、字段级错误和 PDF 入口。
 - `src/pdf-export.ts`：接收后端返回的 `plan_input`、`result`、`scenarios` 和 `explanation`。

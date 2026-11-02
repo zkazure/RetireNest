@@ -12,6 +12,7 @@
 
 ## 支撑
 
-- `api/` — FastAPI 接入层：`POST /api/retirement/plan`，负责请求校验、字段映射、错误映射与响应组装。
+- `commands/` — 可发现命令协议：manifest、输入校验、注册表，以及 medical / pension / deposit / living 四个适配器。协议见 `docs/command-protocol.md`。
+- `api/` — FastAPI 接入层：`POST /api/retirement/plan` 与 `GET/POST /api/commands`；负责请求校验、字段映射、错误映射与响应组装。
 - `tests/` — 全部 pytest 用例，按被测目录命名，例如 `test_demand_deposit.py` 对应 `profit/demand_deposit.py`。在 `src/` 下执行 `uv run pytest`。
 - `tools/` — 离线维护脚本，不参与运行时。目前只有 `fetch_rates.py`，抓银行活期利率供人工核对。

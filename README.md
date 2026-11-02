@@ -26,6 +26,13 @@ uv run --project src python run.py --prod
 
 默认会自动打开浏览器；无桌面环境或远程服务器加 `--no-open`。Ctrl+C 会停止本次启动的所有进程。手动启动方式见 [frontend/README.md](frontend/README.md)。
 
+命令浏览器（开发者工具）：
+
+- 开发模式：http://127.0.0.1:5173/commands.html
+- 单端口模式：http://127.0.0.1:8000/commands.html
+
+命令清单由 `GET /api/commands` 提供，单个命令通过 `POST /api/commands/{id}` 执行；protocol、manifest 和错误格式见 [docs/command-protocol.md](docs/command-protocol.md)。现有退休页和 `/api/retirement/plan` 保持不变。
+
 已实现规划信息表单、退休资金概览、资产曲线、三种情景对比、规则解读与 PDF 报告导出。基础 12 个字段已接入本地 FastAPI 后端；医疗、养老、存款等扩展信息仍只收集，尚未参与计算；LLM 未接入。运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
 
 前端填写栏已支持动态 JSON 模板。接口契约以 [frontend/FORM_TEMPLATE.md](frontend/FORM_TEMPLATE.md) 及 `frontend/contracts/` 中的示例为准。

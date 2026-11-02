@@ -2,6 +2,13 @@
 
 FastAPI 提供 `POST /api/retirement/plan`，把前端动态表单的 `values` 映射成 12 个基础字段，调用 `plan` 包计算，返回与 `frontend/contracts/plan-response.example.json` 同构的响应。
 
+另外提供命令协议端点：
+
+- `GET /api/commands`：返回协议版本和四个领域命令的 manifest。
+- `POST /api/commands/{command_id}`：执行单个命令，请求 `{version, inputs}`，返回 `{command_id, version, outputs, meta}`。
+
+协议、错误码和 manifest 字段见 [docs/command-protocol.md](../../docs/command-protocol.md)。命令接口与旧的 `/api/retirement/plan` 相互独立。
+
 ## 启动
 
 日常推荐在仓库根目录用一键启动器：
