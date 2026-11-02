@@ -27,7 +27,7 @@ uv run --project src python run.py --prod
 - 开发模式：http://127.0.0.1:5173/commands.html
 - 单端口模式：http://127.0.0.1:8000/commands.html
 
-页面从 `GET /api/commands` 读取 manifest，自动生成输入表单，执行 `POST /api/commands/{id}` 并展示 JSON 输出。它只服务于命令调试，不做页面级组合；退休主页独立按页面清单执行。
+页面从 `GET /api/commands` 读取 manifest，自动生成输入表单；“填充示例”写入 manifest 的第一条示例，“清空”回到默认值。执行 `POST /api/commands/{id}` 后先按 `outputs` 渲染输出表（只列 `visible !== false`，`decimal` 原样、数组与对象只做摘要），完整响应折叠在“原始 JSON”里。必填与 `required_when` 同步到原生校验，校验不过不发请求；后端 422 仍按字段展示。它只服务于命令调试，不做页面级组合；退休主页独立按页面清单执行。
 
 前端用 `src/command-registry.ts` 的显式允许列表决定暴露哪些命令；后台新增命令不会自动出现。协议见 [../docs/command-protocol.md](../docs/command-protocol.md)。
 
@@ -71,6 +71,7 @@ build 同时执行 TypeScript 严格检查和生产构建，静态产物位于 d
 - `src/command-types.ts`、`src/command-client.ts`：命令清单与单命令执行类型/客户端。
 - `src/command-registry.ts`：前端显式注册表，决定哪些命令进入命令浏览器。
 - `src/command-browser.ts`、`commands.html`：通用命令浏览器。
+- `src/command-output.ts`：命令浏览器的输出表，按 `outputs` 规格过滤与格式化。
 - `src/model.ts`：只保留 `PlanInput`、`ProjectionPoint`、`PlanResult` 类型，不再本地计算。
 - `src/main.ts`：表单事件、页面加载、结果渲染、字段级错误和 PDF 入口。
 - `src/pdf-export.ts`：接收后端返回的 `plan_input`、`result`、`scenarios` 和 `explanation`。

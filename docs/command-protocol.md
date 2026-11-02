@@ -293,7 +293,7 @@ const response = await runCommand('medical.estimate', {
 
 获取输出。页面如何排版、调用哪些命令、把哪个输出接到哪个输入，由前端代码决定；后端不返回页面结构。
 
-命令浏览器 `frontend/commands.html` 是开发者工具：左侧命令列表，右侧按 manifest 自动生成输入表单，执行后展示 JSON 输出。它不做页面级组合。
+命令浏览器 `frontend/commands.html` 是开发者工具：左侧命令列表，右侧按 manifest 自动生成输入表单。表单下的“填充示例”写入 `examples[0].inputs`，“清空”回到 manifest 的 `default`。执行后先按 `outputs` 渲染输出表（只列 `visible !== false`，`decimal` 原样、数组与对象只做摘要），完整响应折叠在“原始 JSON”里。必填与 `required_when` 会同步到原生校验，校验不过不发请求；后端 422 仍按字段展示。它不做页面级组合。
 
 ## 9. 现有命令
 
