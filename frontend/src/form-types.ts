@@ -47,5 +47,4 @@ export interface FormTemplate {
   sections: FormSection[];
   rules: FormRule[];
 }
-export interface PlanRequest { template_id: string; schema_version: string; values: FormValues }
 export interface FieldError { field: string; message: string }

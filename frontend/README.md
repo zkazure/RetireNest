@@ -22,12 +22,12 @@ uv run --project src python run.py --prod
 
 ## 命令浏览器
 
-现有退休页之外，新增一个开发者工具页面：
+退休主页之外，另有一个开发者工具页面：
 
 - 开发模式：http://127.0.0.1:5173/commands.html
 - 单端口模式：http://127.0.0.1:8000/commands.html
 
-页面从 `GET /api/commands` 读取 manifest，自动生成输入表单，执行 `POST /api/commands/{id}` 并展示 JSON 输出。它只服务于命令调试，不做页面级组合；现有退休页不受影响。
+页面从 `GET /api/commands` 读取 manifest，自动生成输入表单，执行 `POST /api/commands/{id}` 并展示 JSON 输出。它只服务于命令调试，不做页面级组合；退休主页独立按页面清单执行。
 
 前端用 `src/command-registry.ts` 的显式允许列表决定暴露哪些命令；后台新增命令不会自动出现。协议见 [../docs/command-protocol.md](../docs/command-protocol.md)。
 
@@ -58,17 +58,21 @@ build 同时执行 TypeScript 严格检查和生产构建，静态产物位于 d
 - 后端字段级错误回填、测算说明弹窗、PDF 报告导出。
 - 桌面 / 平板 / 手机响应式布局。
 
-启动时播放可跳过的 slogan 动画，开启系统减少动画偏好时直接进入。页首保留品牌，仅在结果页显示导出按钮，初始仅展示填写卡片。选择“其他”城市时需填写城市名称。点击“生成我的退休规划”且校验成功后，隐藏填写卡片，请求与约 1.8 秒的三阶段过渡动画并行；成功后淡出 400 毫秒再展示结果，失败则回到表单并显示错误。点击“返回修改”或“调整我的规划”可返回，填写内容保留。生成前、生成过程中和返回编辑时隐藏导出按钮，避免导出未确认的草稿。切换情景卡片只更新该情景说明，不替换基准图表。内容不在浏览器持久化，刷新后恢复示例；提交时只会发送到本地后端，不保存。
+启动时播放可跳过的 slogan 动画，开启系统减少动画偏好时直接进入。页首保留品牌，仅在结果页显示导出按钮，初始仅展示填写卡片。城市从后端提供的 44 城列表中选择。点击“生成我的退休规划”且校验成功后，隐藏填写卡片，请求与约 1.8 秒的三阶段过渡动画并行；成功后淡出 400 毫秒再展示结果，失败则回到表单并显示错误。点击“返回修改”或“调整我的规划”可返回，填写内容保留。生成前、生成过程中和返回编辑时隐藏导出按钮，避免导出未确认的草稿。切换情景卡片只更新该情景说明，不替换基准图表。内容不在浏览器持久化，刷新后恢复示例；提交时只会发送到本地后端，不保存。
 
 ## 与后端对接
 
-- `src/plan-client.ts`：`POST /api/retirement/plan`，20 秒超时，负责响应结构校验与错误分类。
-- `src/plan-contract.ts`：`PlanResponse`、`PlanScenario`、`PlanErrorResponse` 类型。
+- `src/page-client.ts`：`GET /api/pages/retirement`，20 秒超时，校验页面清单结构。
+- `src/page-types.ts`、`src/page-to-template.ts`：页面清单类型，以及到通用表单结构的转换。
+- `src/page-values.ts`、`src/page-runner.ts`：按执行清单取值、逐个调用 `POST /api/commands/{id}` 并合并字段错误。
+- `src/plan-adapter.ts`：把 `plan.retirement` 的输出映射成结果页使用的 `PlanResponse`。
+- `src/module-results.ts`：按命令的输出规格渲染模块结果卡片。
+- `src/plan-contract.ts`：`PlanResponse`、`PlanScenario` 类型。
 - `src/command-types.ts`、`src/command-client.ts`：命令清单与单命令执行类型/客户端。
-- `src/command-registry.ts`：前端显式注册表，决定哪些命令进入应用。
+- `src/command-registry.ts`：前端显式注册表，决定哪些命令进入命令浏览器。
 - `src/command-browser.ts`、`commands.html`：通用命令浏览器。
 - `src/model.ts`：只保留 `PlanInput`、`ProjectionPoint`、`PlanResult` 类型，不再本地计算。
-- `src/main.ts`：表单事件、请求、结果渲染、字段级错误和 PDF 入口。
+- `src/main.ts`：表单事件、页面加载、结果渲染、字段级错误和 PDF 入口。
 - `src/pdf-export.ts`：接收后端返回的 `plan_input`、`result`、`scenarios` 和 `explanation`。
 - `vite.config.ts`：开发期与 preview 的 `/api` 代理。
 
@@ -88,7 +92,7 @@ AI 未接入。底部“规则解读”由后端的规则文本生成，不是 L
 
 ## 接口与提示动画
 
-提交时只发送模板收集到的字段，不包含任意 DOM 控件或密钥。请求进行期间显示生成面板，失败时在表单顶部展示后端消息，422 的 `field_errors` 会定位到对应输入框。
+提交时只发送页面清单里声明的命令参数，不包含任意 DOM 控件或密钥。请求进行期间显示生成面板，失败时在表单顶部展示后端消息，命令返回的 `field_errors` 会定位到对应输入框。
 
 提示栏以 350ms 从底部升入，显示约 3.2 秒后以 300ms 淡出。连续提示会取消旧的退出定时器。减少动画偏好下直接切换。
 
@@ -98,10 +102,12 @@ AI 未接入。底部“规则解读”由后端的规则文本生成，不是 L
 
 实现位于 src/pdf-export.ts，pdf-lib 通过动态导入按需加载。中文使用浏览器本机字体在 2 倍分辨率 Canvas 绘制，再嵌入 PDF；报告是图像页面，文本暂不支持选择、搜索。导出只在浏览器本地生成，不再发请求。
 
-## 动态表单模板
+## 页面清单驱动
 
-填写栏已改为配置驱动。新增同类字段只需编辑 src/form-template.json，通用渲染器会自动展示并收集数据。生活偏好可折叠，医保、养老金和存款信息按需启用；隐藏字段不提交，decimal 保留字符串精度。
+填写栏不再由前端配置。启动时请求 `GET /api/pages/retirement`，字段的问题文案、类型、单位、选项、约束、分组、开关和跨字段规则都来自后端；前端只做结构转换和渲染。
 
-给后端的协议、字段扩展方法与序列化规则见 [FORM_TEMPLATE.md](FORM_TEMPLATE.md)，请求/响应示例见 contracts/。当前后端只消费 12 个基础字段；医疗、养老、存款和生活偏好只收集，不参与计算。
+提交时按页面清单的执行清单逐个调用命令：`plan.retirement` 与 `living.calculate` 总是执行，医疗、养老金、存款按分组开关执行。任一命令失败即回到表单并合并所有 `field_errors`；结果页先展示退休规划，再按命令输出渲染模块卡片。
 
-执行 npm test 验证模板与数据收集逻辑。
+字段约束是后端算出来的：同一字段被多个命令消费时取交集，前端不持有范围数字。城市列表来自 `living.calculate` 的 44 城枚举，不再支持自定义城市。
+
+执行 npm test 验证页面清单到表单的映射、执行清单取值和规则校验。

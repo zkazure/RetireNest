@@ -1,4 +1,4 @@
-import type { FieldError, FormField, FormTemplate, FormValues, PlanRequest, RawValues } from './form-types';
+import type { FieldError, FormField, FormTemplate, FormValues, RawValues } from './form-types';
 
 export function allFields(template: FormTemplate): FormField[] {
   return template.sections.flatMap(section => [
@@ -110,12 +110,4 @@ export function collectValues(template: FormTemplate, raw: RawValues): { values:
     if (!valid) errors.push({field:rule.right,message:rule.message});
   }
   return {values,errors};
-}
-
-export function buildRequest(template: FormTemplate, values: FormValues): PlanRequest {
-  // Only configured fields enter the payload. Credentials and arbitrary DOM
-  // controls are excluded; fields newly added to the template are retained.
-  const allowed = new Set(allFields(template).map(field => field.name));
-  return {template_id:template.id, schema_version:template.version,
-    values:Object.fromEntries(Object.entries(values).filter(([name])=>allowed.has(name)))};
 }
