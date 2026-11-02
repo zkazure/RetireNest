@@ -1,0 +1,909 @@
+{
+  "id": "retirement.lifecycle",
+  "version": "2.0.0",
+  "title": "一辈子的现金流",
+  "description": "填几个选择题，看工作期与退休期的收支、资产轨迹，以及不同活法的差别。",
+  "sections": [
+    {
+      "id": "basic",
+      "title": "基本情况",
+      "description": null,
+      "toggle": null,
+      "fields": [
+        {
+          "name": "sex",
+          "label": "性别？",
+          "type": "select",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "sex"
+          },
+          "options": [
+            {
+              "label": "男",
+              "value": "男"
+            },
+            {
+              "label": "女",
+              "value": "女"
+            }
+          ],
+          "allowCustom": false
+        },
+        {
+          "name": "city",
+          "label": "你现在居住的城市？",
+          "type": "select",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "city"
+          },
+          "options": [
+            {
+              "label": "北京",
+              "value": "北京"
+            },
+            {
+              "label": "上海",
+              "value": "上海"
+            },
+            {
+              "label": "广州",
+              "value": "广州"
+            },
+            {
+              "label": "深圳",
+              "value": "深圳"
+            },
+            {
+              "label": "成都",
+              "value": "成都"
+            },
+            {
+              "label": "杭州",
+              "value": "杭州"
+            },
+            {
+              "label": "重庆",
+              "value": "重庆"
+            },
+            {
+              "label": "武汉",
+              "value": "武汉"
+            },
+            {
+              "label": "西安",
+              "value": "西安"
+            },
+            {
+              "label": "苏州",
+              "value": "苏州"
+            },
+            {
+              "label": "南京",
+              "value": "南京"
+            },
+            {
+              "label": "天津",
+              "value": "天津"
+            },
+            {
+              "label": "长沙",
+              "value": "长沙"
+            },
+            {
+              "label": "郑州",
+              "value": "郑州"
+            },
+            {
+              "label": "东莞",
+              "value": "东莞"
+            },
+            {
+              "label": "青岛",
+              "value": "青岛"
+            },
+            {
+              "label": "合肥",
+              "value": "合肥"
+            },
+            {
+              "label": "佛山",
+              "value": "佛山"
+            },
+            {
+              "label": "宁波",
+              "value": "宁波"
+            },
+            {
+              "label": "昆明",
+              "value": "昆明"
+            },
+            {
+              "label": "厦门",
+              "value": "厦门"
+            },
+            {
+              "label": "福州",
+              "value": "福州"
+            },
+            {
+              "label": "无锡",
+              "value": "无锡"
+            },
+            {
+              "label": "大连",
+              "value": "大连"
+            },
+            {
+              "label": "沈阳",
+              "value": "沈阳"
+            },
+            {
+              "label": "济南",
+              "value": "济南"
+            },
+            {
+              "label": "哈尔滨",
+              "value": "哈尔滨"
+            },
+            {
+              "label": "长春",
+              "value": "长春"
+            },
+            {
+              "label": "石家庄",
+              "value": "石家庄"
+            },
+            {
+              "label": "南昌",
+              "value": "南昌"
+            },
+            {
+              "label": "太原",
+              "value": "太原"
+            },
+            {
+              "label": "南宁",
+              "value": "南宁"
+            },
+            {
+              "label": "贵阳",
+              "value": "贵阳"
+            },
+            {
+              "label": "兰州",
+              "value": "兰州"
+            },
+            {
+              "label": "乌鲁木齐",
+              "value": "乌鲁木齐"
+            },
+            {
+              "label": "温州",
+              "value": "温州"
+            },
+            {
+              "label": "珠海",
+              "value": "珠海"
+            },
+            {
+              "label": "中山",
+              "value": "中山"
+            },
+            {
+              "label": "惠州",
+              "value": "惠州"
+            },
+            {
+              "label": "泉州",
+              "value": "泉州"
+            },
+            {
+              "label": "常州",
+              "value": "常州"
+            },
+            {
+              "label": "南通",
+              "value": "南通"
+            },
+            {
+              "label": "徐州",
+              "value": "徐州"
+            },
+            {
+              "label": "烟台",
+              "value": "烟台"
+            }
+          ],
+          "allowCustom": false
+        },
+        {
+          "name": "birth_date",
+          "label": "你的出生日期？",
+          "type": "date",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "birth_date"
+          }
+        },
+        {
+          "name": "category",
+          "label": "女性岗位类别（管理技术或工人）？",
+          "type": "select",
+          "required": false,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "category"
+          },
+          "options": [
+            {
+              "label": "管理技术",
+              "value": "管理技术"
+            },
+            {
+              "label": "工人",
+              "value": "工人"
+            }
+          ],
+          "allowCustom": false
+        }
+      ]
+    },
+    {
+      "id": "money",
+      "title": "收入与资产",
+      "description": null,
+      "toggle": null,
+      "fields": [
+        {
+          "name": "income",
+          "label": "你现在每月的税后收入？",
+          "type": "tier",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "income"
+          },
+          "unit": "元/月",
+          "tiers": [
+            {
+              "value": "lt5k",
+              "label": "5 千以下",
+              "amount": 3500
+            },
+            {
+              "value": "5k8k",
+              "label": "5 千到 8 千",
+              "amount": 6500
+            },
+            {
+              "value": "8k12k",
+              "label": "8 千到 1.2 万",
+              "amount": 10000
+            },
+            {
+              "value": "12k20k",
+              "label": "1.2 万到 2 万",
+              "amount": 16000
+            },
+            {
+              "value": "20k30k",
+              "label": "2 万到 3 万",
+              "amount": 25000
+            },
+            {
+              "value": "30k50k",
+              "label": "3 万到 5 万",
+              "amount": 40000
+            },
+            {
+              "value": "gt50k",
+              "label": "5 万以上",
+              "amount": 60000
+            }
+          ],
+          "allowCustom": false
+        },
+        {
+          "name": "assets",
+          "label": "你现在一共有多少资产？",
+          "type": "tier",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "assets"
+          },
+          "unit": "元",
+          "tiers": [
+            {
+              "value": "lt10w",
+              "label": "10 万以下",
+              "amount": 50000
+            },
+            {
+              "value": "10w30w",
+              "label": "10 万到 30 万",
+              "amount": 200000
+            },
+            {
+              "value": "30w50w",
+              "label": "30 万到 50 万",
+              "amount": 400000
+            },
+            {
+              "value": "50w100w",
+              "label": "50 万到 100 万",
+              "amount": 750000
+            },
+            {
+              "value": "100w200w",
+              "label": "100 万到 200 万",
+              "amount": 1500000
+            },
+            {
+              "value": "200w500w",
+              "label": "200 万到 500 万",
+              "amount": 3500000
+            },
+            {
+              "value": "gt500w",
+              "label": "500 万以上",
+              "amount": 8000000
+            }
+          ],
+          "allowCustom": false
+        },
+        {
+          "name": "debt",
+          "label": "你现在有多少负债？",
+          "type": "tier",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "debt"
+          },
+          "unit": "元",
+          "tiers": [
+            {
+              "value": "none",
+              "label": "没有负债",
+              "amount": 0
+            },
+            {
+              "value": "lt10w",
+              "label": "10 万以下",
+              "amount": 50000
+            },
+            {
+              "value": "10w30w",
+              "label": "10 万到 30 万",
+              "amount": 200000
+            },
+            {
+              "value": "30w50w",
+              "label": "30 万到 50 万",
+              "amount": 400000
+            },
+            {
+              "value": "50w100w",
+              "label": "50 万到 100 万",
+              "amount": 750000
+            },
+            {
+              "value": "gt100w",
+              "label": "100 万以上",
+              "amount": 1500000
+            }
+          ],
+          "allowCustom": false
+        }
+      ]
+    },
+    {
+      "id": "spending",
+      "title": "支出",
+      "description": null,
+      "toggle": null,
+      "fields": [
+        {
+          "name": "expense",
+          "label": "当前每月总支出？",
+          "type": "tier",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "expense"
+          },
+          "unit": "元/月",
+          "tiers": [
+            {
+              "value": "lt2k",
+              "label": "2 千以下",
+              "amount": 1500
+            },
+            {
+              "value": "2k4k",
+              "label": "2 千到 4 千",
+              "amount": 3000
+            },
+            {
+              "value": "4k6k",
+              "label": "4 千到 6 千",
+              "amount": 5000
+            },
+            {
+              "value": "6k10k",
+              "label": "6 千到 1 万",
+              "amount": 8000
+            },
+            {
+              "value": "10k15k",
+              "label": "1 万到 1.5 万",
+              "amount": 12500
+            },
+            {
+              "value": "15k25k",
+              "label": "1.5 万到 2.5 万",
+              "amount": 20000
+            },
+            {
+              "value": "gt25k",
+              "label": "2.5 万以上",
+              "amount": 30000
+            }
+          ],
+          "allowCustom": false
+        },
+        {
+          "name": "retirement_expense",
+          "label": "退休后每月打算花多少？",
+          "type": "tier",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "retirement_expense"
+          },
+          "unit": "元/月",
+          "tiers": [
+            {
+              "value": "lt2k",
+              "label": "2 千以下",
+              "amount": 1500
+            },
+            {
+              "value": "2k4k",
+              "label": "2 千到 4 千",
+              "amount": 3000
+            },
+            {
+              "value": "4k6k",
+              "label": "4 千到 6 千",
+              "amount": 5000
+            },
+            {
+              "value": "6k10k",
+              "label": "6 千到 1 万",
+              "amount": 8000
+            },
+            {
+              "value": "10k15k",
+              "label": "1 万到 1.5 万",
+              "amount": 12500
+            },
+            {
+              "value": "gt15k",
+              "label": "1.5 万以上",
+              "amount": 20000
+            }
+          ],
+          "allowCustom": false
+        },
+        {
+          "name": "entertainment",
+          "label": "娱乐开销？",
+          "type": "tier",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "entertainment"
+          },
+          "tiers": [
+            {
+              "value": "low",
+              "label": "省着花",
+              "amount": 300
+            },
+            {
+              "value": "mid",
+              "label": "正常",
+              "amount": 800
+            },
+            {
+              "value": "high",
+              "label": "舍得花",
+              "amount": 1500
+            }
+          ],
+          "allowCustom": false
+        },
+        {
+          "name": "travel",
+          "label": "退休后每年出游几次？",
+          "type": "tier",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "travel"
+          },
+          "tiers": [
+            {
+              "value": "none",
+              "label": "不出远门",
+              "amount": 0
+            },
+            {
+              "value": "once",
+              "label": "一年一次国内",
+              "amount": 1
+            },
+            {
+              "value": "twice",
+              "label": "一年两次国内",
+              "amount": 2
+            },
+            {
+              "value": "three",
+              "label": "一年三次",
+              "amount": 3
+            },
+            {
+              "value": "often",
+              "label": "经常出行",
+              "amount": 5
+            }
+          ],
+          "allowCustom": false
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "title": "规划与策略",
+      "description": "退休年龄留空时按法定规则推导；策略对比会在这个画像上再套五个预设。",
+      "toggle": null,
+      "fields": [
+        {
+          "name": "retirement_age",
+          "label": "打算多少岁退休？",
+          "type": "tier",
+          "required": false,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "retirement_age"
+          },
+          "unit": "岁",
+          "tiers": [
+            {
+              "value": "45",
+              "label": "45 岁",
+              "amount": 45
+            },
+            {
+              "value": "50",
+              "label": "50 岁",
+              "amount": 50
+            },
+            {
+              "value": "55",
+              "label": "55 岁",
+              "amount": 55
+            },
+            {
+              "value": "60",
+              "label": "60 岁",
+              "amount": 60
+            },
+            {
+              "value": "63",
+              "label": "63 岁",
+              "amount": 63
+            },
+            {
+              "value": "65",
+              "label": "65 岁",
+              "amount": 65
+            },
+            {
+              "value": "70",
+              "label": "70 岁",
+              "amount": 70
+            }
+          ],
+          "allowCustom": false
+        },
+        {
+          "name": "children",
+          "label": "育儿计划？",
+          "type": "tier",
+          "required": true,
+          "source": {
+            "command": "lifecycle.project",
+            "input": "children"
+          },
+          "tiers": [
+            {
+              "value": "none",
+              "label": "不要孩子",
+              "amount": 0
+            },
+            {
+              "value": "one",
+              "label": "一个孩子",
+              "amount": 1
+            },
+            {
+              "value": "two",
+              "label": "两个孩子",
+              "amount": 2
+            }
+          ],
+          "allowCustom": false
+        }
+      ]
+    }
+  ],
+  "executions": [
+    {
+      "command": "lifecycle.project",
+      "version": "1.0.0",
+      "question": "按现在的收支，一辈子能不能撑住？",
+      "description": "工作期收工资、退休期收养老金加资产收益，逐年滚动资产，给出结余转负与资产不足的年龄。",
+      "inputs": {
+        "sex": "sex",
+        "city": "city",
+        "birth_date": "birth_date",
+        "category": "category",
+        "income": "income",
+        "expense": "expense",
+        "assets": "assets",
+        "debt": "debt",
+        "retirement_expense": "retirement_expense",
+        "retirement_age": "retirement_age",
+        "travel": "travel",
+        "entertainment": "entertainment",
+        "children": "children"
+      },
+      "toggle": null,
+      "outputs": [
+        {
+          "name": "pension_monthly",
+          "question": "退休后每月养老金",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": "money_flow_nominal",
+          "visible": true
+        },
+        {
+          "name": "break_even_age",
+          "question": "结余转负的年龄",
+          "type": "integer",
+          "unit": "岁",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "depleted_age",
+          "question": "资产不足的年龄",
+          "type": "integer",
+          "unit": "岁",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "final_assets",
+          "question": "规划终点资产",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": "money_total_nominal",
+          "visible": true
+        },
+        {
+          "name": "peak_assets",
+          "question": "资产峰值",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": "money_total_nominal",
+          "visible": false
+        },
+        {
+          "name": "rows",
+          "question": "逐年现金流",
+          "type": "object",
+          "unit": null,
+          "precision": null,
+          "semantic": "money_per_year_nominal",
+          "visible": false,
+          "time_axis": {
+            "start": "age",
+            "step_years": 1
+          }
+        }
+      ]
+    },
+    {
+      "command": "lifecycle.simulate",
+      "version": "1.0.0",
+      "question": "按三档资产配置，成功概率有多大？",
+      "description": "按配比抽收益路径，输出成功率、破产年龄分位、期末资产分位与可支撑的退休支出。",
+      "inputs": {
+        "sex": "sex",
+        "city": "city",
+        "birth_date": "birth_date",
+        "category": "category",
+        "income": "income",
+        "expense": "expense",
+        "assets": "assets",
+        "debt": "debt",
+        "retirement_expense": "retirement_expense",
+        "retirement_age": "retirement_age",
+        "travel": "travel",
+        "entertainment": "entertainment",
+        "children": "children"
+      },
+      "toggle": null,
+      "outputs": [
+        {
+          "name": "pension_monthly",
+          "question": "退休后每月养老金",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": "money_flow_nominal",
+          "visible": true
+        },
+        {
+          "name": "break_even_age",
+          "question": "结余转负的年龄",
+          "type": "integer",
+          "unit": "岁",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "depleted_age",
+          "question": "资产不足的年龄",
+          "type": "integer",
+          "unit": "岁",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "final_assets",
+          "question": "规划终点资产",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": "money_total_nominal",
+          "visible": true
+        },
+        {
+          "name": "success_rate",
+          "question": "成功率",
+          "type": "number",
+          "unit": null,
+          "precision": null,
+          "semantic": "ratio",
+          "visible": true
+        },
+        {
+          "name": "depleted_p10",
+          "question": "破产年龄 10% 分位",
+          "type": "integer",
+          "unit": "岁",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "depleted_median",
+          "question": "破产年龄中位数",
+          "type": "integer",
+          "unit": "岁",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "depleted_p90",
+          "question": "破产年龄 90% 分位",
+          "type": "integer",
+          "unit": "岁",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "terminal_p10",
+          "question": "期末资产 10% 分位",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "terminal_median",
+          "question": "期末资产中位数",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "terminal_p90",
+          "question": "期末资产 90% 分位",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": null,
+          "visible": false
+        },
+        {
+          "name": "affordable_monthly_expense",
+          "question": "可支撑的退休月支出",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": "money_flow_nominal",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "command": "strategy.compare",
+      "version": "1.0.0",
+      "question": "换一种活法，结果差多少？",
+      "description": "把五个预设策略套在同一份画像上，并排给出退休年龄、养老金、破产年龄与成功率。",
+      "inputs": {
+        "sex": "sex",
+        "city": "city",
+        "birth_date": "birth_date",
+        "category": "category",
+        "income": "income",
+        "expense": "expense",
+        "assets": "assets",
+        "debt": "debt",
+        "retirement_expense": "retirement_expense",
+        "retirement_age": "retirement_age",
+        "travel": "travel",
+        "entertainment": "entertainment",
+        "children": "children"
+      },
+      "toggle": null,
+      "outputs": [
+        {
+          "name": "variants",
+          "question": "策略对比",
+          "type": "object",
+          "unit": null,
+          "precision": null,
+          "semantic": null,
+          "visible": true
+        }
+      ]
+    }
+  ],
+  "rules": []
+}

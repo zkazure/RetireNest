@@ -51,7 +51,6 @@ PLAN = PageSection(
 )
 
 _INPUTS = {
-    "age": "age",
     "sex": "sex",
     "city": "city",
     "birth_date": "birth_date",

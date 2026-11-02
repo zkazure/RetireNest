@@ -1,12 +1,10 @@
-"""plan：基础退休规划的聚合测算。
+"""plan：退休规划共用的数据结构。
 
-本期只消费 12 个基础字段；医疗、养老、存款和生活偏好由各自命令测算。
+计算已迁到专门模块（`lifecycle`、`savings`、`pension` 等），这里只保留领域错误类型，
+供命令校验、页面解析与 API 错误映射共用。
 """
 
-from plan.engine import build_explanation, build_scenarios, calculate
 from plan.models import FieldError, PlanInput, PlanResult, ProjectionPoint, Scenario
-from plan.payload import input_payload, result_payload, scenario_payload
-from plan.validation import validate
 
 __all__ = [
     "FieldError",
@@ -14,11 +12,4 @@ __all__ = [
     "PlanResult",
     "ProjectionPoint",
     "Scenario",
-    "build_explanation",
-    "build_scenarios",
-    "calculate",
-    "input_payload",
-    "result_payload",
-    "scenario_payload",
-    "validate",
 ]

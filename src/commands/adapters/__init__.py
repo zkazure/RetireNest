@@ -7,12 +7,10 @@ from commands.adapters.living import COMMAND as LIVING_COMMAND
 from commands.adapters.longevity import COMMAND as LONGEVITY_COMMAND
 from commands.adapters.medical import COMMAND as MEDICAL_COMMAND
 from commands.adapters.pension import COMMAND as PENSION_COMMAND
-from commands.adapters.retirement import COMMAND as RETIREMENT_COMMAND
 from commands.adapters.savings import COMMANDS as SAVINGS_COMMANDS
 from commands.adapters.simulation import COMMANDS as SIMULATION_COMMANDS
 
 COMMANDS = (
-    RETIREMENT_COMMAND,
     MEDICAL_COMMAND,
     PENSION_COMMAND,
     DEPOSIT_COMMAND,
@@ -23,6 +21,6 @@ COMMANDS = (
     LONGEVITY_COMMAND,
     *LIFECYCLE_COMMANDS,
 )
-"""当前注册的十四个命令，顺序即清单顺序。"""
+"""当前注册的十三个命令，顺序即清单顺序。"""
 
 __all__ = ["COMMANDS"]

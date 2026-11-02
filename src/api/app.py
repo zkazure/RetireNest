@@ -15,8 +15,6 @@ from api.agent_routes import router as agent_router
 from api.command_routes import router as command_router
 from api.errors import ApiError
 from api.page_routes import router as page_router
-from api.schemas import PlanRequest
-from api.service import build_plan_response
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +55,6 @@ async def unexpected_error_handler(_: Request, exc: Exception) -> JSONResponse:
             "message": "测算过程中出现错误，请稍后重试。",
         },
     )
-
-
-@app.post("/api/retirement/plan")
-def create_plan(request: PlanRequest) -> dict[str, object]:
-    return build_plan_response(request)
 
 
 app.include_router(command_router)

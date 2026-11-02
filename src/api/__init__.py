@@ -7,5 +7,7 @@
 
 接口：
 
-    POST /api/retirement/plan
+    GET  /api/pages/{page_id}
+    GET  /api/commands
+    POST /api/commands/{command_id}
 """

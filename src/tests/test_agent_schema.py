@@ -18,9 +18,8 @@ def catalog():
 
 
 def test_catalog_covers_all_commands(catalog) -> None:
-    assert len(catalog.specs) == 14
+    assert len(catalog.specs) == 13
     assert set(catalog.by_command_id) == {
-        "plan.retirement",
         "medical.estimate",
         "pension.basic",
         "deposit.demand",
@@ -68,10 +67,10 @@ def test_required_and_optional_inputs_follow_manifest(catalog) -> None:
     assert "compounding" not in savings["required"]
     assert "timing" not in savings["required"]
 
-    plan = catalog.by_name["plan_retirement"].parameters
-    assert "debt" not in plan["required"]
-    assert "monthly_pension" not in plan["required"]
-    assert "age" in plan["required"]
+    lifecycle = catalog.by_name["lifecycle_project"].parameters
+    assert "retirement_age" not in lifecycle["required"]
+    assert "category" not in lifecycle["required"]
+    assert "income" in lifecycle["required"]
 
 
 def test_enum_has_options_and_default(catalog) -> None:
@@ -100,9 +99,9 @@ def test_decimal_inputs_are_strings_with_pattern(catalog) -> None:
 
 
 def test_text_constraints_are_preserved(catalog) -> None:
-    city = catalog.by_name["plan_retirement"].parameters["properties"]["city"]
+    city = catalog.by_name["lifecycle_project"].parameters["properties"]["city"]
     assert city["type"] == "string"
-    assert city["maxLength"] == 30
+    assert len(city["enum"]) > 10
 
 
 def test_tool_description_contains_selection_guidance(catalog) -> None:
@@ -115,7 +114,7 @@ def test_tool_description_contains_selection_guidance(catalog) -> None:
 
 def test_existing_tools_also_have_selection_guidance(catalog) -> None:
     for name in (
-        "plan_retirement",
+        "lifecycle_project",
         "medical_estimate",
         "pension_basic",
         "deposit_demand",

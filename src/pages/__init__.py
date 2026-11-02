@@ -16,16 +16,13 @@ from pages.models import (
     PageToggle,
 )
 from pages.resolve import resolve
-from pages.retirement import MANIFEST as RETIREMENT_PAGE
-from pages.retirement import PAGES as RETIREMENT_PAGES
 
-PAGES: dict = {**RETIREMENT_PAGES, **LIFECYCLE_PAGES}
+PAGES: dict = {**LIFECYCLE_PAGES}
 """当前可用的页面。"""
 
 __all__ = [
     "LIFECYCLE_PAGE",
     "PAGES",
-    "RETIREMENT_PAGE",
     "PageError",
     "PageExecution",
     "PageField",
