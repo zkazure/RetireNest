@@ -24,6 +24,8 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
+from profit.errors import ProfitError
+
 DAYS_PER_YEAR = Decimal(360)
 """人民币日利率按 360 天折算，不是 365。"""
 
@@ -32,10 +34,6 @@ DEFAULT_ANNUAL_RATE = Decimal("0.0005")
 
 CENT = Decimal("0.01")
 _DAILY_RATE_QUANTUM = Decimal("0.0000000001")
-
-
-class ProfitError(ValueError):
-    """参数不满足计算前提时抛出。"""
 
 
 @dataclass(frozen=True, slots=True)

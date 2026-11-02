@@ -8,9 +8,9 @@ from profit.demand_deposit import (
     DEFAULT_ANNUAL_RATE,
     DemandDeposit,
     DemandDepositResult,
-    ProfitError,
     calculate,
 )
+from profit.errors import ProfitError
 
 __all__ = [
     "DAYS_PER_YEAR",
