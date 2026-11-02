@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from api.command_routes import router as command_router
 from api.errors import ApiError
+from api.page_routes import router as page_router
 from api.schemas import PlanRequest
 from api.service import build_plan_response
 
@@ -60,6 +61,7 @@ def create_plan(request: PlanRequest) -> dict[str, object]:
 
 
 app.include_router(command_router)
+app.include_router(page_router)
 
 
 # 生产模式由 run.py 先执行 npm run build，再由这里托管构建产物。
