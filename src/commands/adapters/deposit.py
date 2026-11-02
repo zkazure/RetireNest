@@ -7,7 +7,7 @@ from typing import Any
 
 from commands.errors import CommandInputError
 from commands.models import Command, CommandManifest, InputSpec, OutputSpec
-from profit import SNAPSHOT, DemandDeposit, ProfitError, calculate
+from deposit import SNAPSHOT, DemandDeposit, DepositError, calculate
 
 
 def _decimal_text(value: Decimal | None) -> str | None:
@@ -91,7 +91,7 @@ def handle(inputs: dict[str, Any]) -> dict[str, Any]:
                 annual_rate=inputs.get("annual_rate"),
             )
         )
-    except ProfitError as exc:
+    except DepositError as exc:
         raise CommandInputError(str(exc)) from exc
 
     return {

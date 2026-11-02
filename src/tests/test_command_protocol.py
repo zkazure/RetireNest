@@ -9,11 +9,11 @@ from fastapi.testclient import TestClient
 
 from api.app import app
 from commands import PROTOCOL_VERSION, list_commands
+from deposit import DemandDeposit
+from deposit import calculate as calculate_deposit
 from medical import estimate_medical_cost
 from pension import BasicPensionInput
 from pension import calculate as calculate_pension
-from profit import DemandDeposit
-from profit import calculate as calculate_deposit
 from yishizhuxing import calculate as calculate_living
 
 client = TestClient(app)

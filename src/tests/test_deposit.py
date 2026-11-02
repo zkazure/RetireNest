@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 
-from profit import DEFAULT_ANNUAL_RATE, DemandDeposit, ProfitError, calculate
+from deposit import DEFAULT_ANNUAL_RATE, DemandDeposit, DepositError, calculate
 
 
 def make(
@@ -88,7 +88,7 @@ def test_daily_rate_is_display_only():
     ],
 )
 def test_rejects_invalid_input(overrides, message):
-    with pytest.raises(ProfitError, match=message):
+    with pytest.raises(DepositError, match=message):
         make(**overrides)
 
 

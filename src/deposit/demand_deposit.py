@@ -24,14 +24,14 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
-from profit.errors import ProfitError
-from profit.rates import average_rate
+from deposit.errors import DepositError
+from deposit.rates import average_rate
 
 DAYS_PER_YEAR = Decimal(360)
 """人民币日利率按 360 天折算，不是 365。"""
 
 DEFAULT_ANNUAL_RATE = average_rate()
-"""缺省年利率取利率快照的等权平均（当前 0.05%），来源见 profit.rates.SNAPSHOT。"""
+"""缺省年利率取利率快照的等权平均（当前 0.05%），来源见 deposit.rates.SNAPSHOT。"""
 
 CENT = Decimal("0.01")
 _DAILY_RATE_QUANTUM = Decimal("0.0000000001")
@@ -58,13 +58,13 @@ class DemandDeposit:
             else _to_decimal(self.annual_rate, "年利率")
         )
         if principal <= 0:
-            raise ProfitError(f"本金必须大于 0，收到 {principal}")
+            raise DepositError(f"本金必须大于 0，收到 {principal}")
         if principal != principal.quantize(CENT):
-            raise ProfitError(f"本金最多保留两位小数（到分），收到 {principal}")
+            raise DepositError(f"本金最多保留两位小数（到分），收到 {principal}")
         if rate < 0:
-            raise ProfitError(f"年利率不能为负，收到 {rate}")
+            raise DepositError(f"年利率不能为负，收到 {rate}")
         if self.end_date <= self.start_date:
-            raise ProfitError(f"结束日期 {self.end_date} 必须晚于起始日期 {self.start_date}")
+            raise DepositError(f"结束日期 {self.end_date} 必须晚于起始日期 {self.start_date}")
         object.__setattr__(self, "principal", principal)
         object.__setattr__(self, "annual_rate", rate)
 
@@ -106,12 +106,12 @@ def calculate(deposit: DemandDeposit) -> DemandDepositResult:
 
 def _to_decimal(value: Decimal | int | str, name: str) -> Decimal:
     if isinstance(value, float):
-        raise ProfitError(f"{name}请用 Decimal 或字符串传入，float 会带出浮点误差")
+        raise DepositError(f"{name}请用 Decimal 或字符串传入，float 会带出浮点误差")
     if isinstance(value, bool):
-        raise ProfitError(f"{name}不接受布尔值")
+        raise DepositError(f"{name}不接受布尔值")
     if isinstance(value, Decimal):
         return value
     try:
         return Decimal(value)
     except (InvalidOperation, ValueError, TypeError) as exc:
-        raise ProfitError(f"{name}不是合法数字：{value!r}") from exc
+        raise DepositError(f"{name}不是合法数字：{value!r}") from exc

@@ -1,4 +1,4 @@
-# Profit
+# Deposit
 
 目前只计算一项被动收入：银行活期存款收益。养老金等其他收入暂不在本模块范围内。
 
@@ -9,7 +9,7 @@
 ```python
 from datetime import date
 
-from profit import DemandDeposit, calculate
+from deposit import DemandDeposit, calculate
 
 deposit = DemandDeposit(
     principal="100000",
@@ -40,7 +40,7 @@ result.daily_rate  # Decimal('0.0000013889')，仅供展示
 
 ## 出错
 
-参数不合法时抛 `ProfitError`（`ValueError` 的子类），消息写明是哪个参数、期望什么。
+参数不合法时抛 `DepositError`（`ValueError` 的子类），消息写明是哪个参数、期望什么。
 
 ## 测试
 

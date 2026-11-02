@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
-from profit.errors import ProfitError
+from deposit.errors import DepositError
 
 RATE_QUANTUM = Decimal("0.000001")
 """利率量化到 0.0001 个百分点，避免平均值带出无意义的尾数。"""
@@ -64,7 +64,7 @@ def average_rate(quotes: tuple[RateQuote, ...] = SNAPSHOT) -> Decimal:
     的中位数是多少"，不能当成全国平均来宣传。
     """
     if not quotes:
-        raise ProfitError("利率快照为空，无法计算平均利率")
+        raise DepositError("利率快照为空，无法计算平均利率")
     total = sum((quote.annual_rate for quote in quotes), Decimal(0))
     return (total / len(quotes)).quantize(RATE_QUANTUM, ROUND_HALF_UP)
 

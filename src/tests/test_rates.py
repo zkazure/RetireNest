@@ -5,9 +5,9 @@ from decimal import Decimal
 
 import pytest
 
-from profit import ProfitError
-from profit.demand_deposit import DEFAULT_ANNUAL_RATE
-from profit.rates import (
+from deposit import DepositError
+from deposit.demand_deposit import DEFAULT_ANNUAL_RATE
+from deposit.rates import (
     MAX_AGE_DAYS,
     SNAPSHOT,
     RateQuote,
@@ -57,7 +57,7 @@ def test_average_quantizes_to_five_decimal_percent():
 
 
 def test_empty_snapshot_is_an_error():
-    with pytest.raises(ProfitError, match="快照为空"):
+    with pytest.raises(DepositError, match="快照为空"):
         average_rate(())
 
 
