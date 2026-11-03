@@ -10,7 +10,7 @@ import { playIntro } from './intro';
 import type { FormPreset, FormTemplate } from './form-types';
 import type { PageManifest } from './page-types';
 
-interface Row { age: number; phase: string; income: number; expense: number; medical: number; soft: number; assets: number }
+interface Row { age: number; phase: string; income: number; passive: number; expense: number; medical: number; soft: number; assets: number }
 interface ProjectOutput { pension_monthly: number; break_even_age: number | null; depleted_age: number | null; final_assets: number; peak_assets: number; rows: Row[] }
 interface SimulateOutput { success_rate: number; terminal_p10: number; terminal_median: number; terminal_p90: number; affordable_monthly_expense: number; depleted_p10: number | null; depleted_median: number | null }
 interface Variant { preset_id: string; label: string; retirement_age: number; final_assets: number; success_rate: number; affordable_monthly_expense: number; depleted_age: number | null }
@@ -42,17 +42,45 @@ function axes(width: number, height: number, rows: Row[], minValue: number, maxV
   return lines + ticks;
 }
 
-function lineChart(rows: Row[], series: { value: (row: Row) => number; color: string; label: string }[], options: { min?: number; max?: number; label: string }) {
-  const width = 720, height = 260, padTop = 16, padBottom = 28;
-  const all = series.flatMap(item => rows.map(item.value));
-  const min = options.min ?? Math.min(0, ...all);
-  const max = options.max ?? Math.max(...all, 1);
-  const scaleY = (value: number) => padTop + (1 - (value - min) / (max - min || 1)) * (height - padTop - padBottom);
+function niceAxis(value: number, maxIntervals = 5): { max: number; step: number } {
+  const target = Math.max(value, 1) / maxIntervals;
+  const magnitude = 10 ** Math.floor(Math.log10(target));
+  for (const unit of [1, 2, 2.5, 5, 10]) {
+    const step = unit * magnitude;
+    const intervals = Math.ceil(Math.max(value, 1) / step);
+    if (intervals <= maxIntervals) return { max: step * intervals, step };
+  }
+  return { max: Math.max(value, 1), step: Math.max(value, 1) };
+}
+
+function stackedChart(rows: Row[], series: { value: (row: Row) => number; color: string; label: string }[], options: { label: string }) {
+  const width = 720, height = 280, padTop = 20, padBottom = 28;
+  const values = rows.map(row => series.map(item => Math.max(item.value(row), 0)));
+  const totals = values.map(row => row.reduce((sum, value) => sum + value, 0));
+  const { max, step } = niceAxis(Math.max(...totals, 1));
+  const scaleY = (value: number) => padTop + (1 - value / max) * (height - padTop - padBottom);
   const scaleX = (age: number) => 44 + ((age - rows[0].age) / (rows[rows.length - 1].age - rows[0].age || 1)) * (width - 56);
-  const body = axes(width, height, rows, min, max, scaleY, scaleX) +
-    series.map(item => `<path d="${pathOf(rows.map(row => [scaleX(row.age), scaleY(item.value(row))]))}" fill="none" stroke="${item.color}" stroke-width="2.5"/>`).join('');
-  const legend = series.map(item => `<span class="legend"><i style="background:${item.color}"></i>${escapeHtml(item.label)}</span>`).join('');
-  return `<div class="chart-legend">${legend}</div>` + svg(width, height, body, options.label);
+  const bands = series.map((item, index) => {
+    const tops: [number, number][] = [];
+    const bottoms: [number, number][] = [];
+    rows.forEach((row, rowIndex) => {
+      const bottom = values[rowIndex].slice(0, index).reduce((sum, value) => sum + value, 0);
+      const top = bottom + values[rowIndex][index];
+      tops.push([scaleX(row.age), scaleY(top)]);
+      bottoms.push([scaleX(row.age), scaleY(bottom)]);
+    });
+    return `<path d="${pathOf(tops)} ${pathOf(bottoms.reverse()).replace(/^M/, 'L')} Z" fill="${item.color}" opacity=".88"><title>${escapeHtml(item.label)}</title></path>`;
+  }).join('');
+  const total = `<path d="${pathOf(rows.map((row, index) => [scaleX(row.age), scaleY(totals[index])]))}" fill="none" stroke="${COLORS.ink}" stroke-width="2" stroke-dasharray="5 4"/>`;
+  const legend = series.map(item => `<span class="legend"><i style="background:${item.color}"></i>${escapeHtml(item.label)}</span>`).join('') +
+    `<span class="legend"><i style="background:${COLORS.ink}"></i>收入合计</span>`;
+  const gridLines = Array.from({ length: Math.round(max / step) + 1 }, (_, index) => {
+    const value = index * step;
+    return `<line x1="44" y1="${scaleY(value)}" x2="${width - 12}" y2="${scaleY(value)}" stroke="${COLORS.line}" stroke-dasharray="3 5"/><text x="38" y="${scaleY(value) + 4}" text-anchor="end" class="axis-text">${axisLabel(value)}</text>`;
+  }).join('');
+  const ageTicks = [rows[0].age, rows[Math.floor(rows.length / 3)].age, rows[Math.floor((2 * rows.length) / 3)].age, rows[rows.length - 1].age]
+    .map(age => `<text x="${scaleX(age)}" y="${height - 6}" text-anchor="middle" class="axis-text">${age}岁</text>`).join('');
+  return `<div class="chart-legend">${legend}</div>` + svg(width, height, gridLines + ageTicks + bands + total, options.label);
 }
 
 function axisMax(value: number, intervals = 4): number {
@@ -109,18 +137,19 @@ function spendingChart(rows: Row[]) {
 
 function cashflowChart(rows: Row[], retirementAge: number) {
   const width = 720, height = 280, padTop = 16, padBottom = 28;
-  const all = rows.flatMap(row => [row.income, row.expense]);
+  const all = rows.flatMap(row => [row.income, row.passive, row.expense]);
   const min = Math.min(...all, 0), max = Math.max(...all, 1);
   const scaleY = (value: number) => padTop + (1 - (value - min) / (max - min || 1)) * (height - padTop - padBottom);
   const scaleX = (age: number) => 44 + ((age - rows[0].age) / (rows[rows.length - 1].age - rows[0].age || 1)) * (width - 56);
-  const deficit = rows.filter(row => row.income < row.expense).map(row => `<rect x="${scaleX(row.age) - 3}" y="${height - padBottom - 4}" width="6" height="4" fill="${COLORS.red}" opacity=".55"/>`).join('');
+  const deficit = rows.filter(row => row.income + row.passive < row.expense).map(row => `<rect x="${scaleX(row.age) - 3}" y="${height - padBottom - 4}" width="6" height="4" fill="${COLORS.red}" opacity=".55"/>`).join('');
   const body = axes(width, height, rows, min, max, scaleY, scaleX) + deficit +
     `<line x1="${scaleX(retirementAge)}" y1="${padTop}" x2="${scaleX(retirementAge)}" y2="${height - padBottom}" stroke="${COLORS.clay}" stroke-dasharray="4 4"/>` +
     `<text x="${scaleX(retirementAge) + 6}" y="${padTop + 12}" class="axis-text">${retirementAge} 岁退休</text>` +
     `<path d="${pathOf(rows.map(row => [scaleX(row.age), scaleY(row.income)]))}" fill="none" stroke="${COLORS.green}" stroke-width="2.5"/>` +
+    `<path d="${pathOf(rows.map(row => [scaleX(row.age), scaleY(row.passive)]))}" fill="none" stroke="${COLORS.sage}" stroke-width="2.5"/>` +
     `<path d="${pathOf(rows.map(row => [scaleX(row.age), scaleY(row.expense)]))}" fill="none" stroke="${COLORS.clay}" stroke-width="2.5"/>`;
-  const legend = `<div class="chart-legend"><span class="legend"><i style="background:${COLORS.green}"></i>收入</span><span class="legend"><i style="background:${COLORS.clay}"></i>支出</span><span class="legend"><i style="background:${COLORS.red}"></i>结余为负</span></div>`;
-  return legend + svg(width, height, body, '收入与支出随年龄变化');
+  const legend = `<div class="chart-legend"><span class="legend"><i style="background:${COLORS.green}"></i>主动收入</span><span class="legend"><i style="background:${COLORS.sage}"></i>资产收益</span><span class="legend"><i style="background:${COLORS.clay}"></i>支出</span><span class="legend"><i style="background:${COLORS.red}"></i>结余为负</span></div>`;
+  return legend + svg(width, height, body, '主动收入、资产收益与支出随年龄变化');
 }
 
 function riskPanel(sim: SimulateOutput) {
@@ -154,6 +183,7 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
   const form = document.querySelector<HTMLFormElement>('#plan-form');
   if (form) form.hidden = true;
   const retirementAge = project.rows.find(row => row.phase === '退休')?.age ?? project.rows[0].age;
+  const retirementRow = project.rows.find(row => row.age === retirementAge) ?? project.rows[0];
   host('summary-host').innerHTML = `
     <div class="summary-actions">
       <button class="button button-outline" type="button" id="pdf-button">导出 PDF</button>
@@ -162,13 +192,13 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
     <div class="summary-grid">
       ${card('退休后月养老金', `${money(project.pension_monthly)} 元`, '按推导的缴费年限与指数计算')}
       ${card('规划终点资产', wan(project.final_assets), project.depleted_age ? `${project.depleted_age} 岁出现不足` : `可支撑至 ${project.rows[project.rows.length - 1].age} 岁`)}
-      ${card('结余转负', project.break_even_age ? `${project.break_even_age} 岁` : '不会转负', '收入第一次低于支出的年龄')}
+      ${card('退休后月被动收入', `${money(retirementRow.passive / 12)} 元`, `按当前配比，覆盖退休后月支出的 ${pct(retirementRow.passive / Math.max(retirementRow.expense, 1))}`)}
       ${card('成功率', pct(sim.success_rate), '三档配比下的蒙特卡洛结果')}
     </div>`;
   host('views-host').innerHTML = `
     <section class="view-card" data-view="spending"><h2>支出结构</h2><p class="section-hint">医疗与软性支出影响的是退休后最花钱的那几年。</p>${spendingChart(project.rows)}</section>
-    <section class="view-card" data-view="income"><h2>收入曲线</h2><p class="section-hint">退休那一刻收入从工资换成养老金，落差决定要提前准备多少。</p>${lineChart(project.rows, [{ value: row => row.income, color: COLORS.green, label: '收入' }], { label: '收入随年龄变化', min: 0 })}</section>
-    <section class="view-card" data-view="cashflow"><h2>收支对比</h2><p class="section-hint">两条线交叉的位置，就是现金流拐点。</p>${cashflowChart(project.rows, retirementAge)}</section>
+    <section class="view-card" data-view="income"><h2>收入曲线</h2><p class="section-hint">工资在退休那天断掉，之后靠养老金和资产收益；资产越多，被动收入越高。</p>${stackedChart(project.rows, [{ value: row => (row.phase === '工作' ? row.income : 0), color: COLORS.green, label: '工资' }, { value: row => (row.phase === '退休' ? row.income : 0), color: COLORS.clay, label: '养老金' }, { value: row => row.passive, color: COLORS.sage, label: '资产收益' }], { label: '收入构成随年龄变化' })}</section>
+    <section class="view-card" data-view="cashflow"><h2>收支对比</h2><p class="section-hint">工资断了以后，被动收入接得多快，决定缺口有多大。</p>${cashflowChart(project.rows, retirementAge)}</section>
     <section class="view-card" data-view="risk"><h2>风险与生活水平</h2>${riskPanel(sim)}</section>`;
   host('strategy-host').innerHTML = `<section class="view-card" data-view="strategy"><h2>策略对比</h2><p class="section-hint">同一份画像套上五个预设，看哪种活法更宽裕。</p>${strategyTable(compare.variants)}</section>`;
   host('results').hidden = false;
