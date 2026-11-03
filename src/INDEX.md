@@ -25,4 +25,4 @@
 - `pages/` — 页面清单：引用命令输入组成分组、开关与执行清单，由 `GET /api/pages/{page_id}` 提供给前端。细节见 `pages/README.md`。
 - `api/` — FastAPI 接入层：`GET/POST /api/commands`、`GET /api/pages/{page_id}` 与 Agent 端点；负责请求校验、错误映射与响应组装。
 - `tests/` — 全部 pytest 用例，按被测目录命名，例如 `test_rates.py` 对应 `deposit/rates.py`、`test_living.py` 对应 `living/`。在 `src/` 下执行 `uv run pytest`。
-- `tools/` — 离线维护脚本，不参与运行时。目前只有 `fetch_rates.py`，抓银行活期利率供人工核对。
+- `tools/` — 离线维护脚本，不参与运行时。`fetch_rates.py` 抓银行活期利率供人工核对；`build_demo_fixtures.py` 生成静态体验包的夹具，见 `docs/demo-static.md`。
