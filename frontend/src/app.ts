@@ -159,6 +159,40 @@ function strategyTable(variants: Variant[]) {
   return `<table class="strategy-table"><thead><tr><th>策略</th><th>退休年龄</th><th>成功率</th><th>期末资产</th><th>可支撑月支出</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
+function detailTable(row: Row): string {
+  const living = row.expense - row.medical - row.soft;
+  const income = row.income + row.pension + row.passive;
+  const net = income - row.expense;
+  const group = (label: string) => `<tr class="detail-group"><th colspan="2">${label}</th></tr>`;
+  const line = (label: string, value: number, sum = false) =>
+    `<tr${sum ? ' class="detail-sum"' : ''}><td>${label}</td><td>${money(value)} 元</td></tr>`;
+  return `<table class="detail-table">
+      <tbody>
+        ${group('收入')}
+        ${line('工资', row.income)}
+        ${line('养老金', row.pension)}
+        ${line('资产收益', row.passive)}
+        ${line('收入合计', income, true)}
+        ${group('支出')}
+        ${line('生活', living)}
+        ${line('医疗', row.medical)}
+        ${line('软性', row.soft)}
+        ${line('支出合计', row.expense, true)}
+        ${group('结余与资产')}
+        ${line('当年结余', net)}
+        ${line('年末资产', row.assets, true)}
+      </tbody>
+    </table>`;
+}
+
+function detailCard(rows: Row[], defaultAge: number): string {
+  const options = rows.map(row => `<option value="${row.age}"${row.age === defaultAge ? ' selected' : ''}>${row.age} 岁 · ${row.phase}</option>`).join('');
+  return `<section class="view-card" data-view="detail"><h2>年度明细</h2><p class="section-hint">选一年，看这一年的钱从哪来、花到哪去。</p>
+      <label class="detail-bar">年份<select id="detail-age" class="detail-select">${options}</select></label>
+      <div id="detail-body">${detailTable(rows.find(row => row.age === defaultAge) ?? rows[0])}</div>
+    </section>`;
+}
+
 function card(title: string, value: string, hint: string): string {
   return `<article class="summary-card"><h3>${title}</h3><strong>${value}</strong><p>${hint}</p></article>`;
 }
@@ -183,9 +217,15 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
     <section class="view-card" data-view="spending"><h2>支出结构</h2><p class="section-hint">生活支出退休后降一级，医疗随年龄往上走，软性支出在有孩子时最高。</p>${expenseChart(project.rows)}</section>
     <section class="view-card" data-view="income"><h2>收入曲线</h2><p class="section-hint">工资在退休那天断掉，之后靠养老金和资产收益；资产越多，被动收入越高。</p>${stackedChart(project.rows, [{ value: row => row.income, color: COLORS.green, label: '工资' }, { value: row => row.pension, color: COLORS.clay, label: '养老金' }, { value: row => row.passive, color: COLORS.sage, label: '资产收益' }], { label: '收入构成随年龄变化' })}</section>
     <section class="view-card" data-view="cashflow"><h2>收支对比</h2><p class="section-hint">工资断了以后，被动收入接得多快，决定缺口有多大。</p>${cashflowChart(project.rows, retirementAge)}</section>
+    ${detailCard(project.rows, retirementAge)}
     <section class="view-card" data-view="risk"><h2>风险与生活水平</h2>${riskPanel(sim)}</section>`;
   host('strategy-host').innerHTML = `<section class="view-card" data-view="strategy"><h2>策略对比</h2><p class="section-hint">同一份画像套上五个预设，看哪种活法更宽裕。</p>${strategyTable(compare.variants)}</section>`;
   host('results').hidden = false;
+  const detailSelect = document.querySelector<HTMLSelectElement>('#detail-age');
+  detailSelect?.addEventListener('change', () => {
+    const row = project.rows.find(item => item.age === Number(detailSelect.value));
+    if (row) host('detail-body').innerHTML = detailTable(row);
+  });
   host('pdf-button').addEventListener('click', async () => {
     const button = host('pdf-button') as HTMLButtonElement;
     button.disabled = true;
@@ -228,7 +268,7 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
   host('results').scrollIntoView({ block: 'start' });
 }
 
-const VIEW_IDS = ['spending', 'income', 'cashflow', 'risk', 'strategy'];
+const VIEW_IDS = ['spending', 'income', 'cashflow', 'detail', 'risk', 'strategy'];
 
 function prefill(params: URLSearchParams, renderer: FormRenderer, template: FormTemplate): boolean {
   const values: Record<string, string> = {};
