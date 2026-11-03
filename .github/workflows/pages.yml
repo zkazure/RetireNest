@@ -1,0 +1,56 @@
+# 把静态体验包发布到 GitHub Pages。
+#
+# 演示站点：https://zkazure.github.io/RetireNest/
+# 首次启用需要在仓库 Settings → Pages 把 Source 选成「GitHub Actions」。
+#
+# 只跑演示构建：夹具由 tools/build_demo_fixtures.py 生成并随仓库提交，
+# 这里不重新计算，避免 CI 与本地口径不一致时悄悄上线别的数字。
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'src/tools/build_demo_fixtures.py'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: 安装依赖
+        working-directory: frontend
+        run: npm ci
+      - name: 构建演示包
+        working-directory: frontend
+        run: npm run build:demo
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist-demo
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

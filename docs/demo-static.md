@@ -4,7 +4,7 @@
 
 比赛表单要一条「项目体验」链接，而 GitHub Pages 只能托管静态文件，FastAPI 起不来。于是把页面清单与三条命令在若干预置画像上的输出，在构建期算成一份 JSON，浏览器里直接读，不依赖后端。
 
-线上地址：`https://zkazure.github.io/RetireNest/`（产物由 `frontend/dist-demo/` 拷进博客仓库的 `RetireNest/` 目录）。
+线上地址：`https://zkazure.github.io/RetireNest/`，由本仓库的 `.github/workflows/pages.yml` 构建并发布。
 
 ## 三个部件
 
@@ -27,13 +27,23 @@ cd ../frontend && npm run build:demo
 
 ## 发布
 
-```bash
-rm -rf ~/Developments/blog/RetireNest
-cp -r frontend/dist-demo ~/Developments/blog/RetireNest
-cd ~/Developments/blog && git add RetireNest && git commit -m "..."
-```
+站点由本仓库直接发布：`.github/workflows/pages.yml` 在 main 上构建 `dist-demo`，再部署到 `https://zkazure.github.io/RetireNest/`。
 
-博客仓库是独立的静态站点，`RetireNest/` 作为普通目录放进去即可，不需要 Jekyll 配置。
+首次启用要去仓库 **Settings → Pages**，把 Source 选成「GitHub Actions」。之后推送 main 即自动上线，不需要手工拷贝。
+
+不另开博客仓库的原因：Pages 的地址由「哪个仓库开了 Pages」决定，本仓库名就是 `RetireNest`，开在这里路径天然是 `/RetireNest/`；产物与源码同库，改完一次推送就同步，不会出现两份产物互相漂移。
+
+## 本地预览
+
+`base` 是 `/RetireNest/`，直接开 `dist-demo` 里的 index.html 会丢样式，要放在同名目录下用静态服务器看：
+
+```bash
+cd frontend && npm run build:demo
+mkdir -p /tmp/pages && rm -rf /tmp/pages/RetireNest
+cp -r dist-demo /tmp/pages/RetireNest
+cd /tmp/pages && python3 -m http.server 8099
+# 打开 http://127.0.0.1:8099/RetireNest/
+```
 
 ## 边界
 
