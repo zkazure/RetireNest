@@ -67,13 +67,19 @@ function axisLabel(value: number): string {
   return `${Number.isInteger(wanValue) ? wanValue : wanValue.toFixed(1)}万`;
 }
 
+function sampleAges(rows: Row[], count: number): Row[] {
+  if (rows.length <= count) return rows;
+  return Array.from({ length: count }, (_, index) => rows[Math.round((index * (rows.length - 1)) / (count - 1))]);
+}
+
 function spendingChart(rows: Row[]) {
-  const picks = [0.5, 0.7, 0.9].map(ratio => rows[Math.min(rows.length - 1, Math.floor(rows.length * ratio))]);
-  const width = 520, height = 220, padTop = 30, padBottom = 30, barWidth = 64;
-  const plotLeft = 44, plotRight = width - 12, baseline = height - padBottom;
+  const picks = sampleAges(rows, 7);
+  const width = 720, height = 250, padTop = 34, padBottom = 30;
+  const plotLeft = 48, plotRight = width - 16, baseline = height - padBottom;
   const max = axisMax(Math.max(...picks.map(row => row.expense), 1));
   const scaleY = (value: number) => baseline - (value / max) * (baseline - padTop);
   const step = (plotRight - plotLeft) / picks.length;
+  const barWidth = Math.min(52, step * 0.56);
   const grid = [0, 0.25, 0.5, 0.75, 1].map(ratio => {
     const y = scaleY(max * ratio);
     return `<line x1="${plotLeft}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="${COLORS.line}" stroke-dasharray="3 5"/><text x="${plotLeft - 6}" y="${y + 4}" text-anchor="end" class="axis-text">${axisLabel(max * ratio)}</text>`;
@@ -92,7 +98,10 @@ function spendingChart(rows: Row[]) {
       y -= h;
       return `<rect x="${x}" y="${y}" width="${barWidth}" height="${Math.max(h, 0)}" fill="${color}" rx="3"><title>${label} ${money(value)} 元</title></rect>`;
     }).join('');
-    return `${parts}<text x="${x + barWidth / 2}" y="${height - 12}" text-anchor="middle" class="axis-text">${row.age}岁</text><text x="${x + barWidth / 2}" y="${y - 8}" text-anchor="middle" class="axis-text">${wan(row.expense)}</text>`;
+    const amount = index % 2 === 0 || index === picks.length - 1
+      ? `<text x="${x + barWidth / 2}" y="${y - 8}" text-anchor="middle" class="axis-text">${wan(row.expense)}</text>`
+      : '';
+    return `${parts}<text x="${x + barWidth / 2}" y="${height - 12}" text-anchor="middle" class="axis-text">${row.age}岁</text>${amount}`;
   }).join('');
   const legend = `<div class="chart-legend"><span class="legend"><i style="background:${COLORS.sage}"></i>生活</span><span class="legend"><i style="background:${COLORS.clay}"></i>医疗</span><span class="legend"><i style="background:${COLORS.green}"></i>软性</span></div>`;
   return legend + svg(width, height, grid + bars, '不同年龄的支出结构');
