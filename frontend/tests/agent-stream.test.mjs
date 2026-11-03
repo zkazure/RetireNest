@@ -13,7 +13,7 @@ async function loadTs(file) {
   );
 }
 
-const { SseParser } = await loadTs('agent-stream.ts');
+const { SseParser, replyText } = await loadTs('agent-stream.ts');
 
 test('解析一个完整事件', () => {
   const parser = new SseParser();
@@ -59,4 +59,18 @@ test('未完成的事件留在缓冲区', () => {
   const parser = new SseParser();
   assert.deepEqual(parser.push('data: 1\n'), []);
   assert.deepEqual(parser.push('\n'), [{ event: 'message', data: '1' }]);
+});
+
+test('reply 事件取 reply 字段', () => {
+  const data = JSON.parse('{"session_id":"s1","reply":"你好","warnings":[]}');
+  assert.equal(replyText(data), '你好');
+});
+
+test('兼容旧版的 text 字段', () => {
+  assert.equal(replyText({ text: '旧格式' }), '旧格式');
+});
+
+test('两个字段都没有时返回空串', () => {
+  assert.equal(replyText({}), '');
+  assert.equal(replyText({ reply: null }), '');
 });

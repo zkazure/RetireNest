@@ -40,3 +40,14 @@ function parseBlock(block: string): SseEvent | null {
   if (data.length === 0) return null;
   return { event, data: data.join('\n') };
 }
+
+export interface ReplyPayload {
+  reply?: unknown;
+  text?: unknown;
+}
+
+/** `reply` 事件的正文在 `reply` 字段；兼容早期只有 `text` 的实现。 */
+export function replyText(payload: ReplyPayload): string {
+  const value = payload.reply ?? payload.text;
+  return typeof value === 'string' ? value : '';
+}
