@@ -10,7 +10,7 @@ import { playIntro } from './intro';
 import type { FormPreset, FormTemplate } from './form-types';
 import type { PageManifest } from './page-types';
 
-interface Row { age: number; phase: string; income: number; passive: number; expense: number; medical: number; soft: number; assets: number }
+interface Row { age: number; phase: string; income: number; pension: number; passive: number; expense: number; medical: number; soft: number; assets: number }
 interface ProjectOutput { pension_monthly: number; break_even_age: number | null; depleted_age: number | null; final_assets: number; peak_assets: number; rows: Row[] }
 interface SimulateOutput { success_rate: number; terminal_p10: number; terminal_median: number; terminal_p90: number; affordable_monthly_expense: number; depleted_p10: number | null; depleted_median: number | null }
 interface Variant { preset_id: string; label: string; retirement_age: number; final_assets: number; success_rate: number; affordable_monthly_expense: number; depleted_age: number | null }
@@ -120,18 +120,19 @@ function axisLabel(value: number): string {
 
 function cashflowChart(rows: Row[], retirementAge: number) {
   const width = 720, height = 280, padTop = 16, padBottom = 28;
-  const all = rows.flatMap(row => [row.income, row.passive, row.expense]);
+  const all = rows.flatMap(row => [row.income, row.pension, row.passive, row.expense]);
   const min = Math.min(...all, 0), max = Math.max(...all, 1);
   const scaleY = (value: number) => padTop + (1 - (value - min) / (max - min || 1)) * (height - padTop - padBottom);
   const scaleX = (age: number) => 44 + ((age - rows[0].age) / (rows[rows.length - 1].age - rows[0].age || 1)) * (width - 56);
-  const deficit = rows.filter(row => row.income + row.passive < row.expense).map(row => `<rect x="${scaleX(row.age) - 3}" y="${height - padBottom - 4}" width="6" height="4" fill="${COLORS.red}" opacity=".55"/>`).join('');
+  const deficit = rows.filter(row => row.income + row.pension + row.passive < row.expense).map(row => `<rect x="${scaleX(row.age) - 3}" y="${height - padBottom - 4}" width="6" height="4" fill="${COLORS.red}" opacity=".55"/>`).join('');
   const body = axes(width, height, rows, min, max, scaleY, scaleX) + deficit +
     `<line x1="${scaleX(retirementAge)}" y1="${padTop}" x2="${scaleX(retirementAge)}" y2="${height - padBottom}" stroke="${COLORS.clay}" stroke-dasharray="4 4"/>` +
     `<text x="${scaleX(retirementAge) + 6}" y="${padTop + 12}" class="axis-text">${retirementAge} 岁退休</text>` +
-    `<path d="${pathOf(rows.map(row => [scaleX(row.age), scaleY(row.income)]))}" fill="none" stroke="${COLORS.green}" stroke-width="2.5"/>` +
+    `<path d="${pathOf(rows.filter(row => row.income > 0).map(row => [scaleX(row.age), scaleY(row.income)]))}" fill="none" stroke="${COLORS.green}" stroke-width="2.5"/>` +
+    `<path d="${pathOf(rows.filter(row => row.pension > 0).map(row => [scaleX(row.age), scaleY(row.pension)]))}" fill="none" stroke="${COLORS.ink}" stroke-width="2.5"/>` +
     `<path d="${pathOf(rows.map(row => [scaleX(row.age), scaleY(row.passive)]))}" fill="none" stroke="${COLORS.sage}" stroke-width="2.5"/>` +
     `<path d="${pathOf(rows.map(row => [scaleX(row.age), scaleY(row.expense)]))}" fill="none" stroke="${COLORS.clay}" stroke-width="2.5"/>`;
-  const legend = `<div class="chart-legend"><span class="legend"><i style="background:${COLORS.green}"></i>主动收入</span><span class="legend"><i style="background:${COLORS.sage}"></i>资产收益</span><span class="legend"><i style="background:${COLORS.clay}"></i>支出</span><span class="legend"><i style="background:${COLORS.red}"></i>结余为负</span></div>`;
+  const legend = `<div class="chart-legend"><span class="legend"><i style="background:${COLORS.green}"></i>工资</span><span class="legend"><i style="background:${COLORS.ink}"></i>养老金</span><span class="legend"><i style="background:${COLORS.sage}"></i>资产收益</span><span class="legend"><i style="background:${COLORS.clay}"></i>支出</span><span class="legend"><i style="background:${COLORS.red}"></i>结余为负</span></div>`;
   return legend + svg(width, height, body, '主动收入、资产收益与支出随年龄变化');
 }
 
@@ -175,12 +176,12 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
     <div class="summary-grid">
       ${card('退休后月养老金', `${money(project.pension_monthly)} 元`, '按推导的缴费年限与指数计算')}
       ${card('规划终点资产', wan(project.final_assets), project.depleted_age ? `${project.depleted_age} 岁出现不足` : `可支撑至 ${project.rows[project.rows.length - 1].age} 岁`)}
-      ${card('退休后月被动收入', `${money(retirementRow.passive / 12)} 元`, `按当前配比，覆盖退休后月支出的 ${pct(retirementRow.passive / Math.max(retirementRow.expense, 1))}`)}
+      ${card('退休后月资产收益', `${money(retirementRow.passive / 12)} 元`, `按当前配比，覆盖退休后月支出的 ${pct(retirementRow.passive / Math.max(retirementRow.expense, 1))}`)}
       ${card('成功率', pct(sim.success_rate), '三档配比下的蒙特卡洛结果')}
     </div>`;
   host('views-host').innerHTML = `
     <section class="view-card" data-view="spending"><h2>支出结构</h2><p class="section-hint">生活支出退休后降一级，医疗随年龄往上走，软性支出在有孩子时最高。</p>${expenseChart(project.rows)}</section>
-    <section class="view-card" data-view="income"><h2>收入曲线</h2><p class="section-hint">工资在退休那天断掉，之后靠养老金和资产收益；资产越多，被动收入越高。</p>${stackedChart(project.rows, [{ value: row => (row.phase === '工作' ? row.income : 0), color: COLORS.green, label: '工资' }, { value: row => (row.phase === '退休' ? row.income : 0), color: COLORS.clay, label: '养老金' }, { value: row => row.passive, color: COLORS.sage, label: '资产收益' }], { label: '收入构成随年龄变化' })}</section>
+    <section class="view-card" data-view="income"><h2>收入曲线</h2><p class="section-hint">工资在退休那天断掉，之后靠养老金和资产收益；资产越多，被动收入越高。</p>${stackedChart(project.rows, [{ value: row => row.income, color: COLORS.green, label: '工资' }, { value: row => row.pension, color: COLORS.clay, label: '养老金' }, { value: row => row.passive, color: COLORS.sage, label: '资产收益' }], { label: '收入构成随年龄变化' })}</section>
     <section class="view-card" data-view="cashflow"><h2>收支对比</h2><p class="section-hint">工资断了以后，被动收入接得多快，决定缺口有多大。</p>${cashflowChart(project.rows, retirementAge)}</section>
     <section class="view-card" data-view="risk"><h2>风险与生活水平</h2>${riskPanel(sim)}</section>`;
   host('strategy-host').innerHTML = `<section class="view-card" data-view="strategy"><h2>策略对比</h2><p class="section-hint">同一份画像套上五个预设，看哪种活法更宽裕。</p>${strategyTable(compare.variants)}</section>`;

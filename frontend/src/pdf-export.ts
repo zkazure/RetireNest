@@ -1,7 +1,7 @@
 // 规划报告：把全周期页的摘要、两条曲线与策略对比画到 canvas，再嵌进 A4 PDF。
 import { PDFDocument } from 'pdf-lib';
 
-export interface ReportRow { age: number; phase: string; income: number; passive: number; expense: number; medical: number; soft: number; assets: number }
+export interface ReportRow { age: number; phase: string; income: number; pension: number; passive: number; expense: number; medical: number; soft: number; assets: number }
 export interface ReportVariant { label: string; retirement_age: number; success_rate: number; final_assets: number; affordable_monthly_expense: number }
 export interface ReportData {
   pensionMonthly: number;
@@ -65,7 +65,7 @@ function axes(ctx: CanvasRenderingContext2D, rows: ReportRow[], min: number, max
   return { sx, sy };
 }
 
-function line(ctx: CanvasRenderingContext2D, rows: ReportRow[], key: 'income' | 'passive' | 'expense' | 'assets', color: string, sx: (n: number) => number, sy: (n: number) => number): void {
+function line(ctx: CanvasRenderingContext2D, rows: ReportRow[], key: 'income' | 'pension' | 'passive' | 'expense' | 'assets', color: string, sx: (n: number) => number, sy: (n: number) => number): void {
   ctx.strokeStyle = color;
   ctx.lineWidth = 4;
   ctx.beginPath();
@@ -104,14 +104,16 @@ function coverPage(data: ReportData): HTMLCanvasElement {
   });
 
   text(ctx, '收入与支出', 96, 620, 26, GREEN, '600');
-  const all = data.rows.flatMap(row => [row.income, row.passive, row.expense]);
+  const all = data.rows.flatMap(row => [row.income, row.pension, row.passive, row.expense]);
   const { sx, sy } = axes(ctx, data.rows, Math.min(...all, 0), Math.max(...all, 1), 180, 660, 960, 260);
-  line(ctx, data.rows, 'income', GREEN, sx, sy);
+  line(ctx, data.rows.filter(row => row.income > 0), 'income', GREEN, sx, sy);
+  line(ctx, data.rows.filter(row => row.pension > 0), 'pension', INK, sx, sy);
   line(ctx, data.rows, 'passive', SAGE, sx, sy);
   line(ctx, data.rows, 'expense', CLAY, sx, sy);
-  text(ctx, '主动收入', 180, 992, 18, GREEN);
-  text(ctx, '资产收益', 300, 992, 18, SAGE);
-  text(ctx, '支出', 420, 992, 18, CLAY);
+  text(ctx, '工资', 180, 992, 18, GREEN);
+  text(ctx, '养老金', 300, 992, 18, INK);
+  text(ctx, '资产收益', 420, 992, 18, SAGE);
+  text(ctx, '支出', 600, 992, 18, CLAY);
 
   text(ctx, '资产轨迹', 96, 1040, 26, GREEN, '600');
   const assets = data.rows.map(row => row.assets);
