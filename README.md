@@ -76,4 +76,6 @@ Agent 层默认关闭：可以只在设置页填密钥，也可以由服务端�
 
 运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。启动、重启、停止与模型密钥排障的流程写在 agent skill [.agents/skills/start-retirenest/SKILL.md](.agents/skills/start-retirenest/SKILL.md) 里。
 
+静态体验包把三条命令的结果预生成成夹具，部署在 GitHub Pages 上供无后端试用，生成与发布流程见 [docs/demo-static.md](docs/demo-static.md)。
+
 前端不再保存字段配置：表单的问题、类型、选项、约束与分组全部来自后端页面清单。页面清单的完整示例见 `src/tests/fixtures/lifecycle-page.json`。
