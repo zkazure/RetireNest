@@ -45,6 +45,8 @@ RETIRENEST_LLM_MODEL=deepseek-chat
 RETIRENEST_LLM_BASE_URL=https://api.deepseek.com/v1
 ```
 
+- 值支持 `${NAME}` 引用：从进程环境或本文件前面几行取值；引用没有值时该项跳过并打印提示。
+- 第三方端点（DeepSeek、通义、Kimi 等）必须填 `RETIRENEST_LLM_BASE_URL`，否则会打到 OpenAI 官方端点并返回 401。
 - 需要临时换一套配置：在命令前 export，进程环境优先于文件。
 - 只想看界面、不接模型：`RETIRENEST_AGENT_FAKE=1 make dev`。
 - 密钥只留在 `.env.local` 或当次进程环境里，不要写进被跟踪的文件、README、commit message 或聊天回复，也不要 `echo` 出来。
@@ -63,6 +65,7 @@ curl -s http://127.0.0.1:8000/api/agent/config
 - 503 只列 `RETIRENEST_LLM_MODEL`：key 有了，模型名没给。
 - 设置页填了仍 503：页面 origin 与填设置页的 origin 不同。localStorage 按 origin 隔离，`localhost` 与 `127.0.0.1` 也算不同 origin；在哪个端口聊天，就在那个端口的 `/settings.html` 重新填。
 - 端口被占用：`make stop`，或用 `--stop --ports <端口>` 只清指定端口。
+- 启动日志出现「引用了 `${X}`，但环境里没有值，已跳过」：那个变量在当前 shell 没 export，先 export 或改成字面量。
 - 8000 上是旧页面：`frontend/dist` 是上次构建的产物，开发一律用 5173。
 
 ## 边界

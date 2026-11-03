@@ -427,12 +427,32 @@ def _unquote(value: str) -> str:
     return value
 
 
+ENV_REFERENCE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
+"""只认 `${NAME}` 形式：`$NAME` 会误伤本身带美元符的密钥。"""
+
+
+def _expand(value: str, environ: MutableMapping[str, str]) -> tuple[str, list[str]]:
+    """展开 `${NAME}`；同时返回当前没有值的引用名，供调用方提示。"""
+    missing: list[str] = []
+
+    def replace(match: re.Match[str]) -> str:
+        name = match.group(1)
+        found = environ.get(name)
+        if found is None:
+            missing.append(name)
+            return ""
+        return found
+
+    return ENV_REFERENCE.sub(replace, value), missing
+
+
 def load_env_file(
     path: Path = ENV_FILE,
     environ: MutableMapping[str, str] | None = None,
 ) -> list[str]:
     """把 `.env.local` 里的 `KEY=VALUE` 补进环境变量。
 
+    支持 `${NAME}` 引用（从进程环境或文件里前面几行取值），引用没有值时跳过该项。
     已存在的变量不覆盖，方便在命令行临时 export 覆盖文件；空值等于没写。
     返回本次补进去的变量名，调用方只打印名字，不打印值。
     """
@@ -448,10 +468,14 @@ def load_env_file(
             line = line[len("export ") :].lstrip()
         name, sep, value = line.partition("=")
         name = name.strip()
-        if not sep or not name:
+        if not sep or not name or name in target:
             continue
-        value = _unquote(value.strip())
-        if not value or name in target:
+        value, missing = _expand(_unquote(value.strip()), target)
+        if missing:
+            refs = "、".join(f"${{{ref}}}" for ref in missing)
+            say(f"提示：.env.local 的 {name} 引用了 {refs}，但环境里没有值，已跳过")
+            continue
+        if not value:
             continue
         target[name] = value
         applied.append(name)

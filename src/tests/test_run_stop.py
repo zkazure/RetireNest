@@ -302,6 +302,48 @@ def test_load_env_file_returns_names_only(tmp_path: Path) -> None:
     assert all("sk-secret" not in name for name in applied)
 
 
+def test_load_env_file_expands_reference(tmp_path: Path) -> None:
+    path = tmp_path / ".env.local"
+    path.write_text("RETIRENEST_LLM_API_KEY=${DEEPSEEK_API_KEY}\n", encoding="utf-8")
+    environ = {"DEEPSEEK_API_KEY": "sk-real"}
+
+    assert run.load_env_file(path, environ) == ["RETIRENEST_LLM_API_KEY"]
+    assert environ["RETIRENEST_LLM_API_KEY"] == "sk-real"
+
+
+def test_load_env_file_expands_reference_from_earlier_line(tmp_path: Path) -> None:
+    path = tmp_path / ".env.local"
+    path.write_text("KEY=sk-early\nRETIRENEST_LLM_API_KEY=${KEY}\n", encoding="utf-8")
+    environ: dict[str, str] = {}
+
+    assert run.load_env_file(path, environ) == ["KEY", "RETIRENEST_LLM_API_KEY"]
+    assert environ["RETIRENEST_LLM_API_KEY"] == "sk-early"
+
+
+def test_load_env_file_skips_unresolved_reference(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / ".env.local"
+    path.write_text("RETIRENEST_LLM_API_KEY=${MISSING_KEY}\n", encoding="utf-8")
+    environ: dict[str, str] = {}
+
+    assert run.load_env_file(path, environ) == []
+    assert environ == {}
+
+    out = capsys.readouterr().out
+    assert "MISSING_KEY" in out and "已跳过" in out
+
+
+def test_load_env_file_keeps_bare_dollar_sign(tmp_path: Path) -> None:
+    # 只展开 `${NAME}`，`$NAME` 保持原样，避免密钥里的美元符被误伤。
+    path = tmp_path / ".env.local"
+    path.write_text("RETIRENEST_LLM_API_KEY=sk-a$b\n", encoding="utf-8")
+    environ: dict[str, str] = {}
+
+    assert run.load_env_file(path, environ) == ["RETIRENEST_LLM_API_KEY"]
+    assert environ["RETIRENEST_LLM_API_KEY"] == "sk-a$b"
+
+
 def test_main_stop_skips_tool_checks(monkeypatch: pytest.MonkeyPatch) -> None:
     stopped: list[list[int]] = []
 
