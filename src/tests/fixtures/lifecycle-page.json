@@ -1,6 +1,6 @@
 {
   "id": "retirement.lifecycle",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "title": "一辈子的现金流",
   "description": "填几个选择题，看工作期与退休期的收支、资产轨迹，以及不同活法的差别。",
   "sections": [
@@ -927,5 +927,26 @@
       ]
     }
   ],
-  "rules": []
+  "rules": [],
+  "presets": [
+    {
+      "id": "nailong",
+      "label": "奶龙",
+      "values": {
+        "sex": "男",
+        "city": "深圳",
+        "birth_date": "1992-03-15",
+        "income": "20k30k",
+        "assets": "100w200w",
+        "debt": "10w30w",
+        "expense": "10k15k",
+        "retirement_expense": "6k10k",
+        "entertainment": "mid",
+        "travel": "once",
+        "retirement_age": "60",
+        "children": "none"
+      },
+      "description": "34 岁 · 深圳 · 月入两万多，想 60 岁退休"
+    }
+  ]
 }

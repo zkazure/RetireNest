@@ -68,6 +68,20 @@ class PageExecution:
 
 
 @dataclass(frozen=True, slots=True)
+class PagePreset:
+    """一份示例画像：点一下就把表单填成这个样子。
+
+    `values` 的键是页面字段名，值是该字段的提交值（下拉取选项值、档位取
+    档位 key、日期取 YYYY-MM-DD）。允许只填一部分字段，缺的保持默认。
+    """
+
+    id: str
+    label: str
+    values: Mapping[str, str | bool]
+    description: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class PageRule:
     type: str
     left: str
@@ -85,6 +99,7 @@ class PageManifest:
     sections: tuple[PageSection, ...]
     executions: tuple[PageExecution, ...]
     rules: tuple[PageRule, ...] = field(default=())
+    presets: tuple[PagePreset, ...] = field(default=())
 
     def fields(self) -> tuple[PageField, ...]:
         return tuple(field for section in self.sections for field in section.fields)

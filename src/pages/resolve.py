@@ -8,15 +8,20 @@
 2. 取字段文案：label 只能来自 manifest 的 question，页面模块不能自带问题文本。
 3. 合并约束：同一字段被多个命令消费时，min/max/precision/max_length 取交集，
    每次请求现算，前端因此不需要持有任何数值常量。
+4. 校验示例画像：`presets` 里的每个取值都要对得上页面字段与它的类型、选项与
+   约束，坏画像在解析阶段就报错，不留给前端猜。
 """
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
+from datetime import date
 from typing import Any
 
 from commands import Command, get_command
 from commands.models import InputSpec
+from commands.validation import DECIMAL_RE
 from pages.models import PageError, PageField, PageManifest
 
 _LOOKUP = Callable[[str], Command | None]
@@ -93,6 +98,8 @@ def resolve(page: PageManifest, lookup: _LOOKUP = get_command) -> dict[str, Any]
     for field in fields:
         resolved_fields[field.name] = _resolve_field(field, consumers, specs_by_command)
 
+    presets = _presets(page, resolved_fields)
+
     return {
         "id": page.id,
         "version": page.version,
@@ -154,6 +161,7 @@ def resolve(page: PageManifest, lookup: _LOOKUP = get_command) -> dict[str, Any]
             }
             for rule in page.rules
         ],
+        "presets": presets,
     }
 
 
@@ -291,3 +299,88 @@ def _intersect(field_name: str, specs: list[InputSpec]) -> dict[str, Any]:
             f"min={constraints['min']}，max={constraints['max']}。"
         )
     return constraints
+
+
+def _presets(
+    page: PageManifest, resolved_fields: dict[str, dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """校验示例画像并整理成下发结构；允许只填一部分字段。"""
+    seen: set[str] = set()
+    payload: list[dict[str, Any]] = []
+    for preset in page.presets:
+        if not preset.id:
+            raise PageError("示例画像缺少 id。")
+        if preset.id in seen:
+            raise PageError(f"示例画像 id 重复：{preset.id}")
+        seen.add(preset.id)
+        if not preset.label.strip():
+            raise PageError(f"示例画像 {preset.id} 缺少名称。")
+        for name, value in preset.values.items():
+            field = resolved_fields.get(name)
+            if field is None:
+                raise PageError(f"示例画像 {preset.id} 引用了未知字段：{name}")
+            problem = _preset_value_problem(field, value)
+            if problem:
+                raise PageError(f"示例画像 {preset.id} 的字段 {name} {problem}")
+        item: dict[str, Any] = {
+            "id": preset.id,
+            "label": preset.label,
+            "values": dict(preset.values),
+        }
+        if preset.description:
+            item["description"] = preset.description
+        payload.append(item)
+    return payload
+
+
+def _preset_value_problem(field: dict[str, Any], value: str | bool) -> str | None:
+    """按字段的下发结构挑错；返回 None 表示这个取值可以用。"""
+    kind = field["type"]
+    if kind == "checkbox":
+        return None if isinstance(value, bool) else "应该是布尔值。"
+    if not isinstance(value, str):
+        return "应该是字符串。"
+    if kind == "select":
+        if value in {option["value"] for option in field.get("options", [])}:
+            return None
+        if field.get("allowCustom"):
+            return None
+        return f"不在选项里：{value}"
+    if kind == "date":
+        try:
+            parsed = date.fromisoformat(value)
+        except ValueError:
+            return f"不是合法日期：{value}"
+        return None if parsed.isoformat() == value else f"不是合法日期：{value}"
+    if kind == "tier":
+        if value in {tier["value"] for tier in field.get("tiers", [])}:
+            return None
+        if not field.get("allowCustom"):
+            return f"不在档位里：{value}"
+        return _number_problem(field, value)
+    if kind in {"number", "decimal"}:
+        return _number_problem(field, value)
+    if kind in {"text", "textarea"}:
+        if not value.strip():
+            return "不能为空。"
+        max_length = field.get("maxLength")
+        return None if max_length is None or len(value) <= max_length else f"超过 {max_length} 个字符。"
+    return f"不支持的类型：{kind}"
+
+
+def _number_problem(field: dict[str, Any], value: str) -> str | None:
+    text = value.strip()
+    if not DECIMAL_RE.fullmatch(text):
+        return f"不是数字：{value}"
+    number = float(text)
+    if not math.isfinite(number):
+        return f"不是有限数字：{value}"
+    if field.get("integer") and not number.is_integer():
+        return f"不是整数：{value}"
+    minimum = field.get("min")
+    if minimum is not None and number < minimum:
+        return f"小于下限 {minimum}：{value}"
+    maximum = field.get("max")
+    if maximum is not None and number > maximum:
+        return f"大于上限 {maximum}：{value}"
+    return None

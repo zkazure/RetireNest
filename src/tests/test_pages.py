@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -11,7 +12,15 @@ from fastapi.testclient import TestClient
 
 from api.app import app
 from commands import get_command
-from pages import LIFECYCLE_PAGE, PageError, PageExecution, PageField, PageManifest, PageSection
+from pages import (
+    LIFECYCLE_PAGE,
+    PageError,
+    PageExecution,
+    PageField,
+    PageManifest,
+    PagePreset,
+    PageSection,
+)
 from pages.resolve import resolve
 
 client = TestClient(app)
@@ -234,6 +243,100 @@ def test_unknown_page_returns_404() -> None:
     response = client.get("/api/pages/nope")
     assert response.status_code == 404
     assert response.json()["code"] == "UNKNOWN_PAGE"
+
+
+def _page_with_preset(values: dict, preset_id: str = "probe") -> PageManifest:
+    return replace(LIFECYCLE_PAGE, presets=(PagePreset(id=preset_id, label="探针", values=values),))
+
+
+def test_preset_is_delivered_with_every_field() -> None:
+    body = client.get(f"/api/pages/{PAGE_ID}").json()
+    assert [item["id"] for item in body["presets"]] == ["nailong"]
+
+    nailong = body["presets"][0]
+    assert nailong["label"] == "奶龙"
+    assert nailong["description"] == "34 岁 · 深圳 · 月入两万多，想 60 岁退休"
+    names = {item["name"] for item in fields(body)}
+    assert set(nailong["values"]) <= names
+    assert len(nailong["values"]) == 12
+    assert "category" not in nailong["values"]
+
+
+def test_preset_values_match_field_options() -> None:
+    body = client.get(f"/api/pages/{PAGE_ID}").json()
+    for name, value in body["presets"][0]["values"].items():
+        spec = field(body, name)
+        if spec["type"] == "tier":
+            assert value in {tier["value"] for tier in spec["tiers"]}
+        elif spec["type"] == "select":
+            assert value in {option["value"] for option in spec["options"]}
+        elif spec["type"] == "date":
+            assert date.fromisoformat(value).isoformat() == value
+
+
+def test_preset_may_fill_only_some_fields() -> None:
+    resolved = resolve(_page_with_preset({"sex": "女"}))
+    assert resolved["presets"][0]["values"] == {"sex": "女"}
+
+
+def test_preset_with_unknown_field_is_rejected() -> None:
+    with pytest.raises(PageError, match="未知字段"):
+        resolve(_page_with_preset({"nope": "x"}))
+
+
+def test_preset_with_unknown_option_is_rejected() -> None:
+    with pytest.raises(PageError, match="不在选项里"):
+        resolve(_page_with_preset({"sex": "其他"}))
+
+
+def test_preset_with_unknown_tier_is_rejected() -> None:
+    """允许自定义的档位字段：非数字照样拒；不允许自定义时只认档位 key。"""
+    with pytest.raises(PageError, match="不是数字"):
+        resolve(_page_with_preset({"income": "9k"}))
+    assert resolve(_page_with_preset({"income": "17000"}))["presets"]
+
+    page = PageManifest(
+        id="probe",
+        version="1.0.0",
+        title="探针",
+        description="",
+        sections=(
+            PageSection(
+                id="one",
+                title="一",
+                fields=(PageField(name="income", command="lifecycle.project"),),
+            ),
+        ),
+        executions=(PageExecution(command="lifecycle.project", inputs={"income": "income"}),),
+        presets=(PagePreset(id="probe", label="探针", values={"income": "9k"}),),
+    )
+    with pytest.raises(PageError, match="不在档位里"):
+        resolve(page)
+
+
+def test_preset_custom_number_respects_constraints() -> None:
+    assert resolve(_page_with_preset({"retirement_age": "58"}))["presets"]
+    with pytest.raises(PageError, match="大于上限"):
+        resolve(_page_with_preset({"retirement_age": "95"}))
+    with pytest.raises(PageError, match="不是整数"):
+        resolve(_page_with_preset({"retirement_age": "58.5"}))
+
+
+def test_preset_with_bad_date_is_rejected() -> None:
+    with pytest.raises(PageError, match="不是合法日期"):
+        resolve(_page_with_preset({"birth_date": "1992/03/15"}))
+
+
+def test_preset_ids_must_be_unique() -> None:
+    page = replace(
+        LIFECYCLE_PAGE,
+        presets=(
+            PagePreset(id="probe", label="甲", values={"sex": "男"}),
+            PagePreset(id="probe", label="乙", values={"sex": "女"}),
+        ),
+    )
+    with pytest.raises(PageError, match="id 重复"):
+        resolve(page)
 
 
 def test_page_fixture_matches_endpoint() -> None:

@@ -9,8 +9,8 @@
 
 ## 文件
 
-- `models.py`：`PageManifest`、`PageSection`、`PageField`、`PageToggle`、`PageExecution`、`PageRule`。
-- `lifecycle.py`：全周期页清单，4 个分组、13 个字段、3 条执行，无开关与跨字段规则。
+- `models.py`：`PageManifest`、`PageSection`、`PageField`、`PageToggle`、`PageExecution`、`PageRule`、`PagePreset`。
+- `lifecycle.py`：全周期页清单，4 个分组、13 个字段、3 条执行、1 份示例画像，无开关与跨字段规则。
 - `resolve.py`：校验引用并解析成前端 JSON，负责文案取值与约束交集。
 
 ## 解析规则
@@ -23,6 +23,14 @@
 - 渲染类型取来源命令的类型；消费命令必须能接受这个类型（`integer` 可被 `number` 接受，`enum` 可被 `text` 接受，反之不行）。
 - 每个字段至少被一条执行引用，每条执行的每个参数都能落到字段；出现死字段或悬空参数即报错。
 - 执行清单里的命令必须已注册；分组开关必须先声明再被引用。
+- 示例画像的取值逐个校验：键必须是页面字段；下拉取选项值；档位取档位 key，或 `allowCustom` 为真时取范围内的数值字符串（`integer` 的档位要求整数）；日期取 `YYYY-MM-DD`；开关取布尔。允许只填一部分字段，任一取值不合法即报错。跨字段规则不参与画像校验。
+
+## 新增示例画像
+
+1. 在 `lifecycle.py` 里写一个 `PagePreset(id=..., label=..., description=..., values={...})`。
+2. `values` 的键用页面字段名，取值按上面的校验口径；想留空的字段直接不写。
+3. 把画像加进 `MANIFEST.presets`，并升一下页面 `version`。
+4. 重新生成夹具，`uv run pytest tests/test_pages.py` 会检查画像取值是否对得上字段。
 
 ## 新增字段
 

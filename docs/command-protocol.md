@@ -215,12 +215,15 @@ GET  /api/pages/{page_id}
 - `sections`：分组、顺序与可选开关；每个字段带 `label`、类型、单位、选项、约束、`required`、`visibleWhen`。
 - `executions`：提交时按顺序执行的命令。`inputs` 把命令参数映射到页面字段；`toggle` 非空时只有开关打开才执行；`outputs` 是结果展示所需的输出规格。
 - `rules`：跨字段预校验，前端只做即时提示，命令校验仍是权威。
+- `presets`：示例画像，`values` 的键是页面字段名，点一下就把表单填成这个样子；允许只填一部分字段。
 
 字段的 `label` 必须等于来源命令 manifest 的 `question`。同一字段被多个命令消费时，`min`/`max`/`precision`/`max_length` 取交集，`integer` 只要有一个命令要求就是真；每次请求现算，前端不持有数值常量。
 
 字段的 `required` 由页面清单声明：默认必答，`false` 表示可留空。页面标 `false` 的字段，其所有消费命令的对应输入也必须可选，否则解析失败。命令的 `required_when` 只作用于命令输入，不在页面上推导；条件必填用 `visibleWhen`，字段只在条件成立时出现，出现即必答。
 
 档位字段的 `allowCustom` 为 `true` 时，页面在档位之外还要给一个「其他（自己填）」入口：下发的 `min`/`max`/`integer` 就是对自定义数值的约束，提交时该字段给数值字符串。页面标了 `allowCustom`、而任一消费命令的 `InputSpec.allow_custom` 为假时，解析直接报错，不把问题留到 422。
+
+示例画像的取值在解析阶段逐个校验：键必须是页面字段；下拉取选项值；档位取档位 key，或 `allowCustom` 为真时取范围内的数值字符串（`integer` 的档位要求整数）；日期取 `YYYY-MM-DD`；开关取布尔。任一取值不合法即报错，坏画像不会下发到前端。跨字段 `rules` 不参与画像校验，命令侧仍是权威。
 
 ```json
 {
@@ -259,7 +262,15 @@ GET  /api/pages/{page_id}
       "outputs": []
     }
   ],
-  "rules": []
+  "rules": [],
+  "presets": [
+    {
+      "id": "nailong",
+      "label": "奶龙",
+      "description": "34 岁 · 深圳 · 月入两万多，想 60 岁退休",
+      "values": { "sex": "男", "city": "深圳", "birth_date": "1992-03-15", "income": "20k30k" }
+    }
+  ]
 }
 ```
 
