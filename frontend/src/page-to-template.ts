@@ -1,4 +1,4 @@
-import type { FormField, FormRule, FormSection, FormTemplate } from './form-types';
+import type { FormField, FormPreset, FormRule, FormSection, FormTemplate } from './form-types';
 import type { PageFieldSpec, PageManifest, PageSectionSpec } from './page-types';
 
 // 页面清单只携带后端给的文案与约束；这里只做结构转换，不补任何业务字段。
@@ -69,6 +69,12 @@ function toRule(rule: PageManifest['rules'][number]): FormRule {
   return converted;
 }
 
+function toPreset(preset: PageManifest['presets'][number]): FormPreset {
+  const converted: FormPreset = { id: preset.id, label: preset.label, values: { ...preset.values } };
+  if (preset.description) converted.description = preset.description;
+  return converted;
+}
+
 export function pageToTemplate(page: PageManifest): FormTemplate {
   return {
     id: page.id,
@@ -78,5 +84,6 @@ export function pageToTemplate(page: PageManifest): FormTemplate {
     optionSets: {},
     sections: page.sections.map(toSection),
     rules: page.rules.map(toRule),
+    presets: page.presets.map(toPreset),
   };
 }

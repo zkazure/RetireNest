@@ -59,7 +59,8 @@ uv run --project src python run.py --prod
 全周期页由 `lifecycle.project`、`lifecycle.simulate`、`strategy.compare` 三条命令驱动：确定性现金流、
 三档资产配置的蒙特卡洛（成功率、破产年龄分位、可支撑支出）与五个预设策略的并排对比。表单以选择题为主，
 数值走档位并在选中后回显计算取值；每个金额或年龄题末尾还有「其他（自己填）」，填的数字直接参与计算，
-不再套档位中值。养老金四个参数由城市、收入档与年龄推导，不向用户提问。
+不再套档位中值。表单顶部有示例画像「奶龙」，点一下把字段全部填好，只填不算，可以在此基础上改任意一项。
+养老金四个参数由城市、收入档与年龄推导，不向用户提问。
 
 命令清单由 `GET /api/commands` 提供，单个命令通过 `POST /api/commands/{id}` 执行；首页由 `GET /api/pages/retirement.lifecycle` 的页面清单驱动，提交时逐个调用命令。protocol、manifest、页面清单和错误格式见 [docs/command-protocol.md](docs/command-protocol.md)。
 

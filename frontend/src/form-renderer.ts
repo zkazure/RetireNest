@@ -5,7 +5,7 @@ type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 interface Entry {
   field: FormField; control: Control; wrapper: HTMLElement; error: HTMLElement;
   custom?: HTMLInputElement; customWrapper?: HTMLElement;
-  radios?: HTMLInputElement[]; echo?: HTMLElement;
+  radios?: HTMLInputElement[]; echo?: HTMLElement; sync?: () => void;
 }
 const amountText = (value: number, unit?: string) => {
   const text = value >= 10000 ? `${(value / 10000).toFixed(value >= 100000 ? 0 : 2).replace(/\.?0+$/, '')} 万` : String(Math.round(value));
@@ -108,7 +108,7 @@ export class FormRenderer {
       else inputWrap.append(group, echo);
       wrapper.append(label, inputWrap);
       if (field.hint) { const hint = el('p', 'field-hint', field.hint); hint.id = id + '-hint'; wrapper.append(hint); }
-      const entry: Entry = { field, control, wrapper, radios, echo, error: el('small', 'field-error') };
+      const entry: Entry = { field, control, wrapper, radios, echo, sync, error: el('small', 'field-error') };
       if (field.allowCustom) { entry.custom = custom; entry.customWrapper = customWrap; }
       entry.error.id = id + '-error'; entry.error.hidden = true;
       const initial = defaults[field.name];
@@ -175,6 +175,39 @@ export class FormRenderer {
     return Object.fromEntries([...this.entries].map(([name,entry])=>[name,
       entry.field.type === 'checkbox' ? (entry.control as HTMLInputElement).checked
       : entry.control.value === '__custom__' && entry.custom ? entry.custom.value : entry.control.value]));
+  }
+  // 示例画像一键填入：后端已校验过取值，这里只负责写进控件并把回显刷新同步。
+  // values 里没有的字段保持原样，用户可以只填一部分。
+  applyPreset(values: Record<string, string | boolean>): void {
+    for (const [name, value] of Object.entries(values)) {
+      const entry = this.entries.get(name);
+      if (!entry) continue;
+      if (entry.field.type === 'tier') {
+        const radios = entry.radios ?? [];
+        const matched = radios.find(radio => radio.value === value);
+        if (matched) matched.checked = true;
+        else if (entry.custom) {
+          const other = radios.find(radio => radio.value === '__custom__');
+          if (other) other.checked = true;
+          entry.custom.value = String(value);
+        }
+        entry.sync?.();
+        continue;
+      }
+      if (entry.field.type === 'checkbox') {
+        (entry.control as HTMLInputElement).checked = value === true;
+        continue;
+      }
+      if (entry.field.type === 'select') {
+        const select = entry.control as HTMLSelectElement;
+        const known = [...select.options].some(option => option.value === value);
+        if (known) select.value = String(value);
+        else if (entry.custom) { select.value = '__custom__'; entry.custom.value = String(value); }
+        continue;
+      }
+      entry.control.value = String(value);
+    }
+    this.refresh();
   }
   private refresh() {
     const raw=this.readRaw(), active=activeFieldNames(this.template,raw);

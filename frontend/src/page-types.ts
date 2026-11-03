@@ -78,6 +78,13 @@ export interface PageRuleSpec {
   minimum?: number;
 }
 
+export interface PagePresetSpec {
+  id: string;
+  label: string;
+  description?: string | null;
+  values: Record<string, string | boolean>;
+}
+
 export interface PageManifest {
   id: string;
   version: string;
@@ -86,4 +93,5 @@ export interface PageManifest {
   sections: PageSectionSpec[];
   executions: PageExecutionSpec[];
   rules: PageRuleSpec[];
+  presets: PagePresetSpec[];
 }

@@ -40,6 +40,12 @@ export interface FormRule {
   minimum?: number;
   message: string;
 }
+export interface FormPreset {
+  id: string;
+  label: string;
+  description?: string;
+  values: Record<string, string | boolean>;
+}
 export interface FormTemplate {
   id: string;
   version: string;
@@ -48,5 +54,6 @@ export interface FormTemplate {
   optionSets: Record<string, {label: string; value: string}[]>;
   sections: FormSection[];
   rules: FormRule[];
+  presets: FormPreset[];
 }
 export interface FieldError { field: string; message: string }

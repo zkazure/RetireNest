@@ -3,9 +3,11 @@ import { loadPage, PageLoadError } from './page-client';
 import { pageToTemplate } from './page-to-template';
 import { PageRunError, runPage } from './page-runner';
 import { FormRenderer } from './form-renderer';
+import { collectValues } from './form-data';
 import { CommandApiError } from './command-client';
 import { openGeneration } from './generation';
 import { playIntro } from './intro';
+import type { FormPreset, FormTemplate } from './form-types';
 import type { PageManifest } from './page-types';
 
 interface Row { age: number; phase: string; income: number; expense: number; medical: number; soft: number; assets: number }
@@ -203,53 +205,42 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
   host('results').scrollIntoView({ block: 'start' });
 }
 
-const TIER_FIELDS = new Set(['income', 'expense', 'assets', 'debt', 'retirement_expense', 'retirement_age', 'travel', 'entertainment', 'children']);
 const VIEW_IDS = ['spending', 'income', 'cashflow', 'risk', 'strategy'];
 
-function prefill(params: URLSearchParams): boolean {
-  let complete = true;
+function prefill(params: URLSearchParams, renderer: FormRenderer, template: FormTemplate): boolean {
+  const values: Record<string, string> = {};
   for (const [name, value] of params) {
-    if (!TIER_FIELDS.has(name)) continue;
-    const control = document.querySelector<HTMLInputElement>(`input[name="${name}"][value="${CSS.escape(value)}"]`);
-    if (control) {
-      control.checked = true;
-      control.dispatchEvent(new Event('change', { bubbles: true }));
-      continue;
-    }
-    // 深链里给了档位之外的数值时，落到「其他（自己填）」而不是判定预填失败。
-    const other = document.querySelector<HTMLInputElement>(`input[name="${name}"][value="__custom__"]`);
-    const custom = document.querySelector<HTMLInputElement>(`#field-${name}-custom`);
-    if (other && custom) {
-      other.checked = true;
-      custom.value = value;
-      other.dispatchEvent(new Event('change', { bubbles: true }));
-      custom.dispatchEvent(new Event('input', { bubbles: true }));
-    } else {
-      complete = false;
-    }
+    if (name !== 'view') values[name] = value;
   }
-  const sex = params.get('sex');
-  if (sex === '男' || sex === '女') {
-    const select = document.querySelector<HTMLSelectElement>('select[name="sex"]');
-    if (select) { select.value = sex; select.dispatchEvent(new Event('change', { bubbles: true })); }
-    else complete = false;
-  } else {
-    complete = false;
-  }
-  const city = params.get('city');
-  if (city) {
-    const select = document.querySelector<HTMLSelectElement>('select[name="city"]');
-    if (select && [...select.options].some(option => option.value === city)) {
-      select.value = city; select.dispatchEvent(new Event('change', { bubbles: true }));
-    } else complete = false;
-  } else complete = false;
-  const birth = params.get('birth_date');
-  if (birth) {
-    const input = document.querySelector<HTMLInputElement>('input[name="birth_date"]');
-    if (input) { input.value = birth; input.dispatchEvent(new Event('change', { bubbles: true })); }
-    else complete = false;
-  } else complete = false;
-  return complete;
+  // 深链与示例画像走同一条写入路径：未知字段被忽略，档位之外的数值落到「其他（自己填）」。
+  renderer.applyPreset(values);
+  return collectValues(template, renderer.readRaw()).errors.length === 0;
+}
+
+function renderPresets(presets: FormPreset[], renderer: FormRenderer): void {
+  const bar = host('preset-host');
+  if (!presets.length) return;
+  bar.hidden = false;
+  bar.replaceChildren();
+  const lead = document.createElement('span');
+  lead.className = 'preset-lead';
+  lead.textContent = '一键填入画像：';
+  const note = document.createElement('span');
+  note.className = 'preset-note';
+  note.textContent = presets[0].description ?? '';
+  const chips = presets.map(preset => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'preset-chip';
+    chip.textContent = preset.label;
+    chip.addEventListener('click', () => {
+      renderer.applyPreset(preset.values);
+      bar.querySelectorAll('.preset-chip').forEach(node => node.classList.toggle('selected', node === chip));
+      note.textContent = `已按${preset.label}画像填好，可以直接改任意一项`;
+    });
+    return chip;
+  });
+  bar.append(lead, ...chips, note);
 }
 
 const STAGES = ['正在整理你的画像…', '正在测算现金流与风险…', '正在对比五种活法…'];
@@ -261,6 +252,7 @@ async function bootstrap() {
     const page: PageManifest = await loadPage('retirement.lifecycle');
     const template = pageToTemplate(page);
     const renderer = new FormRenderer(formHost, template);
+    renderPresets(template.presets, renderer);
     const form = document.querySelector<HTMLFormElement>('#plan-form')!;
     const params = new URLSearchParams(location.search);
     form.addEventListener('submit', async event => {
@@ -289,7 +281,7 @@ async function bootstrap() {
         button.disabled = false; button.textContent = '开始测算';
       }
     });
-    if ([...params.keys()].some(key => key !== 'view') && prefill(params)) {
+    if ([...params.keys()].some(key => key !== 'view') && prefill(params, renderer, template)) {
       form.requestSubmit();
     }
   } catch (error) {

@@ -163,3 +163,26 @@ test('select fields stay choice only', () => {
   const custom = collectValues(template, complete({ city: '某个不存在的城市' }));
   assert.ok(custom.errors.some(error => error.field === 'city'));
 });
+
+test('presets come through the manifest and fill every required field', () => {
+  assert.deepEqual(template.presets, page.presets.map(preset => ({
+    id: preset.id,
+    label: preset.label,
+    values: preset.values,
+    ...(preset.description ? { description: preset.description } : {}),
+  })));
+
+  const nailong = template.presets.find(preset => preset.id === 'nailong');
+  assert.equal(nailong.label, '奶龙');
+  assert.deepEqual(nailong.values, page.presets[0].values);
+
+  const { values, errors } = collectValues(template, { ...defaultValues(template), ...nailong.values });
+  assert.deepEqual(errors, []);
+  assert.equal(values.retirement_age, '60');
+  assert.equal(values.category, null);
+});
+
+test('preset description is optional', () => {
+  const converted = pageToTemplate({ ...page, presets: [{ id: 'probe', label: '探针', values: { sex: '男' } }] });
+  assert.equal('description' in converted.presets[0], false);
+});
