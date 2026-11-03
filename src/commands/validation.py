@@ -15,7 +15,8 @@ from typing import Any
 from commands.models import CommandManifest, InputSpec
 from plan.models import FieldError
 
-_DECIMAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
+DECIMAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
+"""线格式的十进制串；页面清单校验示例画像时也用这一条，避免两处漂移。"""
 
 
 def _required_when(spec: InputSpec, raw_inputs: dict[str, Any]) -> bool:
@@ -41,7 +42,7 @@ def _coerce_value(spec: InputSpec, raw: Any) -> tuple[Any, str | None]:
         return value, None
 
     if spec.type == "decimal":
-        if not isinstance(raw, str) or not _DECIMAL_RE.fullmatch(raw.strip()):
+        if not isinstance(raw, str) or not DECIMAL_RE.fullmatch(raw.strip()):
             return None, "请输入有效小数（字符串）。"
         try:
             return Decimal(raw.strip()), None
@@ -92,7 +93,7 @@ def _custom_tier(spec: InputSpec, raw: str) -> tuple[Any, str | None]:
     if not spec.allow_custom:
         return None, "请选择列表中的选项。"
     text = raw.strip()
-    if not _DECIMAL_RE.fullmatch(text):
+    if not DECIMAL_RE.fullmatch(text):
         return None, "请选择列表中的选项，或填写数字。"
     value = float(text)
     if not math.isfinite(value):
