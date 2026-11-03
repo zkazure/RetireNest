@@ -1,4 +1,5 @@
 import './style.css';
+import { installDemoShim } from './demo-shim';
 import { loadPage, PageLoadError } from './page-client';
 import { pageToTemplate } from './page-to-template';
 import { PageRunError, runPage } from './page-runner';
@@ -15,6 +16,9 @@ interface ProjectOutput { pension_monthly: number; break_even_age: number | null
 interface SimulateOutput { success_rate: number; terminal_p10: number; terminal_median: number; terminal_p90: number; affordable_monthly_expense: number; affordable_working_expense: number; required_monthly_income: number | null; depleted_p10: number | null; depleted_median: number | null }
 interface Variant { preset_id: string; label: string; retirement_age: number; final_assets: number; success_rate: number; affordable_monthly_expense: number; depleted_age: number | null }
 interface CompareOutput { variants: Variant[] }
+
+// 静态演示构建里先装好 /api 拦截，后面的任何请求都走夹具；默认构建里是空操作。
+installDemoShim();
 
 const host = (id: string) => document.querySelector<HTMLElement>(`#${id}`)!;
 const money = (value: number) => Math.round(value).toLocaleString('zh-CN');
