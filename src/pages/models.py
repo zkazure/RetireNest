@@ -31,8 +31,8 @@ class PageField:
     """页面上是否必须回答；默认必答，写 False 才允许留空。"""
     hint: str | None = None
     visible_when: tuple[Mapping[str, Any], ...] = ()
-    precise: bool = False
-    """是否允许展开精确输入覆盖档位取值；默认只用选择题。"""
+    allow_custom: bool = False
+    """`type="tier"` 时是否允许档位之外自行填写数值；默认只用选择题。"""
     derive: str | None = None
     """由后端推导的只读字段标记，例如 pension.account_balance。"""
 

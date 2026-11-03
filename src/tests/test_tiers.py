@@ -17,7 +17,7 @@ TABLE = profile_tiers.INCOME
 OPTIONS = tier_help.options(TABLE)
 
 
-def _manifest(tiers=OPTIONS) -> CommandManifest:
+def _manifest(tiers=OPTIONS, *, allow_custom=False, constraints=None) -> CommandManifest:
     return CommandManifest(
         id="demo.tier",
         version="1.0.0",
@@ -29,6 +29,8 @@ def _manifest(tiers=OPTIONS) -> CommandManifest:
                 type="tier",
                 unit="元/月",
                 tiers=tiers,
+                allow_custom=allow_custom,
+                constraints=constraints or {},
             ),
         ),
         outputs=(OutputSpec(name="income", question="月收入", type="number"),),
@@ -77,15 +79,74 @@ def test_校验拒绝非法选项(bad):
 
 
 def test_页面下发档位与回显():
-    command = _command()
-    field = PageField(name="income", command="demo.tier", precise=True)
+    command = _command(_manifest(allow_custom=True))
+    field = PageField(name="income", command="demo.tier", allow_custom=True)
     payload = resolve(_page(field, command), lookup=lambda _: command)
     spec = payload["sections"][0]["fields"][0]
     assert spec["type"] == "tier"
     assert spec["tiers"][0]["value"] == "lt5k"
     assert spec["tiers"][0]["amount"] == pytest.approx(3_500)
     assert spec["allowCustom"] is True
-    assert spec["precise"] is True
+    assert "precise" not in spec
+
+
+def test_页面下发范围与整数要求():
+    command = _command(_manifest(allow_custom=True, constraints={"min": 30, "max": 90, "integer": True}))
+    field = PageField(name="income", command="demo.tier", allow_custom=True)
+    payload = resolve(_page(field, command), lookup=lambda _: command)
+    spec = payload["sections"][0]["fields"][0]
+    assert spec["min"] == 30
+    assert spec["max"] == 90
+    assert spec["integer"] is True
+
+
+def test_页面允许自定义但命令只收档位时报错():
+    command = _command()
+    field = PageField(name="income", command="demo.tier", allow_custom=True)
+    with pytest.raises(PageError):
+        resolve(_page(field, command), lookup=lambda _: command)
+
+
+def test_允许自定义时收下数值字符串():
+    command = _command(_manifest(allow_custom=True, constraints={"min": 0, "max": 10_000_000}))
+    values, errors = coerce_inputs(command.manifest, {"income": "17000"})
+    assert errors == []
+    assert values["income"] == "17000"
+    assert tier_help.amount(command.manifest.inputs[0], values["income"]) == pytest.approx(17_000)
+
+
+def test_不允许自定义时仍拒绝数值字符串():
+    command = _command()
+    _, errors = coerce_inputs(command.manifest, {"income": "17000"})
+    assert [error.field for error in errors] == ["income"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "message"),
+    [
+        ("abc", "请选择列表中的选项，或填写数字。"),
+        ("1e5", "请选择列表中的选项，或填写数字。"),
+        ("-100", "不能小于 0。"),
+        ("20000000", "不能大于 10000000。"),
+    ],
+)
+def test_自定义数值按范围校验(raw, message):
+    command = _command(_manifest(allow_custom=True, constraints={"min": 0, "max": 10_000_000}))
+    _, errors = coerce_inputs(command.manifest, {"income": raw})
+    assert [error.message for error in errors] == [message]
+
+
+def test_自定义数值要求整数时报错():
+    command = _command(_manifest(allow_custom=True, constraints={"integer": True}))
+    _, errors = coerce_inputs(command.manifest, {"income": "45.5"})
+    assert [error.message for error in errors] == ["请填写整数。"]
+
+
+def test_取数值支持自定义():
+    spec = _manifest(allow_custom=True).inputs[0]
+    assert tier_help.amount(spec, "17000") == pytest.approx(17_000)
+    with pytest.raises(ProfileError):
+        tier_help.amount(_manifest().inputs[0], "17000")
 
 
 def test_档位表不一致时报错():

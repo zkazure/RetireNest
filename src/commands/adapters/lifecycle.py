@@ -26,24 +26,34 @@ def _profile_inputs(extra: tuple[InputSpec, ...] = ()) -> tuple[InputSpec, ...]:
         InputSpec(name="category", question="女性岗位类别（管理技术或工人）？", type="enum",
                   options=("管理技术", "工人"), required=False),
         InputSpec(name="income", question="你现在每月的税后收入？", type="tier", unit="元/月",
+                  allow_custom=True, constraints={"min": 0, "max": 10_000_000},
                   tiers=tier_help.options(profile_tiers.INCOME)),
         InputSpec(name="expense", question="当前每月总支出？", type="tier", unit="元/月",
+                  allow_custom=True, constraints={"min": 0, "max": 1_000_000},
                   tiers=tier_help.options(profile_tiers.EXPENSE)),
         InputSpec(name="assets", question="你现在一共有多少资产？", type="tier", unit="元",
+                  allow_custom=True, constraints={"min": 0, "max": 100_000_000_000},
                   tiers=tier_help.options(profile_tiers.ASSETS)),
         InputSpec(name="debt", question="你现在有多少负债？", type="tier", unit="元",
+                  allow_custom=True, constraints={"min": 0, "max": 100_000_000_000},
                   tiers=tier_help.options(profile_tiers.DEBT)),
         InputSpec(name="retirement_expense", question="退休后每月打算花多少？", type="tier",
                   unit="元/月", required=False,
                   description="可选；留空则按当前每月支出计算。",
+                  allow_custom=True, constraints={"min": 0, "max": 1_000_000},
                   tiers=tier_help.options(profile_tiers.RETIRE_EXPENSE)),
         InputSpec(name="retirement_age", question="打算多少岁退休？", type="tier", unit="岁",
-                  required=False, tiers=tier_help.options(profile_tiers.RETIRE_AGE)),
+                  required=False, allow_custom=True,
+                  constraints={"min": 30, "max": 90, "integer": True},
+                  tiers=tier_help.options(profile_tiers.RETIRE_AGE)),
         InputSpec(name="travel", question="退休后每年出游几次？", type="tier",
+                  allow_custom=True, constraints={"min": 0, "max": 50, "integer": True},
                   tiers=tier_help.options(profile_tiers.TRAVEL)),
         InputSpec(name="entertainment", question="娱乐开销？", type="tier",
+                  allow_custom=True, constraints={"min": 0, "max": 100_000},
                   tiers=tier_help.options(profile_tiers.ENTERTAINMENT)),
         InputSpec(name="children", question="育儿计划？", type="tier",
+                  allow_custom=True, constraints={"min": 0, "max": 10, "integer": True},
                   tiers=tier_help.options(profile_tiers.CHILDREN)),
         *extra,
     )
@@ -53,7 +63,7 @@ def _build(inputs: dict[str, Any]) -> Profile:
     retirement_age = None
     tier = inputs.get("retirement_age")
     if tier is not None:
-        retirement_age = int(profile_tiers.RETIRE_AGE.get(tier).amount)
+        retirement_age = int(profile_tiers.amount_of(profile_tiers.RETIRE_AGE, tier))
     return build_profile(
         age=inputs.get("age"),
         sex=inputs["sex"],

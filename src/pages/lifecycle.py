@@ -23,9 +23,9 @@ MONEY = PageSection(
     id="money",
     title="收入与资产",
     fields=(
-        PageField(name="income", command=PROJECT),
-        PageField(name="assets", command=PROJECT),
-        PageField(name="debt", command=PROJECT),
+        PageField(name="income", command=PROJECT, allow_custom=True),
+        PageField(name="assets", command=PROJECT, allow_custom=True),
+        PageField(name="debt", command=PROJECT, allow_custom=True),
     ),
 )
 
@@ -33,15 +33,16 @@ SPENDING = PageSection(
     id="spending",
     title="支出",
     fields=(
-        PageField(name="expense", command=PROJECT),
+        PageField(name="expense", command=PROJECT, allow_custom=True),
         PageField(
             name="retirement_expense",
             command=PROJECT,
             required=False,
+            allow_custom=True,
             hint="留空则按当前每月支出计算。",
         ),
-        PageField(name="entertainment", command=PROJECT),
-        PageField(name="travel", command=PROJECT),
+        PageField(name="entertainment", command=PROJECT, allow_custom=True),
+        PageField(name="travel", command=PROJECT, allow_custom=True),
     ),
 )
 
@@ -50,8 +51,8 @@ PLAN = PageSection(
     title="规划与策略",
     description="退休年龄留空时按法定规则推导；策略对比会在这个画像上再套五个预设。",
     fields=(
-        PageField(name="retirement_age", command=PROJECT, required=False),
-        PageField(name="children", command=PROJECT),
+        PageField(name="retirement_age", command=PROJECT, required=False, allow_custom=True),
+        PageField(name="children", command=PROJECT, allow_custom=True),
     ),
 )
 

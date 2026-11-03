@@ -22,14 +22,14 @@ def build_profile(
     age: int | None = None,
     sex: str,
     city: str,
-    income_tier: str,
-    expense_tier: str,
-    asset_tier: str,
-    debt_tier: str,
-    retirement_expense_tier: str | None = None,
-    travel_tier: str,
-    entertainment_tier: str,
-    children_tier: str,
+    income_tier: str | float,
+    expense_tier: str | float,
+    asset_tier: str | float,
+    debt_tier: str | float,
+    retirement_expense_tier: str | float | None = None,
+    travel_tier: str | float,
+    entertainment_tier: str | float,
+    children_tier: str | float,
     retirement_age: int | None = None,
     plan_until: int | None = None,
     birth_date: date | None = None,
@@ -38,10 +38,11 @@ def build_profile(
 ) -> Profile:
     """选项进、画像出。未给退休年龄时按法定规则推导。
 
+    档位参数既可以是档位 key，也可以是数值字符串或数字（页面上的「其他」）。
     未给退休后支出档位时，按当前月支出计算：退休前后默认同一生活水平。
     """
-    income = tiers.INCOME.get(income_tier).amount
-    expense = tiers.EXPENSE.get(expense_tier).amount
+    income = tiers.amount_of(tiers.INCOME, income_tier)
+    expense = tiers.amount_of(tiers.EXPENSE, expense_tier)
     base_wage = city_base_wage(city)
     if birth_date is None:
         raise ProfileError("画像需要出生日期。")
@@ -65,16 +66,16 @@ def build_profile(
         plan_until=plan_until,
         monthly_income=income,
         monthly_expense=expense,
-        assets=tiers.ASSETS.get(asset_tier).amount,
-        debt=tiers.DEBT.get(debt_tier).amount,
+        assets=tiers.amount_of(tiers.ASSETS, asset_tier),
+        debt=tiers.amount_of(tiers.DEBT, debt_tier),
         retirement_expense=(
             expense
             if retirement_expense_tier is None
-            else tiers.RETIRE_EXPENSE.get(retirement_expense_tier).amount
+            else tiers.amount_of(tiers.RETIRE_EXPENSE, retirement_expense_tier)
         ),
-        travel_trips=tiers.TRAVEL.get(travel_tier).amount,
-        entertainment_monthly=tiers.ENTERTAINMENT.get(entertainment_tier).amount,
-        children=int(tiers.CHILDREN.get(children_tier).amount),
+        travel_trips=tiers.amount_of(tiers.TRAVEL, travel_tier),
+        entertainment_monthly=tiers.amount_of(tiers.ENTERTAINMENT, entertainment_tier),
+        children=int(tiers.amount_of(tiers.CHILDREN, children_tier)),
         pension=PensionParams(
             years=years,
             index=contribution_index(income, base_wage),
@@ -89,4 +90,4 @@ def tier_amount(table: tiers.TierTable, value: Any) -> float:
     """给命令层用：把选项值换成数值，缺省或非法都报错。"""
     if not isinstance(value, str):
         raise ProfileError(f"{table.name} 需要选项值（字符串）。")
-    return table.get(value).amount
+    return tiers.amount_of(table, value)

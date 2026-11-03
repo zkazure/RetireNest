@@ -53,6 +53,33 @@ def test_非法档位被拒绝():
         run("lifecycle.project", income="不存在")
 
 
+def test_自定义金额与同额档位结果一致():
+    by_value = run("lifecycle.project", income="16000", expense="12500", assets="1500000", debt="0")
+    by_key = run("lifecycle.project", income="12k20k", expense="10k15k", assets="100w200w")
+    assert by_value == by_key
+
+
+def test_自定义金额按原值计算而不是档位中值():
+    custom = run("lifecycle.project", income="17000")
+    tier = run("lifecycle.project", income="12k20k")
+    assert custom["rows"] != tier["rows"]
+    assert custom["final_assets"] > tier["final_assets"]
+
+
+def test_自定义退休年龄生效():
+    result = run("lifecycle.project", retirement_age="58")
+    assert result["rows"][58 - 35]["phase"] == "退休"
+
+
+def test_自定义数值越界被拒绝():
+    with pytest.raises(CommandInputError):
+        run("lifecycle.project", income="99999999")
+    with pytest.raises(CommandInputError):
+        run("lifecycle.project", retirement_age="25")
+    with pytest.raises(CommandInputError):
+        run("lifecycle.project", children="1.5")
+
+
 def test_退休年龄可选并接受档位():
     result = run("lifecycle.project", retirement_age="55")
     assert result["rows"][55 - 35]["phase"] == "退休"

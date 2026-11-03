@@ -11,11 +11,13 @@
 ## 文件
 
 - `tiers.py`：档位表。每个选项给出 `value`（提交用）、`label`（界面文案）、
-  `amount`（计算取值）与区间端点。取值是区间中值；开口档取代表值。
+  `amount`（计算取值）与区间端点。取值是区间中值；开口档取代表值。`amount_of()`
+  同时接受数值字符串与数字，供页面「其他（自己填）」直接按原值计算。
 - `derive.py`：推导。养老金四个参数（年限、缴费指数、个人账户余额、计发基数）、
   法定退休年龄、规划终点（寿命 75% 分位）。
 - `schema.py`：`Profile` 与 `PensionParams`，冻结 dataclass，构造时校验区间与配比。
-- `build.py`：`build_profile()` 把选项串成 `Profile`；`tier_amount()` 给命令层复用。
+- `build.py`：`build_profile()` 把选项串成 `Profile`，档位参数也接受数值字符串与数字；
+  `tier_amount()` 给命令层复用。
 
 ## 口径
 

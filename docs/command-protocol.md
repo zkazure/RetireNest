@@ -103,12 +103,14 @@ GET  /api/pages/{page_id}
 - `decimal`：JSON **字符串**，例如 `"100000.20"`；不接受科学计数法。
 - `date`：`YYYY-MM-DD`。
 - `enum`：字符串，必须在 `options` 中。
+- `tier`：字符串，取 `tiers[].value`（档位选项）。`allow_custom` 为 `true` 时也接受十进制数值字符串（如 `"17000"`）：表示用户自己填的数额，直接当计算取值，不再套区间中值。判定先看档位 key，命中不了再按数值解析；档位 key 不受范围约束，`min`/`max` 只作用于自定义数值。
 - `boolean`：`true` / `false`。
 - `text`：字符串，提交前去掉首尾空格。
 
 `constraints` 支持：
 
-- `min`、`max`：数值/decimal 范围。
+- `min`、`max`：数值/decimal 范围；`tier` 的自定义数值也用它。
+- `integer`：仅 `tier` 的自定义数值使用，要求整数（年龄、次数、个数）。
 - `precision`：decimal 最多小数位。
 - `max_length`：text 最大字符数。
 
@@ -214,9 +216,11 @@ GET  /api/pages/{page_id}
 - `executions`：提交时按顺序执行的命令。`inputs` 把命令参数映射到页面字段；`toggle` 非空时只有开关打开才执行；`outputs` 是结果展示所需的输出规格。
 - `rules`：跨字段预校验，前端只做即时提示，命令校验仍是权威。
 
-字段的 `label` 必须等于来源命令 manifest 的 `question`。同一字段被多个命令消费时，`min`/`max`/`precision`/`max_length` 取交集，且每次请求现算，前端不持有数值常量。
+字段的 `label` 必须等于来源命令 manifest 的 `question`。同一字段被多个命令消费时，`min`/`max`/`precision`/`max_length` 取交集，`integer` 只要有一个命令要求就是真；每次请求现算，前端不持有数值常量。
 
 字段的 `required` 由页面清单声明：默认必答，`false` 表示可留空。页面标 `false` 的字段，其所有消费命令的对应输入也必须可选，否则解析失败。命令的 `required_when` 只作用于命令输入，不在页面上推导；条件必填用 `visibleWhen`，字段只在条件成立时出现，出现即必答。
+
+档位字段的 `allowCustom` 为 `true` 时，页面在档位之外还要给一个「其他（自己填）」入口：下发的 `min`/`max`/`integer` 就是对自定义数值的约束，提交时该字段给数值字符串。页面标了 `allowCustom`、而任一消费命令的 `InputSpec.allow_custom` 为假时，解析直接报错，不把问题留到 422。
 
 ```json
 {
@@ -237,7 +241,9 @@ GET  /api/pages/{page_id}
             { "value": "12k20k", "label": "1.2 万到 2 万", "amount": 16000 },
             { "value": "20k30k", "label": "2 万到 3 万", "amount": 25000 }
           ],
-          "allowCustom": false,
+          "allowCustom": true,
+          "min": 0,
+          "max": 10000000,
           "source": { "command": "lifecycle.project", "input": "income" }
         }
       ]

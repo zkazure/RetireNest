@@ -269,6 +269,8 @@
             "input": "income"
           },
           "unit": "元/月",
+          "min": 0,
+          "max": 10000000,
           "tiers": [
             {
               "value": "lt5k",
@@ -306,7 +308,7 @@
               "amount": 60000
             }
           ],
-          "allowCustom": false
+          "allowCustom": true
         },
         {
           "name": "assets",
@@ -318,6 +320,8 @@
             "input": "assets"
           },
           "unit": "元",
+          "min": 0,
+          "max": 100000000000,
           "tiers": [
             {
               "value": "lt10w",
@@ -355,7 +359,7 @@
               "amount": 8000000
             }
           ],
-          "allowCustom": false
+          "allowCustom": true
         },
         {
           "name": "debt",
@@ -367,6 +371,8 @@
             "input": "debt"
           },
           "unit": "元",
+          "min": 0,
+          "max": 100000000000,
           "tiers": [
             {
               "value": "none",
@@ -399,7 +405,7 @@
               "amount": 1500000
             }
           ],
-          "allowCustom": false
+          "allowCustom": true
         }
       ]
     },
@@ -419,6 +425,8 @@
             "input": "expense"
           },
           "unit": "元/月",
+          "min": 0,
+          "max": 1000000,
           "tiers": [
             {
               "value": "lt2k",
@@ -456,7 +464,7 @@
               "amount": 30000
             }
           ],
-          "allowCustom": false
+          "allowCustom": true
         },
         {
           "name": "retirement_expense",
@@ -468,6 +476,8 @@
             "input": "retirement_expense"
           },
           "unit": "元/月",
+          "min": 0,
+          "max": 1000000,
           "tiers": [
             {
               "value": "lt2k",
@@ -500,7 +510,7 @@
               "amount": 20000
             }
           ],
-          "allowCustom": false,
+          "allowCustom": true,
           "hint": "留空则按当前每月支出计算。"
         },
         {
@@ -512,6 +522,8 @@
             "command": "lifecycle.project",
             "input": "entertainment"
           },
+          "min": 0,
+          "max": 100000,
           "tiers": [
             {
               "value": "low",
@@ -529,7 +541,7 @@
               "amount": 1500
             }
           ],
-          "allowCustom": false
+          "allowCustom": true
         },
         {
           "name": "travel",
@@ -540,6 +552,9 @@
             "command": "lifecycle.project",
             "input": "travel"
           },
+          "integer": true,
+          "min": 0,
+          "max": 50,
           "tiers": [
             {
               "value": "none",
@@ -567,7 +582,7 @@
               "amount": 5
             }
           ],
-          "allowCustom": false
+          "allowCustom": true
         }
       ]
     },
@@ -586,7 +601,10 @@
             "command": "lifecycle.project",
             "input": "retirement_age"
           },
+          "integer": true,
           "unit": "岁",
+          "min": 30,
+          "max": 90,
           "tiers": [
             {
               "value": "45",
@@ -624,7 +642,7 @@
               "amount": 70
             }
           ],
-          "allowCustom": false
+          "allowCustom": true
         },
         {
           "name": "children",
@@ -635,6 +653,9 @@
             "command": "lifecycle.project",
             "input": "children"
           },
+          "integer": true,
+          "min": 0,
+          "max": 10,
           "tiers": [
             {
               "value": "none",
@@ -652,7 +673,7 @@
               "amount": 2
             }
           ],
-          "allowCustom": false
+          "allowCustom": true
         }
       ]
     }

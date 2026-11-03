@@ -2,6 +2,9 @@
 
 取值原则：区间中值；两端开口的档取一个代表值。金额单位为元，月收入与月支出
 是当下购买力。档位粒度与界面文案一并放在这里，页面清单只引用 value。
+
+`amount_of()` 还接受数值字符串或数字：页面上「其他（自己填）」提交的就是这种值，
+直接当金额用，不再套区间中值。
 """
 
 from __future__ import annotations
@@ -33,6 +36,23 @@ class TierTable:
 
     def options(self) -> tuple[str, ...]:
         return tuple(tier.value for tier in self.tiers)
+
+
+def amount_of(table: TierTable, value: str | float) -> float:
+    """档位 key 取表里的金额；数值字符串或数字直接当金额。
+
+    页面允许「其他（自己填）」时，提交的是数值字符串而不是档位 key；
+    这里统一收口，下游拿到的仍然是数字。
+    """
+    if isinstance(value, str):
+        for tier in table.tiers:
+            if tier.value == value:
+                return tier.amount
+        try:
+            return float(value)
+        except ValueError as exc:
+            raise ProfileError(f"{table.name} 没有选项 {value!r}") from exc
+    return float(value)
 
 
 INCOME = TierTable(

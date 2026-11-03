@@ -186,7 +186,25 @@ def test_tier_field_carries_options_and_amounts() -> None:
     assert income["type"] == "tier"
     assert len(income["tiers"]) >= 5
     assert all({"value", "label", "amount"} <= set(tier) for tier in income["tiers"])
-    assert income["allowCustom"] is False
+    assert income["allowCustom"] is True
+    assert income["min"] == 0
+    assert income["max"] == 10_000_000
+
+
+def test_tier_fields_allow_custom_values() -> None:
+    body = client.get(f"/api/pages/{PAGE_ID}").json()
+    tier_fields = [item for item in fields(body) if item["type"] == "tier"]
+    assert len(tier_fields) == 9
+    assert all(item["allowCustom"] is True for item in tier_fields)
+    retirement_age = field(body, "retirement_age")
+    assert retirement_age["integer"] is True
+    assert (retirement_age["min"], retirement_age["max"]) == (30, 90)
+
+
+def test_select_fields_stay_choice_only() -> None:
+    body = client.get(f"/api/pages/{PAGE_ID}").json()
+    for name in ("sex", "city", "category"):
+        assert field(body, name)["allowCustom"] is False
 
 
 def test_page_field_is_required_by_default() -> None:

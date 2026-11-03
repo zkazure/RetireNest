@@ -6,6 +6,7 @@ manifest 里带的是选项（value/label/amount），命令的 handler 需要�
 
 from __future__ import annotations
 
+import math
 from profile import tiers as profile_tiers
 from profile.errors import ProfileError
 
@@ -21,8 +22,20 @@ def options(table: profile_tiers.TierTable) -> tuple[TierOption, ...]:
 
 
 def amount(spec: InputSpec, value: str) -> float:
-    """取选项对应的数值；选项不存在时抛 `ProfileError`。"""
+    """取选项对应的数值；`allow_custom` 为真时也接受数值字符串。"""
     for tier in spec.tiers:
         if tier.value == value:
             return tier.amount
+    if spec.allow_custom:
+        parsed = _number(value)
+        if parsed is not None:
+            return parsed
     raise ProfileError(f"{spec.question} 没有选项 {value!r}")
+
+
+def _number(value: str) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if math.isfinite(parsed) else None

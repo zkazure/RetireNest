@@ -72,9 +72,9 @@ def _coerce_value(spec: InputSpec, raw: Any) -> tuple[Any, str | None]:
     if spec.type == "tier":
         if not isinstance(raw, str):
             return None, "请选择列表中的选项。"
-        if raw not in {tier.value for tier in spec.tiers}:
-            return None, "请选择列表中的选项。"
-        return raw, None
+        if raw in {tier.value for tier in spec.tiers}:
+            return raw, None
+        return _custom_tier(spec, raw)
 
     if spec.type == "text":
         if not isinstance(raw, str):
@@ -87,14 +87,35 @@ def _coerce_value(spec: InputSpec, raw: Any) -> tuple[Any, str | None]:
     return None, f"不支持的输入类型：{spec.type}"
 
 
+def _custom_tier(spec: InputSpec, raw: str) -> tuple[Any, str | None]:
+    """档位之外的数值：只有 `allow_custom` 为真时才收，按原字符串提交。"""
+    if not spec.allow_custom:
+        return None, "请选择列表中的选项。"
+    text = raw.strip()
+    if not _DECIMAL_RE.fullmatch(text):
+        return None, "请选择列表中的选项，或填写数字。"
+    value = float(text)
+    if not math.isfinite(value):
+        return None, "请填写有效数字。"
+    if spec.constraints.get("integer") and not value.is_integer():
+        return None, "请填写整数。"
+    problem = _check_constraints(spec, value)
+    if problem:
+        return None, problem
+    return text, None
+
+
 def _check_constraints(spec: InputSpec, value: Any) -> str | None:
     constraints = spec.constraints
-    if "min" in constraints and spec.type in ("integer", "number", "decimal"):
+    # tier 的档位 key 是字符串，范围只对自定义数值生效；_custom_tier 里先转成数字再调用。
+    numeric = ("integer", "number", "decimal", "tier")
+    comparable_value = not isinstance(value, str)
+    if "min" in constraints and spec.type in numeric and comparable_value:
         minimum = constraints["min"]
         comparable = Decimal(str(minimum)) if isinstance(value, Decimal) else minimum
         if value < comparable:
             return f"不能小于 {minimum}。"
-    if "max" in constraints and spec.type in ("integer", "number", "decimal"):
+    if "max" in constraints and spec.type in numeric and comparable_value:
         maximum = constraints["max"]
         comparable = Decimal(str(maximum)) if isinstance(value, Decimal) else maximum
         if value > comparable:

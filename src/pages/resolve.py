@@ -196,6 +196,12 @@ def _resolve_field(
                     f"字段 {field.name} 在页面上可留空，但命令 {manifest.id} 要求必填。"
                 )
     required = field.required
+    if source_spec.type == "tier" and field.allow_custom:
+        for manifest, spec in field_consumers:
+            if not spec.allow_custom:
+                raise PageError(
+                    f"字段 {field.name} 允许自行填写，但命令 {manifest.id} 只接受档位选项。"
+                )
 
     payload: dict[str, Any] = {
         "name": field.name,
@@ -204,7 +210,9 @@ def _resolve_field(
         "required": required,
         "source": {"command": field.command, "input": field.source_input},
     }
-    if source_spec.type == "integer":
+    if source_spec.type == "integer" or (
+        source_spec.type == "tier" and constraints.get("integer")
+    ):
         payload["integer"] = True
     if source_spec.unit:
         payload["unit"] = source_spec.unit
@@ -225,14 +233,12 @@ def _resolve_field(
             payload[target] = constraints[key]
     if source_spec.type == "tier":
         payload["tiers"] = _tier_payload(field.name, [spec for _, spec in field_consumers])
-        payload["allowCustom"] = field.precise
+        payload["allowCustom"] = field.allow_custom
     if source_spec.type == "enum":
         if not source_spec.options:
             raise PageError(f"字段 {field.name} 是枚举但没有选项。")
         payload["options"] = [{"label": option, "value": option} for option in source_spec.options]
         payload["allowCustom"] = False
-    if field.precise:
-        payload["precise"] = True
     if field.derive:
         payload["derive"] = field.derive
     if field.hint:
@@ -277,6 +283,8 @@ def _intersect(field_name: str, specs: list[InputSpec]) -> dict[str, Any]:
         constraints["precision"] = min(precisions)
     if lengths:
         constraints["max_length"] = min(lengths)
+    if any(spec.constraints.get("integer") for spec in specs):
+        constraints["integer"] = True
     if "min" in constraints and "max" in constraints and constraints["min"] > constraints["max"]:
         raise PageError(
             f"字段 {field_name} 的约束没有交集："

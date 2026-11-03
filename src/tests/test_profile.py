@@ -132,6 +132,55 @@ def test_由选项构建画像():
     assert profile.allocations == DEFAULT_ALLOCATION
 
 
+def test_自定义数值直接进画像():
+    profile = build_profile(
+        age=35,
+        sex="男",
+        city="上海",
+        income_tier="17000",
+        expense_tier="10000",
+        asset_tier="210000",
+        debt_tier="0",
+        retirement_expense_tier="9000",
+        travel_tier="3",
+        entertainment_tier="600",
+        children_tier="1",
+        birth_date=birth_for(35),
+    )
+    assert profile.monthly_income == pytest.approx(17_000)
+    assert profile.monthly_expense == pytest.approx(10_000)
+    assert profile.assets == pytest.approx(210_000)
+    assert profile.debt == pytest.approx(0)
+    assert profile.retirement_expense == pytest.approx(9_000)
+    assert profile.travel_trips == pytest.approx(3)
+    assert profile.entertainment_monthly == pytest.approx(600)
+    assert profile.children == 1
+
+
+def test_数值字符串与同额档位给出同一画像():
+    by_key = build_profile(
+        age=35, sex="男", city="上海",
+        income_tier="12k20k", expense_tier="10k15k", asset_tier="100w200w",
+        debt_tier="none", travel_tier="twice", entertainment_tier="mid",
+        children_tier="one", birth_date=birth_for(35),
+    )
+    by_value = build_profile(
+        age=35, sex="男", city="上海",
+        income_tier="16000", expense_tier="12500", asset_tier="1500000",
+        debt_tier="0", travel_tier="2", entertainment_tier="800",
+        children_tier="1", birth_date=birth_for(35),
+    )
+    assert by_value == by_key
+
+
+def test_无法解析的档位值报错():
+    with pytest.raises(ProfileError):
+        tiers.amount_of(tiers.INCOME, "一万七")
+    assert tiers.amount_of(tiers.INCOME, "12k20k") == pytest.approx(16_000)
+    assert tiers.amount_of(tiers.INCOME, "17000") == pytest.approx(17_000)
+    assert tiers.amount_of(tiers.INCOME, 17_000) == pytest.approx(17_000)
+
+
 def test_退休后支出缺省时沿用当前支出():
     profile = build_profile(
         age=35,

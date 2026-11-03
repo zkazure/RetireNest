@@ -34,6 +34,8 @@ class InputSpec:
     default: Any = None
     options: tuple[str, ...] = ()
     tiers: tuple[TierOption, ...] = ()
+    allow_custom: bool = False
+    """`type="tier"` 时是否接受档位之外的数值字符串；默认只认档位。"""
     constraints: Mapping[str, Any] = field(default_factory=dict)
     semantic: str | None = None
     required_when: Mapping[str, Any] | None = None
