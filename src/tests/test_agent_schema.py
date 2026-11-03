@@ -52,7 +52,7 @@ def test_every_tool_has_object_parameters_and_required_list(catalog) -> None:
         assert isinstance(parameters["required"], list)
         assert parameters["properties"]
         assert spec.description
-        assert spec.version == ("1.1.0" if spec.command_id == "lifecycle.project" else "1.0.0")
+        assert spec.version == ("1.2.0" if spec.command_id == "lifecycle.project" else "1.0.0")
 
 
 def test_required_and_optional_inputs_follow_manifest(catalog) -> None:

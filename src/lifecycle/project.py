@@ -73,7 +73,8 @@ def project(profile: Profile, inflation_pct: float = INFLATION_PCT) -> Lifecycle
 
     for age in range(profile.age, profile.plan_until):
         working = age < profile.retirement_age
-        income = profile.monthly_income * 12 if working else pension * 12
+        income = profile.monthly_income * 12 if working else 0.0
+        pension_annual = 0.0 if working else pension * 12
         base_expense = (
             profile.monthly_expense * 12 if working else profile.retirement_expense * 12
         )
@@ -81,7 +82,7 @@ def project(profile: Profile, inflation_pct: float = INFLATION_PCT) -> Lifecycle
         soft = yearly_soft(profile, age)
         expense = base_expense + medical + soft
         passive = assets * rate / 100
-        net = income + passive - expense
+        net = income + pension_annual + passive - expense
         assets = assets + net
         if net < 0 and break_even_age is None:
             break_even_age = age
@@ -93,6 +94,7 @@ def project(profile: Profile, inflation_pct: float = INFLATION_PCT) -> Lifecycle
                 age=age,
                 phase=WORKING if working else RETIRED,
                 income=round(income, 2),
+                pension=round(pension_annual, 2),
                 passive=round(passive, 2),
                 expense=round(expense, 2),
                 medical=round(medical, 2),

@@ -13,7 +13,9 @@ class YearRow:
     age: int
     phase: str
     income: float
-    """主动收入：工作期工资、退休期养老金。"""
+    """主动收入：工资，退休后为 0。"""
+    pension: float
+    """养老金：退休后开始领取，工作期为 0。"""
     passive: float
     """被动收入：期初资产按组合实际收益率产生的收益。"""
     expense: float
@@ -25,7 +27,7 @@ class YearRow:
 
     @property
     def inflow(self) -> float:
-        return self.income + self.passive
+        return self.income + self.pension + self.passive
 
 
 @dataclass(frozen=True, slots=True)

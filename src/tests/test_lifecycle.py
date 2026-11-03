@@ -47,12 +47,13 @@ def test_逐年行数与阶段():
     assert all(row.age >= profile.retirement_age for row in retired)
 
 
-def test_退休后收入换成养老金():
+def test_退休后主动收入为0且改领养老金():
     profile = make_profile()
     result = project(profile)
     at_retirement = next(row for row in result.rows if row.age == profile.retirement_age)
-    assert at_retirement.income == pytest.approx(result.pension_monthly * 12, rel=1e-3)
-    assert at_retirement.income < profile.monthly_income * 12
+    assert at_retirement.income == 0
+    assert at_retirement.pension == pytest.approx(result.pension_monthly * 12, rel=1e-3)
+    assert at_retirement.pension < profile.monthly_income * 12
 
 
 def test_被动收入按期初资产与实际收益率计算():
@@ -61,7 +62,7 @@ def test_被动收入按期初资产与实际收益率计算():
     rate = real_return_pct(profile)
     row = result.rows[0]
     assert row.passive == pytest.approx(profile.net_assets * rate / 100, rel=1e-6)
-    assert row.inflow == pytest.approx(row.income + row.passive)
+    assert row.inflow == pytest.approx(row.income + row.pension + row.passive)
     assert row.passive > 0
 
 
@@ -72,7 +73,7 @@ def test_资产收益不改变资产轨迹():
     rate = real_return_pct(profile)
     assets = float(profile.net_assets)
     for row in result.rows:
-        assets = assets * (1 + rate / 100) + (row.income - row.expense)
+        assets = assets * (1 + rate / 100) + (row.income + row.pension - row.expense)
         assert row.assets == pytest.approx(round(assets, 2), abs=0.01)
 
 
@@ -87,9 +88,18 @@ def test_退休后依靠养老金与资产收益():
     profile = make_profile()
     result = project(profile)
     retired = [row for row in result.rows if row.age >= profile.retirement_age]
-    assert all(row.income == pytest.approx(result.pension_monthly * 12, rel=1e-3) for row in retired)
+    assert all(row.income == 0 for row in retired)
+    assert all(row.pension == pytest.approx(result.pension_monthly * 12, rel=1e-3) for row in retired)
     assert all(row.passive > 0 for row in retired)
     assert result.rows[-1].passive > result.rows[0].passive
+
+
+def test_工作期不领养老金():
+    profile = make_profile()
+    result = project(profile)
+    working = [row for row in result.rows if row.phase == "工作"]
+    assert all(row.pension == 0 for row in working)
+    assert all(row.income == pytest.approx(profile.monthly_income * 12) for row in working)
 
 
 def test_支出包含医疗与软性():

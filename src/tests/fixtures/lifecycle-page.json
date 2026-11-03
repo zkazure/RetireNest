@@ -681,7 +681,7 @@
   "executions": [
     {
       "command": "lifecycle.project",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "question": "按现在的收支，一辈子能不能撑住？",
       "description": "工作期收工资、退休期收养老金加资产收益，逐年滚动资产，给出结余转负与资产不足的年龄。",
       "inputs": {

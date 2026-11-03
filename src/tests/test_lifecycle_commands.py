@@ -35,8 +35,9 @@ def test_项目命令给出逐年轨迹():
     result = run("lifecycle.project")
     assert result["pension_monthly"] > 0
     assert len(result["rows"]) > 10
-    assert {"age", "income", "passive", "expense", "assets"} <= set(result["rows"][0])
+    assert {"age", "income", "pension", "passive", "expense", "assets"} <= set(result["rows"][0])
     first = result["rows"][0]
+    assert first["pension"] == 0
     assert first["passive"] > 0
     assert first["passive"] < first["income"]
 
