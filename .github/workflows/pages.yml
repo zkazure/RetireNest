@@ -12,7 +12,8 @@ on:
     branches: [main]
     paths:
       - 'frontend/**'
-      - 'src/tools/build_demo_fixtures.py'
+      # 演示包在浏览器里跑的就是 src 下的引擎，改了就重新发布
+      - 'src/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
