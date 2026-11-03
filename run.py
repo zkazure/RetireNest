@@ -22,12 +22,15 @@ import sys
 import threading
 import time
 import webbrowser
+from collections.abc import MutableMapping
 from pathlib import Path
 from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 FRONTEND = ROOT / "frontend"
+ENV_FILE = ROOT / ".env.local"
+"""本地模型密钥；已被 gitignore，启动时补进进程环境。"""
 HOST = "127.0.0.1"
 API_PORT = 8000
 WEB_PORT = 5173
@@ -418,6 +421,43 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def _unquote(value: str) -> str:
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
+    return value
+
+
+def load_env_file(
+    path: Path = ENV_FILE,
+    environ: MutableMapping[str, str] | None = None,
+) -> list[str]:
+    """把 `.env.local` 里的 `KEY=VALUE` 补进环境变量。
+
+    已存在的变量不覆盖，方便在命令行临时 export 覆盖文件；空值等于没写。
+    返回本次补进去的变量名，调用方只打印名字，不打印值。
+    """
+    target = os.environ if environ is None else environ
+    if not path.is_file():
+        return []
+    applied: list[str] = []
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].lstrip()
+        name, sep, value = line.partition("=")
+        name = name.strip()
+        if not sep or not name:
+            continue
+        value = _unquote(value.strip())
+        if not value or name in target:
+            continue
+        target[name] = value
+        applied.append(name)
+    return applied
+
+
 def _raise_keyboard_interrupt(_signum: int, _frame: object) -> None:
     raise KeyboardInterrupt
 
@@ -439,6 +479,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.stop:
         stop_ports(args.ports or [API_PORT, WEB_PORT])
         return 0
+
+    loaded = load_env_file()
+    if loaded:
+        say(f"从 .env.local 读取 {len(loaded)} 项环境变量：{'、'.join(loaded)}")
 
     uv = find_tool("uv", "请先安装 uv：https://docs.astral.sh/uv/")
     npm = find_tool("npm", "请先安装 Node.js（含 npm）：https://nodejs.org/")

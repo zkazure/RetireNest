@@ -1,5 +1,8 @@
 /plan.md
 
+# 本地模型密钥与个人环境变量，不提交
+.env.local
+
 # Agent 会话数据库
 *.sqlite3
 *.sqlite3-*

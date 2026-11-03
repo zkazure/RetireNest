@@ -231,6 +231,77 @@ def test_parse_args_default_is_dev_mode() -> None:
     assert args.ports is None
 
 
+def test_load_env_file_reads_pairs(tmp_path: Path) -> None:
+    path = tmp_path / ".env.local"
+    path.write_text(
+        "# 注释行\n"
+        "\n"
+        "RETIRENEST_LLM_API_KEY=sk-local\n"
+        "  RETIRENEST_LLM_MODEL = deepseek-chat  \n"
+        "export RETIRENEST_LLM_BASE_URL=https://api.example.com/v1\n",
+        encoding="utf-8",
+    )
+    environ: dict[str, str] = {}
+
+    applied = run.load_env_file(path, environ)
+
+    assert applied == [
+        "RETIRENEST_LLM_API_KEY",
+        "RETIRENEST_LLM_MODEL",
+        "RETIRENEST_LLM_BASE_URL",
+    ]
+    assert environ == {
+        "RETIRENEST_LLM_API_KEY": "sk-local",
+        "RETIRENEST_LLM_MODEL": "deepseek-chat",
+        "RETIRENEST_LLM_BASE_URL": "https://api.example.com/v1",
+    }
+
+
+def test_load_env_file_strips_paired_quotes(tmp_path: Path) -> None:
+    path = tmp_path / ".env.local"
+    path.write_text('A="sk-quoted"\nB=\'single\'\nC="mismatch\'\n', encoding="utf-8")
+    environ: dict[str, str] = {}
+
+    assert run.load_env_file(path, environ) == ["A", "B", "C"]
+    assert environ == {"A": "sk-quoted", "B": "single", "C": "\"mismatch'"}
+
+
+def test_load_env_file_skips_blank_values_and_malformed_lines(tmp_path: Path) -> None:
+    path = tmp_path / ".env.local"
+    path.write_text("EMPTY=\n无等号\n=没有变量名\nOK=1\n", encoding="utf-8")
+    environ: dict[str, str] = {}
+
+    assert run.load_env_file(path, environ) == ["OK"]
+    assert environ == {"OK": "1"}
+
+
+def test_load_env_file_does_not_override_existing(tmp_path: Path) -> None:
+    path = tmp_path / ".env.local"
+    path.write_text("RETIRENEST_LLM_MODEL=from-file\n", encoding="utf-8")
+    environ = {"RETIRENEST_LLM_MODEL": "from-shell"}
+
+    assert run.load_env_file(path, environ) == []
+    assert environ == {"RETIRENEST_LLM_MODEL": "from-shell"}
+
+
+def test_load_env_file_without_file(tmp_path: Path) -> None:
+    environ: dict[str, str] = {}
+
+    assert run.load_env_file(tmp_path / ".env.local", environ) == []
+    assert environ == {}
+
+
+def test_load_env_file_returns_names_only(tmp_path: Path) -> None:
+    # 返回值用于打印提示，只有变量名，不会把密钥带进日志。
+    path = tmp_path / ".env.local"
+    path.write_text("RETIRENEST_LLM_API_KEY=sk-secret\n", encoding="utf-8")
+
+    applied = run.load_env_file(path, {})
+
+    assert applied == ["RETIRENEST_LLM_API_KEY"]
+    assert all("sk-secret" not in name for name in applied)
+
+
 def test_main_stop_skips_tool_checks(monkeypatch: pytest.MonkeyPatch) -> None:
     stopped: list[list[int]] = []
 

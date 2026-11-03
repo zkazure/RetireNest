@@ -66,7 +66,7 @@ uv run --project src python run.py --prod
 
 命令层另有六个计算原语：`savings.project`（储蓄增长）、`savings.goal`（目标倒推）、`inflation.convert`（通胀换算）、`simulation.retirement`（蒙特卡洛）、`withdrawal.safe_rate`（安全提取率）、`longevity.estimate`（Gompertz 寿命估计）。它们不进入主页表单，可在命令浏览器中单独执行，供 Agent 层调用；口径与 `lifecycle` 一致，并有 `rel=1e-12` 的交叉校验。
 
-Agent 层默认关闭：可以只在设置页填密钥，也可以由服务端设置 `RETIRENEST_LLM_API_KEY` 与 `RETIRENEST_LLM_MODEL`（可选 `RETIRENEST_LLM_BASE_URL`）作为兜底；两种都行，配好之后右下角的悬浮对话框、`POST /api/agent/chat` 与 SSE 端点可用；未配置时返回 503，命令与页面都不受影响。没有 key 时可用 `RETIRENEST_AGENT_FAKE=1` 跑固定演示。可选 `RETIRENEST_AGENT_TOKEN(S)` 启用 Bearer 访问控制，`RETIRENEST_AGENT_DB` 启用 SQLite 会话持久化。配置、隐私、SSE 事件与错误说明见 [docs/agent.md](docs/agent.md)。
+Agent 层默认关闭：可以只在设置页填密钥，也可以由服务端设置 `RETIRENEST_LLM_API_KEY` 与 `RETIRENEST_LLM_MODEL`（可选 `RETIRENEST_LLM_BASE_URL`）作为兜底；两种都行，配好之后右下角的悬浮对话框、`POST /api/agent/chat` 与 SSE 端点可用；未配置时返回 503，命令与页面都不受影响。`make dev` 与 `python run.py` 会自动读取根目录的 `.env.local`（已被 gitignore，格式见 `.env.local.example`），进程里已有的环境变量优先，所以密钥不用每次 export，但改完要重启。没有 key 时可用 `RETIRENEST_AGENT_FAKE=1` 跑固定演示。可选 `RETIRENEST_AGENT_TOKEN(S)` 启用 Bearer 访问控制，`RETIRENEST_AGENT_DB` 启用 SQLite 会话持久化。配置、隐私、SSE 事件与错误说明见 [docs/agent.md](docs/agent.md)。
 
 数据来源、年份与口径见 [docs/data-sources.md](docs/data-sources.md)。其中重疾发生率仍是临时值，标了 `[待转录]`，拿到重疾表附件后整表替换。
 
