@@ -53,28 +53,47 @@ function lineChart(rows: Row[], series: { value: (row: Row) => number; color: st
   return `<div class="chart-legend">${legend}</div>` + svg(width, height, body, options.label);
 }
 
+function axisMax(value: number, intervals = 4): number {
+  const raw = Math.max(value, 1) / intervals;
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  const unit = [1, 2, 2.5, 5, 10].find(candidate => raw <= candidate * magnitude) ?? 10;
+  return unit * magnitude * intervals;
+}
+
+function axisLabel(value: number): string {
+  const wanValue = value / 10000;
+  return `${Number.isInteger(wanValue) ? wanValue : wanValue.toFixed(1)}万`;
+}
+
 function spendingChart(rows: Row[]) {
   const picks = [0.5, 0.7, 0.9].map(ratio => rows[Math.min(rows.length - 1, Math.floor(rows.length * ratio))]);
-  const width = 520, height = 220, barWidth = 64;
-  const max = Math.max(...picks.map(row => row.expense), 1);
+  const width = 520, height = 220, padTop = 30, padBottom = 30, barWidth = 64;
+  const plotLeft = 44, plotRight = width - 12, baseline = height - padBottom;
+  const max = axisMax(Math.max(...picks.map(row => row.expense), 1));
+  const scaleY = (value: number) => baseline - (value / max) * (baseline - padTop);
+  const step = (plotRight - plotLeft) / picks.length;
+  const grid = [0, 0.25, 0.5, 0.75, 1].map(ratio => {
+    const y = scaleY(max * ratio);
+    return `<line x1="${plotLeft}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="${COLORS.line}" stroke-dasharray="3 5"/><text x="${plotLeft - 6}" y="${y + 4}" text-anchor="end" class="axis-text">${axisLabel(max * ratio)}</text>`;
+  }).join('');
   const bars = picks.map((row, index) => {
-    const x = 60 + index * 140;
+    const x = plotLeft + index * step + (step - barWidth) / 2;
     const base = row.expense - row.medical - row.soft;
     const segments: [number, string, string][] = [
       [base, COLORS.sage, '生活'],
       [row.medical, COLORS.clay, '医疗'],
       [row.soft, COLORS.green, '软性'],
     ];
-    let y = height - 30;
+    let y = baseline;
     const parts = segments.map(([value, color, label]) => {
-      const h = (value / max) * (height - 60);
+      const h = (value / max) * (baseline - padTop);
       y -= h;
       return `<rect x="${x}" y="${y}" width="${barWidth}" height="${Math.max(h, 0)}" fill="${color}" rx="3"><title>${label} ${money(value)} 元</title></rect>`;
     }).join('');
     return `${parts}<text x="${x + barWidth / 2}" y="${height - 12}" text-anchor="middle" class="axis-text">${row.age}岁</text><text x="${x + barWidth / 2}" y="${y - 8}" text-anchor="middle" class="axis-text">${wan(row.expense)}</text>`;
   }).join('');
   const legend = `<div class="chart-legend"><span class="legend"><i style="background:${COLORS.sage}"></i>生活</span><span class="legend"><i style="background:${COLORS.clay}"></i>医疗</span><span class="legend"><i style="background:${COLORS.green}"></i>软性</span></div>`;
-  return legend + svg(width, height, bars, '不同年龄的支出结构');
+  return legend + svg(width, height, grid + bars, '不同年龄的支出结构');
 }
 
 function cashflowChart(rows: Row[], retirementAge: number) {
