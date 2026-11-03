@@ -351,10 +351,13 @@ const response = await runCommand('medical.estimate', {
 - 问题：按现在的收支，一辈子能不能撑住。
 - 输入：`sex`、`city`、`birth_date`，可选 `age`、`category`、`retirement_age`；`income`、`expense`、`assets`、`debt`、`retirement_expense`、`travel`、`entertainment`、`children` 为 `type="tier"` 的档位值。
 - `retirement_expense` 可留空，留空时按 `expense` 档位的金额计算（退休前后同一生活水平）。
-- 输出：`pension_monthly`、`break_even_age`、`depleted_age`、`final_assets`、`peak_assets`，以及 `rows`（逐年现金流，`visible: false`）。
+- 输出：`pension_monthly`、`break_even_age`、`depleted_age`、`final_assets`、`peak_assets`、`retirement_assets`、`total_contributions`、`total_returns`，以及 `rows`（逐年现金流，`visible: false`）。
 - `rows` 每年含 `age`、`phase`、`income`（工资，退休后为 0）、`pension`（养老金，工作期为 0）、`passive`（资产收益：期初资产 × 组合实际收益率）、`expense`、`medical`、`soft`、`assets`。
 - `break_even_age` 按「工资 + 养老金 + 资产收益 − 支出」第一次转负的年龄计算；被动收入补上缺口的年份不算转负。
-- 命令版本 1.1.0 增加 `passive` 字段；1.2.0 把养老金从 `income` 拆到 `pension`，`income` 只剩工资。两次升级都不改变资产轨迹。
+- `retirement_assets` 是最后一个工作年年末的资产，即停止工作那一刻；当年即退休时取起步净资产。
+- `total_contributions` 是起步净资产加工资、养老金再减支出；`total_returns` 是逐年资产收益之和。两者相加等于 `final_assets`。
+- 养老金按实际退休年龄取计发月数（表覆盖 40–70 周岁，表外夹到边界），不再用法定退休年龄。
+- 命令版本 1.1.0 增加 `passive` 字段；1.2.0 把养老金从 `income` 拆到 `pension`，`income` 只剩工资；1.3.0 增加退休时资产与终值拆分，并让养老金按实际退休年龄计发。前两次升级不改变资产轨迹。
 - 档位到数值的映射由 `profile` 包完成，命令 handler 只接收数值。
 
 ### lifecycle.simulate

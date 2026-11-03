@@ -97,9 +97,12 @@ _BASE_OUTPUTS = (
 PROJECT = Command(
     manifest=CommandManifest(
         id="lifecycle.project",
-        version="1.2.0",
+        version="1.3.0",
         question="按现在的收支，一辈子能不能撑住？",
-        description="工作期收工资、退休期收养老金加资产收益，逐年滚动资产，给出结余转负与资产不足的年龄。",
+        description=(
+            "工作期收工资、退休期收养老金加资产收益，逐年滚动资产，给出结余转负与"
+            "资产不足的年龄，并拆开终值里的累计投入与累计收益。"
+        ),
         when_to_use="用户想要一条确定的年度现金流与资产轨迹时用。",
         when_not_to_use="用户想看概率与破产年龄分布时用 lifecycle.simulate。",
         inputs=_profile_inputs(),
@@ -107,6 +110,15 @@ PROJECT = Command(
             *_BASE_OUTPUTS,
             OutputSpec(name="peak_assets", question="资产峰值", type="number", unit="元",
                        semantic="money_total_nominal", visible=False),
+            OutputSpec(name="retirement_assets", question="退休时资产", type="number",
+                       unit="元", semantic="money_total_nominal",
+                       description="停止工作那一刻的资产，即最后一个工作年年末。"),
+            OutputSpec(name="total_contributions", question="累计投入", type="number",
+                       unit="元", semantic="money_total_nominal",
+                       description="起步净资产加工资、养老金，再减支出。"),
+            OutputSpec(name="total_returns", question="累计投资收益", type="number",
+                       unit="元", semantic="money_total_nominal",
+                       description="逐年资产收益之和；终值等于累计投入加累计收益。"),
             OutputSpec(name="rows", question="逐年现金流", type="object",
                        semantic="money_per_year_nominal", time_axis={"start": "age", "step_years": 1},
                        visible=False),
@@ -127,6 +139,9 @@ def _project(inputs: dict[str, Any]) -> dict[str, Any]:
         "depleted_age": result.depleted_age,
         "final_assets": result.final_assets,
         "peak_assets": result.peak_assets,
+        "retirement_assets": result.retirement_assets,
+        "total_contributions": result.total_contributions,
+        "total_returns": result.total_returns,
         "rows": [
             {
                 "age": row.age,

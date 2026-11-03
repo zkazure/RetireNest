@@ -38,6 +38,12 @@ class LifecycleResult:
     depleted_age: int | None
     final_assets: float
     peak_assets: float
+    retirement_assets: float
+    """停止工作那一刻的资产：最后一个工作年年末。"""
+    total_contributions: float
+    """累计投入：起步净资产加工资、养老金，再减支出。"""
+    total_returns: float
+    """累计资产收益：逐年被动收入之和。终值 = 累计投入 + 累计收益。"""
 
     @property
     def total_income(self) -> float:

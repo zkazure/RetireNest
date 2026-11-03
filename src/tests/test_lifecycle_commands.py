@@ -42,6 +42,14 @@ def test_项目命令给出逐年轨迹():
     assert first["passive"] < first["income"]
 
 
+def test_项目命令拆开终值来源():
+    result = run("lifecycle.project")
+    assert result["retirement_assets"] > 0
+    assert result["total_contributions"] + result["total_returns"] == pytest.approx(
+        result["final_assets"], abs=0.05
+    )
+
+
 def test_仿真命令给出成功率():
     result = run("lifecycle.simulate", paths=200)
     assert 0 <= result["success_rate"] <= 1

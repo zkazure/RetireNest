@@ -45,7 +45,7 @@ def test_tool_names_are_safe_and_unique(catalog) -> None:
 
 
 def test_every_tool_has_object_parameters_and_required_list(catalog) -> None:
-    versions = {"lifecycle.project": "1.2.0", "lifecycle.simulate": "1.1.0"}
+    versions = {"lifecycle.project": "1.3.0", "lifecycle.simulate": "1.1.0"}
     for spec in catalog.specs:
         parameters = spec.parameters
         assert parameters["type"] == "object"

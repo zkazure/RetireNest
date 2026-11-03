@@ -52,7 +52,10 @@ def test_command_list_contains_all_manifests() -> None:
         "lifecycle.simulate",
         "strategy.compare",
     ]
-    expected_versions = {"lifecycle.project": "1.2.0", "lifecycle.simulate": "1.1.0"}
+    expected_versions = {
+        "lifecycle.project": "1.3.0",
+        "lifecycle.simulate": "1.1.0",
+    }
     for command in body["commands"]:
         assert command["question"]
         assert command["version"] == expected_versions.get(command["id"], "1.0.0")

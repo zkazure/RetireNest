@@ -18,9 +18,17 @@ INFLATION_PCT = 2.5
 SECOND_CHILD_GAP = 3
 """第二个孩子按相差三岁估，养育支出按 60% 系数。"""
 
+PENSION_TABLE_MIN_AGE = 40
+PENSION_TABLE_MAX_AGE = 70
+"""计发月数表覆盖 40–70 周岁，表外年龄夹到边界，见 pension.params。"""
+
 
 def pension_monthly(profile: Profile) -> float:
-    """退休后每月养老金，复用 pension 域的口径。"""
+    """退休后每月养老金，复用 pension 域的口径；计发月数按实际退休年龄。"""
+    age = min(
+        max(profile.retirement_age, PENSION_TABLE_MIN_AGE),
+        PENSION_TABLE_MAX_AGE,
+    )
     result = calculate_pension(
         BasicPensionInput(
             birth_date=profile.birth_date,
@@ -30,6 +38,7 @@ def pension_monthly(profile: Profile) -> float:
             account_balance=f"{profile.pension.account_balance:.2f}",
             calculation_base=f"{profile.pension.base_wage:.2f}",
             category=profile.category,
+            retirement_age_months=age * 12,
         )
     )
     return float(result.total)
@@ -66,6 +75,10 @@ def project(profile: Profile, inflation_pct: float = INFLATION_PCT) -> Lifecycle
     rate = real_return_pct(profile, inflation_pct)
     pension = pension_monthly(profile)
     assets = float(profile.net_assets)
+    start_assets = assets
+    retirement_assets = start_assets
+    total_contributions = start_assets
+    total_returns = 0.0
     peak = assets
     rows: list[YearRow] = []
     depleted_age: int | None = None
@@ -83,7 +96,11 @@ def project(profile: Profile, inflation_pct: float = INFLATION_PCT) -> Lifecycle
         expense = base_expense + medical + soft
         passive = assets * rate / 100
         net = income + pension_annual + passive - expense
+        total_returns += passive
+        total_contributions += income + pension_annual - expense
         assets = assets + net
+        if age == profile.retirement_age - 1:
+            retirement_assets = assets
         if net < 0 and break_even_age is None:
             break_even_age = age
         if assets < 0 and depleted_age is None:
@@ -112,4 +129,7 @@ def project(profile: Profile, inflation_pct: float = INFLATION_PCT) -> Lifecycle
         depleted_age=depleted_age,
         final_assets=rows[-1].assets if rows else round(assets, 2),
         peak_assets=round(peak, 2),
+        retirement_assets=round(retirement_assets, 2),
+        total_contributions=round(total_contributions, 2),
+        total_returns=round(total_returns, 2),
     )

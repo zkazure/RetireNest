@@ -11,7 +11,8 @@ import pytest
 
 from lifecycle import compare, project, simulate
 from lifecycle.errors import LifecycleError
-from lifecycle.project import real_return_pct
+from lifecycle.project import pension_monthly, real_return_pct
+from pension import BasicPensionInput, calculate
 
 
 def with_income(profile, monthly_income):
@@ -215,3 +216,55 @@ def test_策略对比覆盖五个预设():
     fire = next(item for item in summaries if item.preset_id == "fire")
     steady = next(item for item in summaries if item.preset_id == "steady")
     assert fire.retirement_age < steady.retirement_age
+
+def expected_pension(profile, age_months: int) -> float:
+    params = profile.pension
+    result = calculate(
+        BasicPensionInput(
+            birth_date=profile.birth_date,
+            gender=profile.sex,
+            contribution_years=params.years,
+            average_index=f"{params.index:.4f}",
+            account_balance=f"{params.account_balance:.2f}",
+            calculation_base=f"{params.base_wage:.2f}",
+            category=profile.category,
+            retirement_age_months=age_months,
+        )
+    )
+    return float(result.total)
+
+
+def test_养老金按实际退休年龄计发():
+    profile = make_profile(retirement_age=60)
+    assert pension_monthly(profile) == pytest.approx(expected_pension(profile, 60 * 12))
+
+
+def test_表外退休年龄夹到计发月数表边界():
+    profile = make_profile(age=30, birth_date=birth_for(30), retirement_age=30)
+    assert pension_monthly(profile) == pytest.approx(expected_pension(profile, 40 * 12))
+
+
+def test_提前退休的养老金低于按法定年龄计发():
+    early = pension_monthly(make_profile(retirement_age=60))
+    statutory = pension_monthly(make_profile(retirement_age=63))
+    assert early < statutory
+
+
+def test_退休时资产等于最后一个工作年年末():
+    profile = make_profile()
+    result = project(profile)
+    row = next(row for row in result.rows if row.age == profile.retirement_age - 1)
+    assert result.retirement_assets == row.assets
+
+
+def test_当年退休时退休资产等于起步净资产():
+    profile = make_profile(age=60, birth_date=birth_for(60), retirement_age=60)
+    result = project(profile)
+    assert result.retirement_assets == pytest.approx(profile.net_assets)
+
+
+def test_终值等于累计投入加累计收益():
+    result = project(make_profile())
+    assert result.final_assets == pytest.approx(
+        result.total_contributions + result.total_returns, abs=0.05
+    )
