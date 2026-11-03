@@ -10,7 +10,7 @@
 ## 文件
 
 - `models.py`：`PageManifest`、`PageSection`、`PageField`、`PageToggle`、`PageExecution`、`PageRule`。
-- `retirement.py`：退休规划主页的清单，8 个分组、39 个字段、5 条执行、3 个开关、4 条跨字段规则。
+- `lifecycle.py`：全周期页清单，4 个分组、13 个字段、3 条执行，无开关与跨字段规则。
 - `resolve.py`：校验引用并解析成前端 JSON，负责文案取值与约束交集。
 
 ## 解析规则
@@ -26,12 +26,12 @@
 ## 新增字段
 
 1. 确认目标命令的 `input` 已存在（没有就先加命令输入）。
-2. 在 `retirement.py` 对应 `PageSection.fields` 里加 `PageField(name=..., command=...)`。
+2. 在 `lifecycle.py` 对应 `PageSection.fields` 里加 `PageField(name=..., command=...)`。
 3. 如果这个问题可以留空，加 `required=False`，并确认消费命令的对应输入也是 `required=False`。
 4. 如果字段要提交给别的命令，在相应 `PageExecution.inputs` 里加映射。
 5. 运行 `uv run pytest tests/test_pages.py`，它会检查引用、交集和夹具。
 
-`tests/fixtures/retirement-page.json` 是页面响应的快照，由
+`tests/fixtures/lifecycle-page.json` 是页面响应的快照，由
 `tests/test_pages.py::test_page_fixture_matches_endpoint` 对比；改页面后重新生成：
 
 ```bash
@@ -41,7 +41,7 @@ import json
 from fastapi.testclient import TestClient
 from api.app import app
 body = TestClient(app).get("/api/pages/retirement.lifecycle").json()
-with open("tests/fixtures/retirement-page.json", "w", encoding="utf-8") as handle:
+with open("tests/fixtures/lifecycle-page.json", "w", encoding="utf-8") as handle:
     json.dump(body, handle, ensure_ascii=False, indent=2)
     handle.write("\n")
 PY
