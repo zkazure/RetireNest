@@ -41,6 +41,8 @@ result.monthly_at(24)  # 退休两年后的名义月养老金
 - calculation_base：计发基数，元/月，由各省每年公布，必须自己传入。
 - prior_monthly_wage：退休前月工资，给了才算替代率。
 - annual_adjustment：年调整率，省略时取调整率快照的最近一次（当前 2.0%）。
+- retirement_age_months：实际退休年龄（月）；省略时按出生日期与法定规则推导。计发月数
+  随之取 40–70 周岁附表，表外年龄会报错；`lifecycle` 会把用户填的退休年龄传进来。
 
 返回 `BasicPensionResult`，字段都是可追溯的中间量或终值；`monthly_at(n)` 给退休后第
 n 个月的名义月养老金。

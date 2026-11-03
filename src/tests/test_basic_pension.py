@@ -123,3 +123,34 @@ def test_contribution_years_bounds(years):
 def test_female_needs_category_at_calculate_time():
     with pytest.raises(PensionError, match="岗位类别"):
         calculate(make_input(gender="女", category=None))
+
+
+def test_retirement_age_override_changes_payout_months():
+    result = calculate(make_input(retirement_age_months=60 * 12))
+    assert result.retirement_age_months == 720
+    assert result.payout_months == 139
+    assert result.account_pension == Decimal("1079.14")
+
+
+def test_retirement_age_override_uses_earlier_table_row():
+    result = calculate(make_input(retirement_age_months=50 * 12))
+    assert result.payout_months == 195
+    assert result.account_pension == Decimal("769.23")
+    assert result.total == Decimal("3169.23")
+
+
+def test_retirement_age_override_wins_over_statutory_age():
+    statutory = calculate(make_input())
+    earlier = calculate(make_input(retirement_age_months=50 * 12))
+    assert statutory.payout_months == 139
+    assert earlier.payout_months == 195
+
+
+def test_retirement_age_override_outside_table():
+    with pytest.raises(PensionError, match="计发月数"):
+        calculate(make_input(retirement_age_months=35 * 12))
+
+
+def test_retirement_age_override_must_be_integer_months():
+    with pytest.raises(PensionError, match="整数月"):
+        make_input(retirement_age_months=720.0)

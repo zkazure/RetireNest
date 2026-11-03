@@ -14,7 +14,8 @@
 不做的事，以及为什么：
 - 不做视同缴费年限：1996 年前的口径复杂，由调用方折算进缴费年限。
 - 不做跨省转移、补缴、断缴：折算成等效缴费年限后传入。
-- 不做弹性提前/延迟退休：只按法定年龄算，提前与延迟的收益差留给情景对比。
+- 不做弹性提前/延迟退休：`pension.basic` 命令只按法定年龄算；需要模拟实际退休
+  年龄的调用方通过 `retirement_age_months` 覆盖，计发月数随之变化。
 - 不做折现：折现率是政策选择，缺口模块自己折，这里只给名义现金流。
 """
 
@@ -56,12 +57,25 @@ class BasicPensionInput:
     category: str | None = None
     prior_monthly_wage: Decimal | int | str | None = None
     annual_adjustment: Decimal | int | str | None = None
+    retirement_age_months: int | None = None
+    """实际退休年龄（月）；None 表示按出生日期与法定规则推导。"""
 
     def __post_init__(self) -> None:
         years = to_decimal(self.contribution_years, "缴费年限")
         index = to_decimal(self.average_index, "平均缴费指数")
         balance = to_decimal(self.account_balance, "个人账户储存额")
         base = to_decimal(self.calculation_base, "计发基数")
+        if self.retirement_age_months is not None:
+            if isinstance(self.retirement_age_months, bool) or not isinstance(
+                self.retirement_age_months, int
+            ):
+                raise PensionError(
+                    f"实际退休年龄需为整数月，收到 {self.retirement_age_months!r}"
+                )
+            if self.retirement_age_months <= 0:
+                raise PensionError(
+                    f"实际退休年龄必须大于 0，收到 {self.retirement_age_months} 个月"
+                )
         if years <= 0:
             raise PensionError(f"缴费年限必须大于 0，收到 {years}")
         if years > MAX_CONTRIBUTION_YEARS:
@@ -121,7 +135,11 @@ class BasicPensionResult:
 
 def calculate(inp: BasicPensionInput) -> BasicPensionResult:
     """算退休当月的基础养老金、个人账户养老金与合计，保留到分。"""
-    age_months = retirement_age_months(inp.birth_date, inp.gender, inp.category)
+    age_months = (
+        inp.retirement_age_months
+        if inp.retirement_age_months is not None
+        else retirement_age_months(inp.birth_date, inp.gender, inp.category)
+    )
     months = payout_months(age_months)
     basic = (
         inp.calculation_base
