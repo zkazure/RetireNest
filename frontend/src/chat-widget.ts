@@ -42,7 +42,7 @@ function mount(): void {
         <button class="chat-send" type="submit">发送</button>
       </form>
       <div class="chat-foot">
-        <span class="chat-status" aria-live="polite">未配置模型</span>
+        <span class="chat-status" aria-live="polite">就绪</span>
         <a class="chat-settings" href="/settings.html">模型设置</a>
       </div>
     </section>`;
@@ -70,6 +70,20 @@ function mount(): void {
     log.scrollTop = log.scrollHeight;
     return node;
   };
+
+  // 服务端配了环境变量时，浏览器里不用填 key；先问一次，避免误报「未配置模型」。
+  let serverConfigured = false;
+  void (async () => {
+    try {
+      const response = await fetch('/api/agent/config', { headers: { Accept: 'application/json' } });
+      if (!response.ok) return;
+      const body = (await response.json()) as { configured?: { enabled?: boolean } };
+      serverConfigured = Boolean(body.configured?.enabled);
+      if (serverConfigured && !hasModelKey(loadSettings())) setStatus('使用服务端配置的模型');
+    } catch {
+      // 读不到就保留默认提示，不影响发消息。
+    }
+  })();
 
   const open = (): void => {
     panel.hidden = false;
@@ -143,7 +157,9 @@ function mount(): void {
     tone(text, 'user');
     input.value = '';
     setBusy(true);
-    if (!hasModelKey(loadSettings())) setStatus('未配置模型，去「模型设置」填写', 'error');
+    if (!hasModelKey(loadSettings()) && !serverConfigured) {
+      setStatus('未配置模型，去「模型设置」填写', 'error');
+    }
     try {
       const settings = loadSettings();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
