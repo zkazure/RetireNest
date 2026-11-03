@@ -147,6 +147,21 @@ def test_成功率低时可支撑支出被下调():
     assert result.affordable_monthly_expense <= profile.retirement_expense
 
 
+def test_仿真流入包含养老金():
+    """退休期的流入是养老金，而不是 0；否则与确定性推演互相矛盾。"""
+    profile = make_profile(
+        age=60,
+        income_tier="gt50k",
+        expense_tier="lt2k",
+        asset_tier="0",
+        retirement_expense_tier="lt2k",
+        retirement_age=60,
+        birth_date=birth_for(60),
+    )
+    result = simulate(profile, paths=200)
+    assert result.success_rate == 1
+
+
 def test_策略对比覆盖五个预设():
     summaries = compare(make_profile(), paths=100)
     assert len(summaries) == 5

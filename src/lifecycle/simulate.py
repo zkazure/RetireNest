@@ -6,7 +6,7 @@ from profile.schema import Profile
 
 from lifecycle.errors import LifecycleError
 from lifecycle.models import SimulationResult
-from lifecycle.project import INFLATION_PCT, yearly_soft
+from lifecycle.project import INFLATION_PCT, pension_monthly, yearly_soft
 from medical.tri_state import expected_annual
 from portfolio import combine
 from simulation.returns import generate_real_paths
@@ -18,11 +18,12 @@ AFFORDABLE_TARGET = 0.9
 
 
 def _flows(profile: Profile) -> list[tuple[float, float]]:
-    """逐年「收入、支出」，不含投资收益。支出已含医疗与软性支出。"""
+    """逐年「流入、支出」。流入含工作期工资与退休期养老金，不含投资收益。"""
+    pension_annual = pension_monthly(profile) * 12
     flows = []
     for age in range(profile.age, profile.plan_until):
         working = age < profile.retirement_age
-        income = profile.monthly_income * 12 if working else 0.0
+        income = profile.monthly_income * 12 if working else pension_annual
         base = profile.monthly_expense * 12 if working else profile.retirement_expense * 12
         flows.append((income, base + expected_annual(age, profile.sex) + yearly_soft(profile, age)))
     return flows
@@ -120,10 +121,11 @@ def _affordable(profile: Profile, gross: list[list[float]], *, target: float) ->
 
 
 def _flows_with_expense(profile: Profile, retirement_expense: float) -> list[tuple[float, float]]:
+    pension_annual = pension_monthly(profile) * 12
     flows = []
     for age in range(profile.age, profile.plan_until):
         working = age < profile.retirement_age
-        income = profile.monthly_income * 12 if working else 0.0
+        income = profile.monthly_income * 12 if working else pension_annual
         base = profile.monthly_expense * 12 if working else retirement_expense * 12
         flows.append((income, base + expected_annual(age, profile.sex) + yearly_soft(profile, age)))
     return flows
