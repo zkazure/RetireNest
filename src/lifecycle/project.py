@@ -80,8 +80,9 @@ def project(profile: Profile, inflation_pct: float = INFLATION_PCT) -> Lifecycle
         medical = expected_annual(age, profile.sex)
         soft = yearly_soft(profile, age)
         expense = base_expense + medical + soft
-        net = income - expense
-        assets = assets * (1 + rate / 100) + net
+        passive = assets * rate / 100
+        net = income + passive - expense
+        assets = assets + net
         if net < 0 and break_even_age is None:
             break_even_age = age
         if assets < 0 and depleted_age is None:
@@ -92,6 +93,7 @@ def project(profile: Profile, inflation_pct: float = INFLATION_PCT) -> Lifecycle
                 age=age,
                 phase=WORKING if working else RETIRED,
                 income=round(income, 2),
+                passive=round(passive, 2),
                 expense=round(expense, 2),
                 medical=round(medical, 2),
                 soft=round(soft, 2),

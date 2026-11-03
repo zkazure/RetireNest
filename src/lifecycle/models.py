@@ -13,12 +13,19 @@ class YearRow:
     age: int
     phase: str
     income: float
+    """主动收入：工作期工资、退休期养老金。"""
+    passive: float
+    """被动收入：期初资产按组合实际收益率产生的收益。"""
     expense: float
     medical: float
     soft: float
     net: float
     assets: float
     real_return_pct: float
+
+    @property
+    def inflow(self) -> float:
+        return self.income + self.passive
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,7 +39,7 @@ class LifecycleResult:
 
     @property
     def total_income(self) -> float:
-        return sum(row.income for row in self.rows)
+        return sum(row.inflow for row in self.rows)
 
     @property
     def total_expense(self) -> float:

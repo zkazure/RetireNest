@@ -352,6 +352,9 @@ const response = await runCommand('medical.estimate', {
 - 输入：`sex`、`city`、`birth_date`，可选 `age`、`category`、`retirement_age`；`income`、`expense`、`assets`、`debt`、`retirement_expense`、`travel`、`entertainment`、`children` 为 `type="tier"` 的档位值。
 - `retirement_expense` 可留空，留空时按 `expense` 档位的金额计算（退休前后同一生活水平）。
 - 输出：`pension_monthly`、`break_even_age`、`depleted_age`、`final_assets`、`peak_assets`，以及 `rows`（逐年现金流，`visible: false`）。
+- `rows` 每年含 `age`、`phase`、`income`（主动收入：工作期工资、退休期养老金）、`passive`（被动收入：期初资产 × 组合实际收益率）、`expense`、`medical`、`soft`、`assets`。
+- `break_even_age` 按「主动收入 + 被动收入 − 支出」第一次转负的年龄计算；被动收入补上缺口的年份不算转负。
+- 命令版本 1.1.0 增加 `passive` 字段与上述结余口径，资产轨迹不变。
 - 档位到数值的映射由 `profile` 包完成，命令 handler 只接收数值。
 
 ### lifecycle.simulate

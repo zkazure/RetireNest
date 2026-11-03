@@ -9,6 +9,7 @@ import pytest
 
 from lifecycle import compare, project, simulate
 from lifecycle.errors import LifecycleError
+from lifecycle.project import real_return_pct
 
 
 def birth_for(age: int) -> date:
@@ -52,6 +53,43 @@ def test_退休后收入换成养老金():
     at_retirement = next(row for row in result.rows if row.age == profile.retirement_age)
     assert at_retirement.income == pytest.approx(result.pension_monthly * 12, rel=1e-3)
     assert at_retirement.income < profile.monthly_income * 12
+
+
+def test_被动收入按期初资产与实际收益率计算():
+    profile = make_profile()
+    result = project(profile)
+    rate = real_return_pct(profile)
+    row = result.rows[0]
+    assert row.passive == pytest.approx(profile.net_assets * rate / 100, rel=1e-6)
+    assert row.inflow == pytest.approx(row.income + row.passive)
+    assert row.passive > 0
+
+
+def test_资产收益不改变资产轨迹():
+    """被动收入只是把复利拆出来展示，资产必须与旧的复利写法逐位一致。"""
+    profile = make_profile()
+    result = project(profile)
+    rate = real_return_pct(profile)
+    assets = float(profile.net_assets)
+    for row in result.rows:
+        assets = assets * (1 + rate / 100) + (row.income - row.expense)
+        assert row.assets == pytest.approx(round(assets, 2), abs=0.01)
+
+
+def test_结余按主动收入加被动收入计算():
+    profile = make_profile(income_tier="gt50k", asset_tier="gt500w", expense_tier="lt2k")
+    result = project(profile)
+    assert result.break_even_age is None
+    assert all(row.net == pytest.approx(row.inflow - row.expense, abs=0.02) for row in result.rows)
+
+
+def test_退休后依靠养老金与资产收益():
+    profile = make_profile()
+    result = project(profile)
+    retired = [row for row in result.rows if row.age >= profile.retirement_age]
+    assert all(row.income == pytest.approx(result.pension_monthly * 12, rel=1e-3) for row in retired)
+    assert all(row.passive > 0 for row in retired)
+    assert result.rows[-1].passive > result.rows[0].passive
 
 
 def test_支出包含医疗与软性():

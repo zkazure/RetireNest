@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.app import app
-from commands import PROTOCOL_VERSION, list_commands
+from commands import PROTOCOL_VERSION, get_command, list_commands
 from deposit import DemandDeposit
 from deposit import calculate as calculate_deposit
 from living import calculate as calculate_living
@@ -17,10 +17,13 @@ from pension import BasicPensionInput
 from pension import calculate as calculate_pension
 
 client = TestClient(app)
-PROTOCOL = "1.0.0"
 
 
-def run(command_id: str, inputs: dict, version: str = PROTOCOL):
+def run(command_id: str, inputs: dict, version: str | None = None):
+    """按清单里的实际版本发请求，避免升级命令版本时批量改用例。"""
+    if version is None:
+        command = get_command(command_id)
+        version = command.manifest.version if command else "1.0.0"
     return client.post(
         f"/api/commands/{command_id}",
         json={"version": version, "inputs": inputs},
@@ -49,9 +52,10 @@ def test_command_list_contains_all_manifests() -> None:
         "lifecycle.simulate",
         "strategy.compare",
     ]
+    expected_versions = {"lifecycle.project": "1.1.0"}
     for command in body["commands"]:
         assert command["question"]
-        assert command["version"] == "1.0.0"
+        assert command["version"] == expected_versions.get(command["id"], "1.0.0")
         assert command["inputs"]
         assert command["outputs"]
         assert all("question" in item for item in command["inputs"])

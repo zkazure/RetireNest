@@ -6,7 +6,7 @@ from datetime import date
 
 import pytest
 
-from commands import execute_command
+from commands import execute_command, get_command
 from commands.errors import CommandInputError
 
 BASE = {
@@ -26,14 +26,19 @@ BASE = {
 
 
 def run(command_id: str, **extra):
-    return execute_command(command_id, "1.0.0", {**BASE, **extra})
+    command = get_command(command_id)
+    assert command is not None
+    return execute_command(command_id, command.manifest.version, {**BASE, **extra})
 
 
 def test_项目命令给出逐年轨迹():
     result = run("lifecycle.project")
     assert result["pension_monthly"] > 0
     assert len(result["rows"]) > 10
-    assert {"age", "income", "expense", "assets"} <= set(result["rows"][0])
+    assert {"age", "income", "passive", "expense", "assets"} <= set(result["rows"][0])
+    first = result["rows"][0]
+    assert first["passive"] > 0
+    assert first["passive"] < first["income"]
 
 
 def test_仿真命令给出成功率():
@@ -87,7 +92,7 @@ def test_退休年龄可选并接受档位():
 
 def test_退休后支出可选且缺省按当前支出():
     omitted = {key: value for key, value in BASE.items() if key != "retirement_expense"}
-    result = execute_command("lifecycle.project", "1.0.0", omitted)
+    result = execute_command("lifecycle.project", get_command("lifecycle.project").manifest.version, omitted)
     explicit = run("lifecycle.project", retirement_expense="10k15k")
     assert result["rows"] == explicit["rows"]
 

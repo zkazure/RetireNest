@@ -97,7 +97,7 @@ _BASE_OUTPUTS = (
 PROJECT = Command(
     manifest=CommandManifest(
         id="lifecycle.project",
-        version="1.0.0",
+        version="1.1.0",
         question="按现在的收支，一辈子能不能撑住？",
         description="工作期收工资、退休期收养老金加资产收益，逐年滚动资产，给出结余转负与资产不足的年龄。",
         when_to_use="用户想要一条确定的年度现金流与资产轨迹时用。",
@@ -132,6 +132,7 @@ def _project(inputs: dict[str, Any]) -> dict[str, Any]:
                 "age": row.age,
                 "phase": row.phase,
                 "income": row.income,
+                "passive": row.passive,
                 "expense": row.expense,
                 "medical": row.medical,
                 "soft": row.soft,
