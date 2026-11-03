@@ -56,3 +56,16 @@ def test_非法档位被拒绝():
 def test_退休年龄可选并接受档位():
     result = run("lifecycle.project", retirement_age="55")
     assert result["rows"][55 - 35]["phase"] == "退休"
+
+
+def test_退休后支出可选且缺省按当前支出():
+    omitted = {key: value for key, value in BASE.items() if key != "retirement_expense"}
+    result = execute_command("lifecycle.project", "1.0.0", omitted)
+    explicit = run("lifecycle.project", retirement_expense="10k15k")
+    assert result["rows"] == explicit["rows"]
+
+    retired = next(row for row in result["rows"] if row["phase"] == "退休")
+    assert retired["expense"] - retired["medical"] - retired["soft"] == pytest.approx(
+        12_500 * 12
+    )
+    assert run("lifecycle.project", retirement_expense="")["rows"] == explicit["rows"]

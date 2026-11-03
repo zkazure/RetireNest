@@ -34,7 +34,12 @@ SPENDING = PageSection(
     title="支出",
     fields=(
         PageField(name="expense", command=PROJECT),
-        PageField(name="retirement_expense", command=PROJECT),
+        PageField(
+            name="retirement_expense",
+            command=PROJECT,
+            required=False,
+            hint="留空则按当前每月支出计算。",
+        ),
         PageField(name="entertainment", command=PROJECT),
         PageField(name="travel", command=PROJECT),
     ),

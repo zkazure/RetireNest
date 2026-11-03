@@ -26,7 +26,7 @@ def build_profile(
     expense_tier: str,
     asset_tier: str,
     debt_tier: str,
-    retirement_expense_tier: str,
+    retirement_expense_tier: str | None = None,
     travel_tier: str,
     entertainment_tier: str,
     children_tier: str,
@@ -36,8 +36,12 @@ def build_profile(
     category: str | None = None,
     allocations: dict[str, float] | None = None,
 ) -> Profile:
-    """选项进、画像出。未给退休年龄时按法定规则推导。"""
+    """选项进、画像出。未给退休年龄时按法定规则推导。
+
+    未给退休后支出档位时，按当前月支出计算：退休前后默认同一生活水平。
+    """
     income = tiers.INCOME.get(income_tier).amount
+    expense = tiers.EXPENSE.get(expense_tier).amount
     base_wage = city_base_wage(city)
     if birth_date is None:
         raise ProfileError("画像需要出生日期。")
@@ -60,10 +64,14 @@ def build_profile(
         retirement_age=retirement_age,
         plan_until=plan_until,
         monthly_income=income,
-        monthly_expense=tiers.EXPENSE.get(expense_tier).amount,
+        monthly_expense=expense,
         assets=tiers.ASSETS.get(asset_tier).amount,
         debt=tiers.DEBT.get(debt_tier).amount,
-        retirement_expense=tiers.RETIRE_EXPENSE.get(retirement_expense_tier).amount,
+        retirement_expense=(
+            expense
+            if retirement_expense_tier is None
+            else tiers.RETIRE_EXPENSE.get(retirement_expense_tier).amount
+        ),
         travel_trips=tiers.TRAVEL.get(travel_tier).amount,
         entertainment_monthly=tiers.ENTERTAINMENT.get(entertainment_tier).amount,
         children=int(tiers.CHILDREN.get(children_tier).amount),

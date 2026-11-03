@@ -462,7 +462,7 @@
           "name": "retirement_expense",
           "label": "退休后每月打算花多少？",
           "type": "tier",
-          "required": true,
+          "required": false,
           "source": {
             "command": "lifecycle.project",
             "input": "retirement_expense"
@@ -500,7 +500,8 @@
               "amount": 20000
             }
           ],
-          "allowCustom": false
+          "allowCustom": false,
+          "hint": "留空则按当前每月支出计算。"
         },
         {
           "name": "entertainment",

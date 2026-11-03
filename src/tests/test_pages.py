@@ -167,10 +167,17 @@ def test_field_without_consumer_is_rejected() -> None:
 
 def test_required_comes_from_the_page_field() -> None:
     body = client.get(f"/api/pages/{PAGE_ID}").json()
-    for name in ("category", "retirement_age"):
+    for name in ("category", "retirement_age", "retirement_expense"):
         assert field(body, name)["required"] is False
     for name in ("sex", "city", "birth_date", "income"):
         assert field(body, name)["required"] is True
+
+
+def test_retirement_expense_is_optional_with_default_hint() -> None:
+    body = client.get(f"/api/pages/{PAGE_ID}").json()
+    retirement_expense = field(body, "retirement_expense")
+    assert retirement_expense["required"] is False
+    assert retirement_expense["hint"] == "留空则按当前每月支出计算。"
 
 
 def test_tier_field_carries_options_and_amounts() -> None:

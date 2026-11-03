@@ -123,12 +123,31 @@ def test_由选项构建画像():
     )
     assert profile.monthly_income == pytest.approx(25_000)
     assert profile.monthly_expense == pytest.approx(12_500)
+    assert profile.retirement_expense == pytest.approx(8_000)
     assert profile.assets == pytest.approx(1_500_000)
     assert profile.children == 1
     assert profile.travel_trips == 2
     assert profile.retirement_age == 63
     assert profile.pension.years == 35
     assert profile.allocations == DEFAULT_ALLOCATION
+
+
+def test_退休后支出缺省时沿用当前支出():
+    profile = build_profile(
+        age=35,
+        sex="男",
+        city="上海",
+        income_tier="20k30k",
+        expense_tier="10k15k",
+        asset_tier="100w200w",
+        debt_tier="none",
+        travel_tier="twice",
+        entertainment_tier="mid",
+        children_tier="one",
+        birth_date=birth_for(35),
+    )
+    assert profile.monthly_expense == pytest.approx(12_500)
+    assert profile.retirement_expense == pytest.approx(profile.monthly_expense)
 
 
 def test_缺出生日期且没给退休年龄时报错():

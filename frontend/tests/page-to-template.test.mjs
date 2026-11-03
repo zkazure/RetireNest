@@ -97,9 +97,20 @@ test('optional fields stay optional but are still active', () => {
   const active = activeFieldNames(template, complete());
   assert.ok(active.has('retirement_age'));
   assert.ok(active.has('category'));
+  assert.ok(active.has('retirement_expense'));
   const { values, errors } = collectValues(template, complete());
   assert.deepEqual(errors, []);
   assert.equal(values.retirement_age, null);
+});
+
+test('retirement expense may be left blank and is omitted from command inputs', () => {
+  const { values, errors } = collectValues(template, complete({ retirement_expense: '' }));
+  assert.deepEqual(errors, []);
+  assert.equal(values.retirement_expense, null);
+
+  const executions = enabledExecutions(page, values);
+  const inputs = buildInputs(values, executions[0]);
+  assert.ok(!('retirement_expense' in inputs));
 });
 
 test('executions map fields to command arguments', () => {

@@ -73,8 +73,8 @@ export class FormRenderer {
         });
       });
       control = hidden; inputWrap.append(group, echo);
-      if (field.hint) { const hint = el('p', 'field-hint', field.hint); hint.id = id + '-hint'; wrapper.append(hint); }
       wrapper.append(label, inputWrap);
+      if (field.hint) { const hint = el('p', 'field-hint', field.hint); hint.id = id + '-hint'; wrapper.append(hint); }
       const entry: Entry = { field, control, wrapper, radios, echo, error: el('small', 'field-error') };
       entry.error.id = id + '-error'; entry.error.hidden = true;
       const initial = defaults[field.name];
