@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>RetireNest 封面 1280×720</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; }
+  body {
+    display: flex;
+    font-family: "Noto Sans CJK SC", "Dream Han Sans CN", sans-serif;
+    background: #f5f7f3;
+    color: #283c32;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .left {
+    position: relative;
+    width: 772px;
+    height: 720px;
+    padding: 56px 60px 52px;
+    background: #24573f;
+    color: #f7faf0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .glow {
+    position: absolute;
+    top: -180px; right: -140px;
+    width: 560px; height: 560px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(226,237,180,.18), rgba(226,237,180,0) 68%);
+  }
+  .glow2 {
+    position: absolute;
+    bottom: -260px; left: -120px;
+    width: 520px; height: 520px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(163,199,140,.14), rgba(163,199,140,0) 70%);
+  }
+
+  .brand { display: flex; align-items: center; gap: 14px; position: relative; }
+  .mark {
+    width: 46px; height: 48px;
+    border-radius: 13px;
+    background: #e2edb4;
+    display: grid; place-items: center;
+  }
+  .brand strong { display: block; font-size: 23px; font-weight: 700; letter-spacing: 1.5px; line-height: 1; }
+  .brand span { display: block; margin-top: 7px; font-size: 9.5px; letter-spacing: 3px; color: #a9c48d; font-weight: 500; }
+
+  h1 {
+    position: relative;
+    margin-top: 62px;
+    font-size: 47px;
+    line-height: 1.34;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .sub {
+    position: relative;
+    margin-top: 26px;
+    font-size: 18px;
+    letter-spacing: .6px;
+    color: #b9cf9a;
+  }
+  .chips {
+    position: relative;
+    margin-top: 34px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .chips span {
+    font-size: 12.5px;
+    letter-spacing: .5px;
+    color: #d9e6c2;
+    border: 1px solid rgba(226,237,180,.34);
+    border-radius: 999px;
+    padding: 7px 15px;
+  }
+  .rule {
+    position: relative;
+    margin-top: auto;
+    height: 1px;
+    background: rgba(226,237,180,.22);
+  }
+  .stats {
+    position: relative;
+    display: flex;
+    margin-top: 30px;
+    gap: 8px;
+  }
+  .stats > div { flex: 1; }
+  .stats b { font-size: 27px; font-weight: 700; color: #e2edb4; letter-spacing: .4px; }
+  .stats i { font-style: normal; font-size: 12px; margin-left: 4px; color: #a9c48d; }
+  .stats small { display: block; margin-top: 9px; font-size: 11.5px; color: #9db38a; letter-spacing: .3px; }
+
+  .right {
+    flex: 1;
+    padding: 56px 52px 40px;
+    display: flex;
+    flex-direction: column;
+  }
+  .card {
+    margin: auto 0;
+    background: #fff;
+    border: 1px solid #e5eadf;
+    border-radius: 14px;
+    padding: 26px 28px 24px;
+  }
+  .cardhead { display: flex; align-items: center; justify-content: space-between; }
+  .tag { font-size: 11px; letter-spacing: 1.4px; color: #95a187; }
+  .chip {
+    font-size: 10.5px;
+    letter-spacing: .6px;
+    color: #24573f;
+    background: #edf2e5;
+    border-radius: 999px;
+    padding: 4px 10px;
+  }
+  .big { margin-top: 22px; display: flex; align-items: baseline; gap: 6px; }
+  .big b { font-size: 44px; font-weight: 700; letter-spacing: -.5px; color: #1e3a2b; line-height: 1; }
+  .big i { font-style: normal; font-size: 17px; color: #6c855c; }
+  .biglabel { margin-top: 8px; font-size: 12px; color: #798579; letter-spacing: .4px; }
+
+  .bar {
+    margin-top: 22px;
+    display: flex;
+    height: 12px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #eef2e8;
+  }
+  .seg.invest { background: #24573f; }
+  .seg.gain { background: #a3c78c; }
+
+  .legend {
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #63725a;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .d { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+  .d.invest { background: #24573f; }
+  .d.gain { background: #a3c78c; }
+
+  .rows { margin-top: 20px; border-top: 1px solid #eef1e9; padding-top: 16px; }
+  .rows > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    font-size: 12.5px;
+  }
+  .rows span { color: #798579; }
+  .rows b { font-weight: 600; color: #283c32; font-size: 13.5px; }
+
+  .foot {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #95a187;
+  }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="glow"></div>
+    <div class="glow2"></div>
+
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 46 48" aria-hidden="true">
+        <rect x="11" y="27" width="6" height="11" rx="2" fill="#24573f"/>
+        <rect x="20" y="20" width="6" height="18" rx="2" fill="#24573f"/>
+        <rect x="29" y="12" width="6" height="26" rx="2" fill="#24573f"/>
+      </svg>
+      <div>
+        <strong>退有所算</strong>
+        <span>RETIRENEST</span>
+      </div>
+    </div>
+
+    <h1>把退休焦虑<br>换成一张<br>可复核的现金流表</h1>
+    <p class="sub">确定性引擎算数字，AI 只负责解释</p>
+    <div class="chips">
+      <span>五类视图</span>
+      <span>五个策略预设</span>
+      <span>两页 PDF 报告</span>
+    </div>
+
+    <div class="rule"></div>
+    <div class="stats">
+      <div>
+        <b>14,305</b><i>元/月</i>
+        <small>退休后首年养老金</small>
+      </div>
+      <div>
+        <b>667.7</b><i>万</i>
+        <small>退休时资产</small>
+      </div>
+      <div>
+        <b>1235.2</b><i>万</i>
+        <small>84 岁终值</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card">
+      <div class="cardhead">
+        <span class="tag">示例画像 · 奶龙</span>
+        <span class="chip">84 岁</span>
+      </div>
+      <div class="big"><b>1235.2</b><i>万</i></div>
+      <div class="biglabel">84 岁终值</div>
+
+      <div class="bar">
+        <div class="seg invest" style="width:49.6%"></div>
+        <div class="seg gain" style="width:50.4%"></div>
+      </div>
+      <div class="legend">
+        <span><em class="d invest"></em>累计投入 612.9 万</span>
+        <span><em class="d gain"></em>累计投资收益 622.3 万</span>
+      </div>
+
+      <div class="rows">
+        <div><span>退休时资产</span><b>667.7 万</b></div>
+        <div><span>退休后首年养老金</span><b>14,305 元/月</b></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>金融经贸 · 黑客松参赛作品</span>
+      <span>终值里一半来自投资收益</span>
+    </div>
+  </div>
+</body>
+</html>

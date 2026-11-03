@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>RetireNest 海报 1080×1920</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; }
+  body {
+    position: relative;
+    font-family: "Noto Sans CJK SC", "Dream Han Sans CN", sans-serif;
+    background: #f5f7f3;
+    color: #283c32;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .band {
+    position: relative;
+    height: 600px;
+    background: #24573f;
+    padding: 72px 76px 0;
+    color: #f7faf0;
+    overflow: hidden;
+  }
+  .glow {
+    position: absolute;
+    top: -220px; right: -180px;
+    width: 760px; height: 760px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(226,237,180,.18), rgba(226,237,180,0) 68%);
+  }
+
+  .brand { position: relative; display: flex; align-items: center; gap: 18px; }
+  .mark {
+    width: 56px; height: 58px;
+    border-radius: 16px;
+    background: #e2edb4;
+    display: grid; place-items: center;
+  }
+  .brand strong { display: block; font-size: 28px; font-weight: 700; letter-spacing: 2px; line-height: 1; }
+  .brand span { display: block; margin-top: 9px; font-size: 11px; letter-spacing: 4px; color: #a9c48d; font-weight: 500; }
+
+  h1 {
+    position: relative;
+    margin-top: 62px;
+    font-size: 70px;
+    line-height: 1.32;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .sub {
+    position: relative;
+    margin-top: 38px;
+    font-size: 25px;
+    letter-spacing: 1px;
+    color: #b9cf9a;
+  }
+
+  .body { padding: 64px 76px 0; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e5eadf;
+    border-radius: 18px;
+    padding: 40px 44px 36px;
+  }
+  .cardhead { display: flex; align-items: center; justify-content: space-between; }
+  .tag { font-size: 15px; letter-spacing: 1.6px; color: #95a187; }
+  .chip {
+    font-size: 14px;
+    letter-spacing: .8px;
+    color: #24573f;
+    background: #edf2e5;
+    border-radius: 999px;
+    padding: 7px 16px;
+  }
+  .big { margin-top: 28px; display: flex; align-items: baseline; gap: 10px; }
+  .big b { font-size: 88px; font-weight: 700; letter-spacing: -1px; color: #1e3a2b; line-height: 1; }
+  .big i { font-style: normal; font-size: 30px; color: #6c855c; }
+  .biglabel { margin-top: 12px; font-size: 16px; color: #798579; letter-spacing: .6px; }
+
+  .bar {
+    margin-top: 34px;
+    display: flex;
+    height: 18px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #eef2e8;
+  }
+  .seg.invest { background: #24573f; }
+  .seg.gain { background: #a3c78c; }
+
+  .legend {
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    color: #63725a;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .d { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .d.invest { background: #24573f; }
+  .d.gain { background: #a3c78c; }
+
+  .pair {
+    margin-top: 30px;
+    border-top: 1px solid #eef1e9;
+    padding-top: 24px;
+    display: flex;
+  }
+  .pair > div { flex: 1; }
+  .pair > div + div { border-left: 1px solid #eef1e9; padding-left: 32px; }
+  .pair small { display: block; font-size: 14px; color: #798579; letter-spacing: .4px; }
+  .pair b { display: block; margin-top: 10px; font-size: 30px; font-weight: 700; color: #1e3a2b; letter-spacing: -.3px; }
+  .pair b em { font-style: normal; font-size: 16px; font-weight: 500; color: #6c855c; margin-left: 5px; }
+
+  .features { margin-top: 76px; }
+  .feat { display: flex; gap: 30px; padding: 34px 0; border-top: 1px solid #e2e8da; }
+  .feat:last-child { border-bottom: 1px solid #e2e8da; }
+  .num {
+    flex: 0 0 62px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #a3c78c;
+    padding-top: 6px;
+  }
+  .feat h3 { font-size: 27px; font-weight: 700; letter-spacing: .6px; color: #1e3a2b; }
+  .feat p { margin-top: 12px; font-size: 17px; line-height: 1.72; color: #5b6b57; letter-spacing: .2px; }
+
+  .foot {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 196px;
+    background: #24573f;
+    padding: 0 76px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 15px;
+    letter-spacing: 1.4px;
+    color: #c3d6ae;
+  }
+  .foot b { font-weight: 600; color: #e2edb4; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+  <div class="band">
+    <div class="glow"></div>
+
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 46 48" aria-hidden="true">
+        <rect x="11" y="27" width="6" height="11" rx="2" fill="#24573f"/>
+        <rect x="20" y="20" width="6" height="18" rx="2" fill="#24573f"/>
+        <rect x="29" y="12" width="6" height="26" rx="2" fill="#24573f"/>
+      </svg>
+      <div>
+        <strong>退有所算</strong>
+        <span>RETIRENEST</span>
+      </div>
+    </div>
+
+    <h1>把退休焦虑<br>换成一张可复核的<br>现金流表</h1>
+    <p class="sub">确定性引擎算数字，AI 只负责解释</p>
+  </div>
+
+  <div class="body">
+    <div class="card">
+      <div class="cardhead">
+        <span class="tag">示例画像 · 奶龙</span>
+        <span class="chip">全周期现金流</span>
+      </div>
+
+      <div class="big"><b>1235.2</b><i>万</i></div>
+      <div class="biglabel">84 岁终值</div>
+
+      <div class="bar">
+        <div class="seg invest" style="width:49.6%"></div>
+        <div class="seg gain" style="width:50.4%"></div>
+      </div>
+      <div class="legend">
+        <span><em class="d invest"></em>累计投入 612.9 万</span>
+        <span><em class="d gain"></em>累计投资收益 622.3 万</span>
+      </div>
+
+      <div class="pair">
+        <div>
+          <small>退休时资产</small>
+          <b>667.7<em>万</em></b>
+        </div>
+        <div>
+          <small>退休后首年养老金</small>
+          <b>14,305<em>元/月</em></b>
+        </div>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feat">
+        <div class="num">01</div>
+        <div>
+          <h3>逐年可核对</h3>
+          <p>收入按工资、养老金、资产收益三段堆叠。退休后工资归零，由养老金与被动收入支撑，每一年都能摊开看。</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="num">02</div>
+        <div>
+          <h3>数字可复核</h3>
+          <p>终值拆成退休时资产、累计投入与累计投资收益，逐分对平；养老金按实际退休年龄取计发月数，来源与年份可查。</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="num">03</div>
+        <div>
+          <h3>策略可对比</h3>
+          <p>五个预设策略并排，三档资产配置跑蒙特卡洛，给出成功率、破产年龄分位与维持支出所需收入。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>金融经贸 · 黑客松参赛作品</span>
+    <span><b>退有所算 RetireNest</b> · 退休财务规划智能体</span>
+  </div>
+</body>
+</html>
