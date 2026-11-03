@@ -195,6 +195,16 @@ function prefill(params: URLSearchParams): boolean {
     if (control) {
       control.checked = true;
       control.dispatchEvent(new Event('change', { bubbles: true }));
+      continue;
+    }
+    // 深链里给了档位之外的数值时，落到「其他（自己填）」而不是判定预填失败。
+    const other = document.querySelector<HTMLInputElement>(`input[name="${name}"][value="__custom__"]`);
+    const custom = document.querySelector<HTMLInputElement>(`#field-${name}-custom`);
+    if (other && custom) {
+      other.checked = true;
+      custom.value = value;
+      other.dispatchEvent(new Event('change', { bubbles: true }));
+      custom.dispatchEvent(new Event('input', { bubbles: true }));
     } else {
       complete = false;
     }

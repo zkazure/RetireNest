@@ -128,3 +128,38 @@ test('executions map fields to command arguments', () => {
   assert.ok(!('retirement_age' in inputs));
   assert.ok(!('age' in inputs));
 });
+
+test('tier fields expose a custom option with range checks', () => {
+  const fields = template.sections.flatMap(section => section.fields);
+  const income = fields.find(field => field.name === 'income');
+  assert.equal(income.allowCustom, true);
+  assert.equal(income.min, 0);
+  assert.equal(income.max, 10_000_000);
+
+  const custom = collectValues(template, complete({ income: '17000' }));
+  assert.deepEqual(custom.errors, []);
+  assert.equal(custom.values.income, '17000');
+  const inputs = buildInputs(custom.values, enabledExecutions(page, custom.values)[0]);
+  assert.equal(inputs.income, '17000');
+
+  const tooBig = collectValues(template, complete({ income: '99999999' }));
+  assert.ok(tooBig.errors.some(error => error.field === 'income'));
+  const notNumber = collectValues(template, complete({ income: '一万七' }));
+  assert.ok(notNumber.errors.some(error => error.field === 'income'));
+});
+
+test('integer tier fields reject decimals in the custom option', () => {
+  const fractional = collectValues(template, complete({ retirement_age: '58.5' }));
+  assert.ok(fractional.errors.some(error => error.field === 'retirement_age' && error.message.includes('整数')));
+
+  const whole = collectValues(template, complete({ retirement_age: '58' }));
+  assert.deepEqual(whole.errors, []);
+  assert.equal(whole.values.retirement_age, '58');
+});
+
+test('select fields stay choice only', () => {
+  const city = template.sections.flatMap(section => section.fields).find(field => field.name === 'city');
+  assert.notEqual(city.allowCustom, true);
+  const custom = collectValues(template, complete({ city: '某个不存在的城市' }));
+  assert.ok(custom.errors.some(error => error.field === 'city'));
+});

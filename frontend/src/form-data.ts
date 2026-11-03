@@ -103,7 +103,14 @@ export function collectValues(template: FormTemplate, raw: RawValues): { values:
       values[field.name] = text;
     } else {
       if (field.type === 'select' && !field.allowCustom && !fieldOptions(template,field).some(option => option.value === text)) error('请选择列表中的选项。');
-      if (field.type === 'tier' && !(field.tiers ?? []).some(tier => tier.value === text)) error('请选择列表中的选项。');
+      if (field.type === 'tier' && !(field.tiers ?? []).some(tier => tier.value === text)) {
+        const number = Number(text);
+        if (!field.allowCustom) error('请选择列表中的选项。');
+        else if (!/^\d+(?:\.\d+)?$/.test(text)) error('请输入有效数字。');
+        else if (field.integer && !Number.isSafeInteger(number)) error('请输入整数。');
+        else if (field.min !== undefined && number < field.min) error(`不能小于 ${field.min}。`);
+        else if (field.max !== undefined && number > field.max) error(`不能大于 ${field.max}。`);
+      }
       values[field.name] = text;
     }
   }

@@ -60,33 +60,67 @@ export class FormRenderer {
       const group = el('div', 'tier-group'); group.setAttribute('role', 'radiogroup');
       const echo = el('small', 'tier-echo');
       const radios: HTMLInputElement[] = [];
+      const amountEcho = (amount: number) => `按 ${amountText(amount, field.unit)} 计算`;
+      const echoFor = (value: string) => {
+        const tier = (field.tiers ?? []).find(item => item.value === value);
+        return tier ? amountEcho(tier.amount) : '';
+      };
+      const customWrap = el('div', 'tier-custom'); customWrap.hidden = true;
+      const custom = el('input'); custom.type = 'number'; custom.id = id + '-custom';
+      custom.step = field.integer ? '1' : 'any'; custom.placeholder = '填具体数值';
+      custom.setAttribute('aria-label', `${field.label}（自定义）`);
+      if (field.min !== undefined) custom.min = String(field.min);
+      if (field.max !== undefined) custom.max = String(field.max);
+      const customEcho = () => {
+        const number = Number(custom.value);
+        return custom.value.trim() && Number.isFinite(number) && number >= 0
+          ? amountEcho(number) : '填具体数值，提交时按它计算';
+      };
+      const sync = () => {
+        const checked = radios.find(item => item.checked) ?? null;
+        radios.forEach(item => item.closest('.tier-option')?.classList.toggle('selected', item.checked));
+        const isCustom = checked?.value === '__custom__';
+        customWrap.hidden = !isCustom;
+        custom.disabled = !isCustom;
+        hidden.value = checked?.value ?? '';
+        echo.textContent = !checked ? '' : isCustom ? customEcho() : echoFor(checked.value);
+      };
       (field.tiers ?? []).forEach(tier => {
         const option = el('label', 'tier-option');
         const radio = el('input'); radio.type = 'radio'; radio.name = field.name; radio.value = tier.value;
         option.append(radio, document.createTextNode(tier.label));
         group.append(option); radios.push(radio);
-        radio.addEventListener('change', () => {
-          if (!radio.checked) return;
-          hidden.value = tier.value;
-          radios.forEach(item => item.closest('.tier-option')?.classList.toggle('selected', item.checked));
-          echo.textContent = `按 ${amountText(tier.amount, field.unit)} 计算`;
-        });
+        radio.addEventListener('change', () => { if (radio.checked) sync(); });
       });
-      control = hidden; inputWrap.append(group, echo);
+      if (field.allowCustom) {
+        const option = el('label', 'tier-option');
+        const radio = el('input'); radio.type = 'radio'; radio.name = field.name; radio.value = '__custom__';
+        option.append(radio, document.createTextNode('其他（自己填）'));
+        group.append(option); radios.push(radio);
+        radio.addEventListener('change', () => { if (radio.checked) { sync(); custom.focus(); } });
+        custom.addEventListener('input', () => { if (hidden.value === '__custom__') echo.textContent = customEcho(); });
+        customWrap.append(custom);
+        if (field.unit) customWrap.append(el('span', 'unit', field.unit));
+      }
+      control = hidden;
+      // 自定义输入放在 radiogroup 之外，避免把文本控件塞进单选组。
+      if (field.allowCustom) inputWrap.append(group, customWrap, echo);
+      else inputWrap.append(group, echo);
       wrapper.append(label, inputWrap);
       if (field.hint) { const hint = el('p', 'field-hint', field.hint); hint.id = id + '-hint'; wrapper.append(hint); }
       const entry: Entry = { field, control, wrapper, radios, echo, error: el('small', 'field-error') };
+      if (field.allowCustom) { entry.custom = custom; entry.customWrapper = customWrap; }
       entry.error.id = id + '-error'; entry.error.hidden = true;
       const initial = defaults[field.name];
-      if (typeof initial === 'string') {
-        const match = radios.find(item => item.value === initial);
-        if (match) {
-          match.checked = true; control.value = initial;
-          match.closest('.tier-option')?.classList.add('selected');
-          const tier = (field.tiers ?? []).find(item => item.value === initial);
-          if (tier) echo.textContent = `按 ${amountText(tier.amount, field.unit)} 计算`;
+      if (typeof initial === 'string' && initial) {
+        const known = radios.find(radio => radio.value === initial);
+        if (known) known.checked = true;
+        else if (field.allowCustom) {
+          const other = radios.find(radio => radio.value === '__custom__');
+          if (other) { other.checked = true; custom.value = initial; }
         }
       }
+      sync();
       wrapper.append(entry.error); this.entries.set(field.name, entry);
       return entry;
     }

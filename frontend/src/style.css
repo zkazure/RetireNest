@@ -350,6 +350,15 @@ body.intro-active { overflow: hidden; }
 .tier-option.selected { border-color: #327359; background: #eef4ec; color: #245441; font-weight: 600; }
 .tier-option:focus-within { outline: 2px solid #9dbaa6; outline-offset: 2px; }
 .tier-echo { flex-basis: 100%; margin-top: 4px; color: #6c7a68; font-size: 12px; }
+/* 「其他（自己填）」：选中后原地展开一个数字输入，不额外占地方 */
+.tier-custom { flex-basis: 100%; display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.tier-custom[hidden] { display: none; }
+.tier-custom input {
+  width: 150px; height: 34px; padding: 0 10px; border: 1px solid #dfe6d8; border-radius: 6px;
+  background: #fff; font: inherit; font-size: 13px; color: #3c4f3a; font-variant-numeric: tabular-nums;
+}
+.tier-custom input:focus { outline: none; border-color: #86a16b; box-shadow: 0 0 0 3px #edf3e2; }
+.tier-custom .unit { font-size: 12px; color: #87917f; }
 
 /* 全周期页：与主页同一套视觉，单独成页避免挤占经典测算的布局 */
 .site-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 1160px; margin: auto; padding: 22px 40px; border-bottom: 1px solid var(--line); }

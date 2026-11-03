@@ -29,7 +29,6 @@ export interface PageFieldSpec {
   hint?: string;
   options?: { label: string; value: string }[];
   tiers?: { value: string; label: string; amount: number }[];
-  precise?: boolean;
   derive?: string | null;
   allowCustom?: boolean;
   visibleWhen?: PageCondition[];

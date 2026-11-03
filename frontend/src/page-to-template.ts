@@ -30,7 +30,6 @@ function toField(field: PageFieldSpec): FormField {
       amount: tier.amount,
     }));
   }
-  if (field.precise) converted.precise = true;
   if (field.derive) converted.derive = field.derive;
   if (field.allowCustom) converted.allowCustom = true;
   if (field.visibleWhen) {

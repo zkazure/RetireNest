@@ -20,7 +20,6 @@ export interface FormField {
   defaultValue?: string | number | boolean;
   options?: {label: string; value: string}[];
   tiers?: {value: string; label: string; amount: number}[];
-  precise?: boolean;
   derive?: string;
   optionsSource?: string;
   allowCustom?: boolean;

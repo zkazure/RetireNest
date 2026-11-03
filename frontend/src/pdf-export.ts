@@ -120,7 +120,7 @@ function coverPage(data: ReportData): HTMLCanvasElement {
     ? `按当前假设，${data.depletedAge} 岁出现资产不足；${data.breakEvenAge ? `${data.breakEvenAge} 岁结余转负。` : ''}`
     : `按当前假设，资产可支撑至 ${data.rows[data.rows.length - 1].age} 岁；${data.breakEvenAge ? `${data.breakEvenAge} 岁结余转负，但资产未耗尽。` : '全程结余为正。'}`;
   text(ctx, note, 96, 1440, 20, '#5d6a56');
-  text(ctx, '档位按区间中值计算；养老金由城市、收入档与缴费年限推导；收益率与寿命假设见 docs/data-sources.md。', 96, 1480, 16, '#8a9683');
+  text(ctx, '选档位按区间中值计算，自己填的数按原值计算；养老金由城市、收入档与缴费年限推导；收益率与寿命假设见 docs/data-sources.md。', 96, 1480, 16, '#8a9683');
   return canvas;
 }
 
