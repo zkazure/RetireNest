@@ -229,6 +229,7 @@ uv run pytest tests/test_agent_schema.py tests/test_agent_loop.py \
 Agent 可以在回复里给出 `/plan.html?...` 的链接，点开就带着参数渲染同一份画像：
 
 - 参数名与档位值取自 `lifecycle.project` 等命令的 schema 枚举，Agent 不允许自造
+- 页面上的「其他（自己填）」提交的是数值字符串；工具 schema 仍只给档位枚举，所以 Agent 只能选档位。用户要精确值，让他自己在表单里填
 - `view` 取 `spending`、`income`、`cashflow`、`risk`、`strategy`，打开后只显示该视图
 - 页面只认 URL 里出现的参数，缺任何必填项就停在表单上，不会用默认值凑数
 
