@@ -70,6 +70,6 @@ Agent 层默认关闭：可以只在设置页填密钥，也可以由服务端�
 
 数据来源、年份与口径见 [docs/data-sources.md](docs/data-sources.md)。其中重疾发生率仍是临时值，标了 `[待转录]`，拿到重疾表附件后整表替换。
 
-运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。
+运行方法、计算口径与接口说明见 [frontend/README.md](frontend/README.md) 和 [src/api/README.md](src/api/README.md)。启动、重启、停止与模型密钥排障的流程写在 agent skill [.agents/skills/start-retirenest/SKILL.md](.agents/skills/start-retirenest/SKILL.md) 里。
 
 前端不再保存字段配置：表单的问题、类型、选项、约束与分组全部来自后端页面清单。页面清单的完整示例见 `src/tests/fixtures/lifecycle-page.json`。
