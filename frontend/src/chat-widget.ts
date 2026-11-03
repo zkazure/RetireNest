@@ -1,6 +1,6 @@
 // 悬浮对话框：全站右下角入口，点开是一个不离开当前页面的对话面板。
 import './chat-widget.css';
-import { SseParser, type SseEvent } from './agent-stream';
+import { SseParser, replyText, type SseEvent } from './agent-stream';
 import { hasModelKey, loadSettings } from './settings-store';
 
 interface StreamPayload {
@@ -130,7 +130,8 @@ function mount(): void {
     }
     if (event.event === 'tool_result') return;
     if (event.event === 'reply') {
-      tone(payload.text ?? '', 'assistant');
+      const text = replyText(payload);
+      if (text) tone(text, 'assistant');
       for (const warning of payload.warnings ?? []) tone(warning, 'note');
       return;
     }

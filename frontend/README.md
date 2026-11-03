@@ -31,14 +31,16 @@ uv run --project src python run.py --prod
 
 前端用 `src/command-registry.ts` 的显式允许列表决定暴露哪些命令；后台新增命令不会自动出现。协议见 [../docs/command-protocol.md](../docs/command-protocol.md)。
 
-## 规划对话页
+## 规划对话（右下角悬浮框）
 
-- 开发模式：http://127.0.0.1:5173/agent.html
-- 单端口模式：http://127.0.0.1:8000/agent.html
+对话不是独立页面，而是全站右下角的悬浮气泡，点开是一个不离开当前页面的面板。
 
-页面用 `fetch` 调 `POST /api/agent/chat/stream`，边读 SSE 边渲染 `session`、`tool_call`、`tool_result`、`reply`、`done` 事件；流式不可用时回退到普通 `POST /api/agent/chat`。工具轨迹折叠展示 command_id、输入、输出或错误，warning 单独显示。
+- 开发模式：http://127.0.0.1:5173/ ，点右下角气泡
+- 单端口模式：http://127.0.0.1:8000/ ，点右下角气泡
 
-启用了 Bearer 时，在页面顶部的“访问令牌”输入 token；token 只放内存，不写 localStorage。没有模型 key 时可用 `RETIRENEST_AGENT_FAKE=1` 启动固定演示，页面会显示“开发假模型”字样。Agent 配置、鉴权、SQLite 与会话说明见 [../docs/agent.md](../docs/agent.md)。
+面板用 `fetch` 调 `POST /api/agent/chat/stream`，边读 SSE 边渲染：`session` 忽略、`tool_call` 显示成「正在调用 …」的提示、`tool_result` 不展示、`reply` 落到气泡里、`warnings` 逐条附在后面、`error` 直接显示错误文案。没有流式响应时，503 会被换成一句「去模型设置填写」的引导。
+
+模型密钥在 `/settings.html` 里填，存当前浏览器的 localStorage，发消息时随 `X-LLM-Api-Key`、`X-LLM-Model`、`X-LLM-Base-Url` 请求头带给后端。**页面 origin 与填设置的 origin 必须一致**：`localhost` 与 `127.0.0.1`、5173 与 8000 都算不同 origin，localStorage 不互通。服务端配了环境变量时可以不填；配了 Bearer 时设置页的访问令牌也一样只放 localStorage。Agent 配置、鉴权、SQLite 与会话说明见 [../docs/agent.md](../docs/agent.md)，起服务的完整流程见 [../.agents/skills/start-retirenest/SKILL.md](../.agents/skills/start-retirenest/SKILL.md)。
 
 ## 手动启动（排错）
 
