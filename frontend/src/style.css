@@ -399,12 +399,10 @@ body.intro-active { overflow: hidden; }
 .strategy-table td:nth-child(n + 2) { font-variant-numeric: tabular-nums; }
 .detail-bar { display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 4px; font-size: 12px; color: #6c7a68; }
 .detail-select { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: #fff; color: #2f3a2e; font-size: 13px; font-variant-numeric: tabular-nums; }
-.detail-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 13px; }
-.detail-table th, .detail-table td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
-.detail-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; color: #3c4f3a; }
-.detail-table .detail-group th { padding-top: 16px; border-bottom: 0; font-size: 12px; font-weight: 550; color: #6c7a68; }
-.detail-table .detail-group:first-child th { padding-top: 8px; }
-.detail-table .detail-sum td { font-weight: 600; color: #245441; }
+.detail-seg { fill: #fff; font-size: 11px; paint-order: stroke; stroke: rgba(0, 0, 0, .16); stroke-width: 2px; }
+.detail-side { fill: #6c7a68; font-size: 12px; }
+.detail-total { fill: #245441; font-size: 12px; font-weight: 600; }
+.detail-net { font-size: 13px; font-weight: 600; }
 
 /* 档位字段要占满整行：七个档位挤在 1/4 列里会换行溢出固定高度的输入框 */
 .template-field:has(.tier-group) { grid-column: 1 / -1; }

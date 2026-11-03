@@ -159,37 +159,59 @@ function strategyTable(variants: Variant[]) {
   return `<table class="strategy-table"><thead><tr><th>策略</th><th>退休年龄</th><th>成功率</th><th>期末资产</th><th>可支撑月支出</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function detailTable(row: Row): string {
+function detailChart(row: Row): string {
   const living = row.expense - row.medical - row.soft;
-  const income = row.income + row.pension + row.passive;
-  const net = income - row.expense;
-  const group = (label: string) => `<tr class="detail-group"><th colspan="2">${label}</th></tr>`;
-  const line = (label: string, value: number, sum = false) =>
-    `<tr${sum ? ' class="detail-sum"' : ''}><td>${label}</td><td>${money(value)} 元</td></tr>`;
-  return `<table class="detail-table">
-      <tbody>
-        ${group('收入')}
-        ${line('工资', row.income)}
-        ${line('养老金', row.pension)}
-        ${line('资产收益', row.passive)}
-        ${line('收入合计', income, true)}
-        ${group('支出')}
-        ${line('生活', living)}
-        ${line('医疗', row.medical)}
-        ${line('软性', row.soft)}
-        ${line('支出合计', row.expense, true)}
-        ${group('结余与资产')}
-        ${line('当年结余', net)}
-        ${line('年末资产', row.assets, true)}
-      </tbody>
-    </table>`;
+  const negativePassive = row.passive < 0;
+  const incomeTotal = row.income + row.pension + Math.max(row.passive, 0);
+  const net = row.income + row.pension + row.passive - row.expense;
+  const income = [
+    { label: '工资', value: row.income, color: '#245441' },
+    { label: '养老金', value: row.pension, color: '#4f7d62' },
+    { label: '资产收益', value: row.passive, color: '#8ca47d' },
+  ];
+  const expense = [
+    { label: '生活', value: living, color: '#b89a68' },
+    { label: '医疗', value: row.medical, color: '#a4574b' },
+    { label: '软性', value: row.soft, color: '#d6b88a' },
+  ];
+  const width = 720, height = 176, plotLeft = 64, plotRight = 620, barHeight = 40;
+  const max = Math.max(incomeTotal, row.expense, 1);
+  const bar = (parts: { label: string; value: number; color: string }[], y: number, total: number) => {
+    let x = plotLeft;
+    const segments = parts.filter(part => part.value > 0).map(part => {
+      const segmentWidth = (part.value / max) * (plotRight - plotLeft);
+      const rect = `<rect x="${x.toFixed(1)}" y="${y}" width="${segmentWidth.toFixed(1)}" height="${barHeight}" fill="${part.color}"><title>${part.label} ${money(part.value)} 元</title></rect>`;
+      const inBar = segmentWidth > 56
+        ? `<text x="${(x + segmentWidth / 2).toFixed(1)}" y="${y + 25}" text-anchor="middle" class="detail-seg">${part.label} ${wan(part.value)}</text>`
+        : '';
+      x += segmentWidth;
+      return rect + inBar;
+    }).join('');
+    return segments + `<text x="${plotRight + 12}" y="${y + 26}" class="detail-total">${wan(total)}</text>`;
+  };
+  const netColor = net < 0 ? COLORS.red : COLORS.green;
+  return legendOf([
+    { color: '#245441', label: '工资' },
+    { color: '#4f7d62', label: '养老金' },
+    { color: '#8ca47d', label: '资产收益' },
+    { color: '#b89a68', label: '生活' },
+    { color: '#a4574b', label: '医疗' },
+    { color: '#d6b88a', label: '软性' },
+  ]) + svg(width, height, `
+      <text x="12" y="41" class="detail-side">收入</text>
+      <text x="12" y="101" class="detail-side">支出</text>
+      ${bar(income, 16, incomeTotal)}
+      ${bar(expense, 76, row.expense)}
+      <g><title>${money(net)} 元</title><text x="${plotLeft}" y="152" class="detail-net" style="fill:${netColor}">当年结余 ${wan(net)}</text></g>
+      ${negativePassive ? `<text x="${plotLeft + 160}" y="152" class="detail-net" style="fill:${COLORS.red}">资产收益 ${wan(row.passive)}（资产已为负）</text>` : ''}
+    `, '当年收入与支出的构成对比');
 }
 
 function detailCard(rows: Row[], defaultAge: number): string {
   const options = rows.map(row => `<option value="${row.age}"${row.age === defaultAge ? ' selected' : ''}>${row.age} 岁 · ${row.phase}</option>`).join('');
   return `<section class="view-card" data-view="detail"><h2>年度明细</h2><p class="section-hint">选一年，看这一年的钱从哪来、花到哪去。</p>
       <label class="detail-bar">年份<select id="detail-age" class="detail-select">${options}</select></label>
-      <div id="detail-body">${detailTable(rows.find(row => row.age === defaultAge) ?? rows[0])}</div>
+      <div id="detail-body">${detailChart(rows.find(row => row.age === defaultAge) ?? rows[0])}</div>
     </section>`;
 }
 
@@ -224,7 +246,7 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
   const detailSelect = document.querySelector<HTMLSelectElement>('#detail-age');
   detailSelect?.addEventListener('change', () => {
     const row = project.rows.find(item => item.age === Number(detailSelect.value));
-    if (row) host('detail-body').innerHTML = detailTable(row);
+    if (row) host('detail-body').innerHTML = detailChart(row);
   });
   host('pdf-button').addEventListener('click', async () => {
     const button = host('pdf-button') as HTMLButtonElement;
