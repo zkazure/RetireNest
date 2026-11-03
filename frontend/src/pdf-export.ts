@@ -10,6 +10,8 @@ export interface ReportData {
   depletedAge: number | null;
   successRate: number;
   affordableMonthly: number;
+  affordableWorking: number;
+  requiredIncome: number | null;
   rows: ReportRow[];
   variants: ReportVariant[];
 }
@@ -83,24 +85,29 @@ function coverPage(data: ReportData): HTMLCanvasElement {
   text(ctx, '退有所算 · 全周期现金流报告', 96, 150, 42, GREEN, '600');
   text(ctx, '基于假设的测算，不构成个性化投资建议', 96, 196, 18, '#7c8874');
 
+  const required = data.requiredIncome === null
+    ? '超出可测算范围'
+    : `${money(data.requiredIncome)} 元`;
   const cards: [string, string][] = [
     ['退休后月养老金', `${money(data.pensionMonthly)} 元`],
     ['规划终点资产', wan(data.finalAssets)],
     ['成功率', `${(data.successRate * 100).toFixed(1)}%`],
     ['可支撑退休月支出', `${money(data.affordableMonthly)} 元`],
+    ['维持支出需要的月收入', required],
+    ['可支撑工作期月支出', `${money(data.affordableWorking)} 元`],
   ];
   cards.forEach(([label, value], index) => {
-    const x = 96 + (index % 2) * 540;
-    const y = 260 + Math.floor(index / 2) * 150;
+    const x = 96 + (index % 3) * 350;
+    const y = 260 + Math.floor(index / 3) * 150;
     ctx.fillStyle = '#ffffff';
     ctx.strokeStyle = '#e2e7dc';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(x, y, 500, 120, 14);
+    ctx.roundRect(x, y, 330, 120, 14);
     ctx.fill();
     ctx.stroke();
-    text(ctx, label, x + 28, y + 46, 20, '#7c8874');
-    text(ctx, value, x + 28, y + 92, 34, GREEN, '600');
+    text(ctx, label, x + 24, y + 46, 20, '#7c8874');
+    text(ctx, value, x + 24, y + 92, 30, GREEN, '600');
   });
 
   text(ctx, '收入与支出', 96, 620, 26, GREEN, '600');
@@ -133,8 +140,8 @@ function strategyPage(data: ReportData): HTMLCanvasElement {
   text(ctx, '五种活法的对比', 96, 150, 36, GREEN, '600');
   text(ctx, '同一份画像套上不同预设，看退休年龄、成功率与期末资产的差别。', 96, 196, 18, '#7c8874');
 
-  const headers = ['策略', '退休年龄', '成功率', '期末资产', '可支撑月支出'];
-  const columns = [96, 420, 600, 760, 980];
+  const headers = ['策略', '退休年龄', '成功率', '期末资产', '可支撑退休月支出'];
+  const columns = [96, 400, 570, 740, 920];
   headers.forEach((header, index) => text(ctx, header, columns[index], 280, 20, '#7c8874'));
   ctx.strokeStyle = '#e2e7dc';
   ctx.beginPath();

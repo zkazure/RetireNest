@@ -374,7 +374,9 @@ body.intro-active { overflow: hidden; }
 .intro { max-width: 720px; margin-bottom: 26px; }
 .intro h1 { font-size: 30px; margin: 0 0 10px; letter-spacing: .5px; }
 .intro p { color: #63725a; line-height: 1.75; margin: 0; }
-.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin: 22px 0 8px; }
+.summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 22px 0 8px; }
+@media (max-width: 900px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .summary-grid { grid-template-columns: 1fr; } }
 .summary-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
 .summary-card h3 { margin: 0 0 8px; font-size: 12px; font-weight: 550; color: #6c7a68; letter-spacing: .4px; }
 .summary-card strong { display: block; font-size: 24px; color: #245441; }

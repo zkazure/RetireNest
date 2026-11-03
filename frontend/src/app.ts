@@ -12,7 +12,7 @@ import type { PageManifest } from './page-types';
 
 interface Row { age: number; phase: string; income: number; pension: number; passive: number; expense: number; medical: number; soft: number; assets: number }
 interface ProjectOutput { pension_monthly: number; break_even_age: number | null; depleted_age: number | null; final_assets: number; peak_assets: number; rows: Row[] }
-interface SimulateOutput { success_rate: number; terminal_p10: number; terminal_median: number; terminal_p90: number; affordable_monthly_expense: number; depleted_p10: number | null; depleted_median: number | null }
+interface SimulateOutput { success_rate: number; terminal_p10: number; terminal_median: number; terminal_p90: number; affordable_monthly_expense: number; affordable_working_expense: number; required_monthly_income: number | null; depleted_p10: number | null; depleted_median: number | null }
 interface Variant { preset_id: string; label: string; retirement_age: number; final_assets: number; success_rate: number; affordable_monthly_expense: number; depleted_age: number | null }
 interface CompareOutput { variants: Variant[] }
 
@@ -142,10 +142,13 @@ function riskPanel(sim: SimulateOutput) {
     ['中位', sim.terminal_median],
     ['乐观（90% 分位）', sim.terminal_p90],
   ].map(([label, value]) => `<div class="risk-row"><span>${label}</span><div class="risk-bar"><i style="width:${Math.min(100, (Number(value) / Math.max(sim.terminal_p90, 1)) * 100).toFixed(1)}%"></i></div><b>${wan(Number(value))}</b></div>`).join('');
+  const need = sim.required_monthly_income === null
+    ? '超出可测算范围'
+    : `每月 ${money(sim.required_monthly_income)} 元`;
   return `
     <div class="risk-headline"><strong>${pct(sim.success_rate)}</strong><span>模拟路径里资产始终不为负的比例</span></div>
     ${bars}
-    <p class="field-hint">按当前配比，模拟要求成功率九成时，退休后每月可支撑 ${money(sim.affordable_monthly_expense)} 元。${sim.depleted_median ? `最可能在中位 ${sim.depleted_median} 岁出现资产不足。` : '多数路径不会耗尽资产。'}</p>`;
+    <p class="field-hint">按当前配比与九成成功率：维持现有支出需要${need}收入；当前收入能支撑工作期每月 ${money(sim.affordable_working_expense)} 元、退休后每月 ${money(sim.affordable_monthly_expense)} 元的生活支出。${sim.depleted_median ? `最可能在中位 ${sim.depleted_median} 岁出现资产不足。` : '多数路径不会耗尽资产。'}</p>`;
 }
 
 function strategyTable(variants: Variant[]) {
@@ -156,7 +159,7 @@ function strategyTable(variants: Variant[]) {
       <td>${wan(variant.final_assets)}</td>
       <td>${money(variant.affordable_monthly_expense)} 元</td>
     </tr>`).join('');
-  return `<table class="strategy-table"><thead><tr><th>策略</th><th>退休年龄</th><th>成功率</th><th>期末资产</th><th>可支撑月支出</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table class="strategy-table"><thead><tr><th>策略</th><th>退休年龄</th><th>成功率</th><th>期末资产</th><th>可支撑退休月支出</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function detailChart(row: Row): string {
@@ -219,6 +222,21 @@ function card(title: string, value: string, hint: string): string {
   return `<article class="summary-card"><h3>${title}</h3><strong>${value}</strong><p>${hint}</p></article>`;
 }
 
+function requiredIncomeCard(sim: SimulateOutput, project: ProjectOutput) {
+  const current = (project.rows.find(row => row.phase === '工作')?.income ?? 0) / 12;
+  const need = sim.required_monthly_income;
+  if (need === null) {
+    return card('维持支出需要的月收入', '超出可测算范围', '支出远超收入上限，没有可信的建议值');
+  }
+  if (current <= 0) {
+    return card('维持支出需要的月收入', `${money(need)} 元`, '当前没有工作期收入，无法比较缺口');
+  }
+  if (need <= current) {
+    return card('维持支出需要的月收入', `${money(need)} 元`, `当前 ${money(current)} 元，还有 ${money(current - need)} 元余量`);
+  }
+  return card('维持支出需要的月收入', `${money(need)} 元`, `当前 ${money(current)} 元，每月缺口 ${money(need - current)} 元`);
+}
+
 function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOutput) {
   const form = document.querySelector<HTMLFormElement>('#plan-form');
   if (form) form.hidden = true;
@@ -234,6 +252,8 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
       ${card('规划终点资产', wan(project.final_assets), project.depleted_age ? `${project.depleted_age} 岁出现不足` : `可支撑至 ${project.rows[project.rows.length - 1].age} 岁`)}
       ${card('退休后月资产收益', `${money(retirementRow.passive / 12)} 元`, `按当前配比，覆盖退休后月支出的 ${pct(retirementRow.passive / Math.max(retirementRow.expense, 1))}`)}
       ${card('成功率', pct(sim.success_rate), '三档配比下的蒙特卡洛结果')}
+      ${requiredIncomeCard(sim, project)}
+      ${card('按当前收入可支撑的月支出', `${money(sim.affordable_working_expense)} 元`, `退休后约 ${money(sim.affordable_monthly_expense)} 元/月；只调生活支出，医疗与软性不变`)}
     </div>`;
   host('views-host').innerHTML = `
     <section class="view-card" data-view="spending"><h2>支出结构</h2><p class="section-hint">生活支出退休后降一级，医疗随年龄往上走，软性支出在有孩子时最高。</p>${expenseChart(project.rows)}</section>
@@ -261,6 +281,8 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
         depletedAge: project.depleted_age,
         successRate: sim.success_rate,
         affordableMonthly: sim.affordable_monthly_expense,
+        affordableWorking: sim.affordable_working_expense,
+        requiredIncome: sim.required_monthly_income,
         rows: project.rows,
         variants: compare.variants,
       });
