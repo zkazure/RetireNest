@@ -53,86 +53,69 @@ function niceAxis(value: number, maxIntervals = 5): { max: number; step: number 
   return { max: Math.max(value, 1), step: Math.max(value, 1) };
 }
 
-function stackedChart(rows: Row[], series: { value: (row: Row) => number; color: string; label: string }[], options: { label: string }) {
+function chartFrame(rows: Row[], maxValue: number) {
   const width = 720, height = 280, padTop = 20, padBottom = 28;
-  const values = rows.map(row => series.map(item => Math.max(item.value(row), 0)));
-  const totals = values.map(row => row.reduce((sum, value) => sum + value, 0));
-  const { max, step } = niceAxis(Math.max(...totals, 1));
+  const { max, step } = niceAxis(maxValue);
   const scaleY = (value: number) => padTop + (1 - value / max) * (height - padTop - padBottom);
   const scaleX = (age: number) => 44 + ((age - rows[0].age) / (rows[rows.length - 1].age - rows[0].age || 1)) * (width - 56);
+  const grid = Array.from({ length: Math.round(max / step) + 1 }, (_, index) => {
+    const value = index * step;
+    return `<line x1="44" y1="${scaleY(value)}" x2="${width - 12}" y2="${scaleY(value)}" stroke="${COLORS.line}" stroke-dasharray="3 5"/><text x="38" y="${scaleY(value) + 4}" text-anchor="end" class="axis-text">${axisLabel(value)}</text>`;
+  }).join('');
+  const ageTicks = [rows[0].age, rows[Math.floor(rows.length / 3)].age, rows[Math.floor((2 * rows.length) / 3)].age, rows[rows.length - 1].age]
+    .map(age => `<text x="${scaleX(age)}" y="${height - 6}" text-anchor="middle" class="axis-text">${age}岁</text>`).join('');
+  return { width, height, scaleX, scaleY, axis: grid + ageTicks };
+}
+
+function legendOf(series: { color: string; label: string }[]): string {
+  return `<div class="chart-legend">${series.map(item => `<span class="legend"><i style="background:${item.color}"></i>${escapeHtml(item.label)}</span>`).join('')}</div>`;
+}
+
+function stackedChart(rows: Row[], series: { value: (row: Row) => number; color: string; label: string }[], options: { label: string }) {
+  const values = rows.map(row => series.map(item => Math.max(item.value(row), 0)));
+  const totals = values.map(row => row.reduce((sum, value) => sum + value, 0));
+  const frame = chartFrame(rows, Math.max(...totals, 1));
   const bands = series.map((item, index) => {
     const tops: [number, number][] = [];
     const bottoms: [number, number][] = [];
     rows.forEach((row, rowIndex) => {
       const bottom = values[rowIndex].slice(0, index).reduce((sum, value) => sum + value, 0);
       const top = bottom + values[rowIndex][index];
-      tops.push([scaleX(row.age), scaleY(top)]);
-      bottoms.push([scaleX(row.age), scaleY(bottom)]);
+      tops.push([frame.scaleX(row.age), frame.scaleY(top)]);
+      bottoms.push([frame.scaleX(row.age), frame.scaleY(bottom)]);
     });
     return `<path d="${pathOf(tops)} ${pathOf(bottoms.reverse()).replace(/^M/, 'L')} Z" fill="${item.color}" opacity=".88"><title>${escapeHtml(item.label)}</title></path>`;
   }).join('');
-  const total = `<path d="${pathOf(rows.map((row, index) => [scaleX(row.age), scaleY(totals[index])]))}" fill="none" stroke="${COLORS.ink}" stroke-width="2" stroke-dasharray="5 4"/>`;
-  const legend = series.map(item => `<span class="legend"><i style="background:${item.color}"></i>${escapeHtml(item.label)}</span>`).join('') +
-    `<span class="legend"><i style="background:${COLORS.ink}"></i>收入合计</span>`;
-  const gridLines = Array.from({ length: Math.round(max / step) + 1 }, (_, index) => {
-    const value = index * step;
-    return `<line x1="44" y1="${scaleY(value)}" x2="${width - 12}" y2="${scaleY(value)}" stroke="${COLORS.line}" stroke-dasharray="3 5"/><text x="38" y="${scaleY(value) + 4}" text-anchor="end" class="axis-text">${axisLabel(value)}</text>`;
+  const total = `<path d="${pathOf(rows.map((row, index) => [frame.scaleX(row.age), frame.scaleY(totals[index])]))}" fill="none" stroke="${COLORS.ink}" stroke-width="2" stroke-dasharray="5 4"/>`;
+  const legend = legendOf([...series, { color: COLORS.ink, label: '收入合计' }]);
+  return legend + svg(frame.width, frame.height, frame.axis + bands + total, options.label);
+}
+
+function expenseChart(rows: Row[]) {
+  const series = [
+    { value: (row: Row) => row.expense - row.medical - row.soft, color: COLORS.sage, label: '生活' },
+    { value: (row: Row) => row.medical, color: COLORS.clay, label: '医疗' },
+    { value: (row: Row) => row.soft, color: COLORS.green, label: '软性' },
+  ];
+  const width = 720, height = 342, left = 48, right = width - 16;
+  const padTop = 16, panelHeight = 84, gap = 20;
+  const scaleX = (age: number) => left + ((age - rows[0].age) / (rows[rows.length - 1].age - rows[0].age || 1)) * (right - left);
+  const panels = series.map((item, index) => {
+    const y0 = padTop + index * (panelHeight + gap);
+    const max = niceAxis(Math.max(...rows.map(item.value), 1), 3).max;
+    const scaleY = (value: number) => y0 + panelHeight - (value / max) * panelHeight;
+    const grid = [0, max].map(value => `<line x1="${left}" y1="${scaleY(value)}" x2="${right}" y2="${scaleY(value)}" stroke="${COLORS.line}" stroke-dasharray="3 5"/><text x="${left - 10}" y="${scaleY(value) + 4}" text-anchor="end" class="axis-text">${axisLabel(value)}</text>`).join('');
+    const path = `<path d="${pathOf(rows.map(row => [scaleX(row.age), scaleY(item.value(row))]))}" fill="none" stroke="${item.color}" stroke-width="2.5"/>`;
+    return `<text x="${left}" y="${y0 - 4}" class="axis-text" style="fill:${item.color}">${item.label}</text>${grid}${path}`;
   }).join('');
   const ageTicks = [rows[0].age, rows[Math.floor(rows.length / 3)].age, rows[Math.floor((2 * rows.length) / 3)].age, rows[rows.length - 1].age]
     .map(age => `<text x="${scaleX(age)}" y="${height - 6}" text-anchor="middle" class="axis-text">${age}岁</text>`).join('');
-  return `<div class="chart-legend">${legend}</div>` + svg(width, height, gridLines + ageTicks + bands + total, options.label);
-}
-
-function axisMax(value: number, intervals = 4): number {
-  const raw = Math.max(value, 1) / intervals;
-  const magnitude = 10 ** Math.floor(Math.log10(raw));
-  const unit = [1, 2, 2.5, 5, 10].find(candidate => raw <= candidate * magnitude) ?? 10;
-  return unit * magnitude * intervals;
+  return legendOf(series) + svg(width, height, panels + ageTicks, '不同年龄的生活、医疗与软性支出');
 }
 
 function axisLabel(value: number): string {
   const wanValue = value / 10000;
   return `${Number.isInteger(wanValue) ? wanValue : wanValue.toFixed(1)}万`;
-}
-
-function sampleAges(rows: Row[], count: number): Row[] {
-  if (rows.length <= count) return rows;
-  return Array.from({ length: count }, (_, index) => rows[Math.round((index * (rows.length - 1)) / (count - 1))]);
-}
-
-function spendingChart(rows: Row[]) {
-  const picks = sampleAges(rows, 7);
-  const width = 720, height = 250, padTop = 34, padBottom = 30;
-  const plotLeft = 48, plotRight = width - 16, baseline = height - padBottom;
-  const max = axisMax(Math.max(...picks.map(row => row.expense), 1));
-  const scaleY = (value: number) => baseline - (value / max) * (baseline - padTop);
-  const step = (plotRight - plotLeft) / picks.length;
-  const barWidth = Math.min(52, step * 0.56);
-  const grid = [0, 0.25, 0.5, 0.75, 1].map(ratio => {
-    const y = scaleY(max * ratio);
-    return `<line x1="${plotLeft}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="${COLORS.line}" stroke-dasharray="3 5"/><text x="${plotLeft - 6}" y="${y + 4}" text-anchor="end" class="axis-text">${axisLabel(max * ratio)}</text>`;
-  }).join('');
-  const bars = picks.map((row, index) => {
-    const x = plotLeft + index * step + (step - barWidth) / 2;
-    const base = row.expense - row.medical - row.soft;
-    const segments: [number, string, string][] = [
-      [base, COLORS.sage, '生活'],
-      [row.medical, COLORS.clay, '医疗'],
-      [row.soft, COLORS.green, '软性'],
-    ];
-    let y = baseline;
-    const parts = segments.map(([value, color, label]) => {
-      const h = (value / max) * (baseline - padTop);
-      y -= h;
-      return `<rect x="${x}" y="${y}" width="${barWidth}" height="${Math.max(h, 0)}" fill="${color}" rx="3"><title>${label} ${money(value)} 元</title></rect>`;
-    }).join('');
-    const amount = index % 2 === 0 || index === picks.length - 1
-      ? `<text x="${x + barWidth / 2}" y="${y - 8}" text-anchor="middle" class="axis-text">${wan(row.expense)}</text>`
-      : '';
-    return `${parts}<text x="${x + barWidth / 2}" y="${height - 12}" text-anchor="middle" class="axis-text">${row.age}岁</text>${amount}`;
-  }).join('');
-  const legend = `<div class="chart-legend"><span class="legend"><i style="background:${COLORS.sage}"></i>生活</span><span class="legend"><i style="background:${COLORS.clay}"></i>医疗</span><span class="legend"><i style="background:${COLORS.green}"></i>软性</span></div>`;
-  return legend + svg(width, height, grid + bars, '不同年龄的支出结构');
 }
 
 function cashflowChart(rows: Row[], retirementAge: number) {
@@ -196,7 +179,7 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
       ${card('成功率', pct(sim.success_rate), '三档配比下的蒙特卡洛结果')}
     </div>`;
   host('views-host').innerHTML = `
-    <section class="view-card" data-view="spending"><h2>支出结构</h2><p class="section-hint">医疗与软性支出影响的是退休后最花钱的那几年。</p>${spendingChart(project.rows)}</section>
+    <section class="view-card" data-view="spending"><h2>支出结构</h2><p class="section-hint">生活支出退休后降一级，医疗随年龄往上走，软性支出在有孩子时最高。</p>${expenseChart(project.rows)}</section>
     <section class="view-card" data-view="income"><h2>收入曲线</h2><p class="section-hint">工资在退休那天断掉，之后靠养老金和资产收益；资产越多，被动收入越高。</p>${stackedChart(project.rows, [{ value: row => (row.phase === '工作' ? row.income : 0), color: COLORS.green, label: '工资' }, { value: row => (row.phase === '退休' ? row.income : 0), color: COLORS.clay, label: '养老金' }, { value: row => row.passive, color: COLORS.sage, label: '资产收益' }], { label: '收入构成随年龄变化' })}</section>
     <section class="view-card" data-view="cashflow"><h2>收支对比</h2><p class="section-hint">工资断了以后，被动收入接得多快，决定缺口有多大。</p>${cashflowChart(project.rows, retirementAge)}</section>
     <section class="view-card" data-view="risk"><h2>风险与生活水平</h2>${riskPanel(sim)}</section>`;
