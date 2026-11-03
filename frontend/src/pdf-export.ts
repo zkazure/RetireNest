@@ -6,6 +6,9 @@ export interface ReportVariant { label: string; retirement_age: number; success_
 export interface ReportData {
   pensionMonthly: number;
   finalAssets: number;
+  retirementAssets: number;
+  totalContributions: number;
+  totalReturns: number;
   breakEvenAge: number | null;
   depletedAge: number | null;
   successRate: number;
@@ -109,6 +112,15 @@ function coverPage(data: ReportData): HTMLCanvasElement {
     text(ctx, label, x + 24, y + 46, 20, '#7c8874');
     text(ctx, value, x + 24, y + 92, 30, GREEN, '600');
   });
+
+  text(
+    ctx,
+    `退休时资产 ${wan(data.retirementAssets)}；终值 = 累计投入 ${wan(data.totalContributions)} + 投资收益 ${wan(data.totalReturns)}`,
+    96,
+    578,
+    20,
+    '#5d6a56',
+  );
 
   text(ctx, '收入与支出', 96, 620, 26, GREEN, '600');
   const all = data.rows.flatMap(row => [row.income, row.pension, row.passive, row.expense]);

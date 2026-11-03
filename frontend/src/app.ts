@@ -11,7 +11,7 @@ import type { FormPreset, FormTemplate } from './form-types';
 import type { PageManifest } from './page-types';
 
 interface Row { age: number; phase: string; income: number; pension: number; passive: number; expense: number; medical: number; soft: number; assets: number }
-interface ProjectOutput { pension_monthly: number; break_even_age: number | null; depleted_age: number | null; final_assets: number; peak_assets: number; rows: Row[] }
+interface ProjectOutput { pension_monthly: number; break_even_age: number | null; depleted_age: number | null; final_assets: number; peak_assets: number; retirement_assets: number; total_contributions: number; total_returns: number; rows: Row[] }
 interface SimulateOutput { success_rate: number; terminal_p10: number; terminal_median: number; terminal_p90: number; affordable_monthly_expense: number; affordable_working_expense: number; required_monthly_income: number | null; depleted_p10: number | null; depleted_median: number | null }
 interface Variant { preset_id: string; label: string; retirement_age: number; final_assets: number; success_rate: number; affordable_monthly_expense: number; depleted_age: number | null }
 interface CompareOutput { variants: Variant[] }
@@ -248,8 +248,9 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
       <button class="button button-outline" type="button" id="edit-button">修改参数</button>
     </div>
     <div class="summary-grid">
-      ${card('退休后月养老金', `${money(project.pension_monthly)} 元`, '按推导的缴费年限与指数计算')}
-      ${card('规划终点资产', wan(project.final_assets), project.depleted_age ? `${project.depleted_age} 岁出现不足` : `可支撑至 ${project.rows[project.rows.length - 1].age} 岁`)}
+      ${card('退休后月养老金', `${money(project.pension_monthly)} 元`, '按推导的缴费年限、实际退休年龄与指数计算')}
+      ${card('退休时资产', wan(project.retirement_assets), `${retirementAge} 岁停止工作那一刻的资产`)}
+      ${card('规划终点资产', wan(project.final_assets), project.depleted_age ? `${project.depleted_age} 岁出现不足` : `累计投入 ${wan(project.total_contributions)} + 投资收益 ${wan(project.total_returns)}`)}
       ${card('退休后月资产收益', `${money(retirementRow.passive / 12)} 元`, `按当前配比，覆盖退休后月支出的 ${pct(retirementRow.passive / Math.max(retirementRow.expense, 1))}`)}
       ${card('成功率', pct(sim.success_rate), '三档配比下的蒙特卡洛结果')}
       ${requiredIncomeCard(sim, project)}
@@ -277,6 +278,9 @@ function render(project: ProjectOutput, sim: SimulateOutput, compare: CompareOut
       const bytes = await createReportPdf({
         pensionMonthly: project.pension_monthly,
         finalAssets: project.final_assets,
+        retirementAssets: project.retirement_assets,
+        totalContributions: project.total_contributions,
+        totalReturns: project.total_returns,
         breakEvenAge: project.break_even_age,
         depletedAge: project.depleted_age,
         successRate: sim.success_rate,
