@@ -2,14 +2,30 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date
 from profile.build import build_profile
+from profile.derive import account_balance, contribution_index
 
 import pytest
 
 from lifecycle import compare, project, simulate
 from lifecycle.errors import LifecycleError
 from lifecycle.project import real_return_pct
+
+
+def with_income(profile, monthly_income):
+    """按给定月收入重算养老金参数，得到一份候选画像。"""
+    params = profile.pension
+    return replace(
+        profile,
+        monthly_income=monthly_income,
+        pension=replace(
+            params,
+            index=contribution_index(monthly_income, params.base_wage),
+            account_balance=account_balance(monthly_income, params.years),
+        ),
+    )
 
 
 def birth_for(age: int) -> date:
@@ -160,6 +176,35 @@ def test_仿真流入包含养老金():
     )
     result = simulate(profile, paths=200)
     assert result.success_rate == 1
+
+
+def test_所需收入在九成成功率处收敛():
+    profile = make_profile(asset_tier="lt10w", income_tier="lt5k", expense_tier="15k25k")
+    result = simulate(profile, paths=400)
+    need = result.required_monthly_income
+    assert need is not None and need > 0
+    assert simulate(with_income(profile, need + 1), paths=400).success_rate >= 0.9
+    assert simulate(with_income(profile, need * 0.95), paths=400).success_rate < 0.9
+
+
+def test_当前收入充足时所需收入不高于当前收入():
+    profile = make_profile()
+    result = simulate(profile, paths=200)
+    assert result.required_monthly_income is not None
+    assert result.required_monthly_income <= profile.monthly_income
+
+
+def test_可支撑支出按同一比例缩放():
+    profile = make_profile()
+    result = simulate(profile, paths=200)
+    work = result.affordable_working_expense / profile.monthly_expense
+    retired = result.affordable_monthly_expense / profile.retirement_expense
+    assert work == pytest.approx(retired, rel=1e-3)
+
+
+def test_关闭所需收入求解时返回空():
+    result = simulate(make_profile(), paths=100, required=False)
+    assert result.required_monthly_income is None
 
 
 def test_策略对比覆盖五个预设():

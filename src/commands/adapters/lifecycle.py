@@ -147,11 +147,14 @@ def _project(inputs: dict[str, Any]) -> dict[str, Any]:
 SIMULATE = Command(
     manifest=CommandManifest(
         id="lifecycle.simulate",
-        version="1.0.0",
+        version="1.1.0",
         question="按三档资产配置，成功概率有多大？",
-        description="按配比抽收益路径，输出成功率、破产年龄分位、期末资产分位与可支撑的退休支出。",
+        description=(
+            "按配比抽收益路径，输出成功率、破产年龄分位、期末资产分位，以及两个方向："
+            "维持现有支出需要的最低月收入、现有收入能支撑的工作期与退休后月支出。"
+        ),
         deterministic=True,
-        when_to_use="用户问「概率」「风险」「够不够稳」时用。",
+        when_to_use="用户问「概率」「风险」「够不够稳」「要挣多少」「能花多少」时用。",
         when_not_to_use="用户只想要一条确定路径时用 lifecycle.project。",
         inputs=_profile_inputs(
             (
@@ -178,6 +181,11 @@ SIMULATE = Command(
                        unit="元", visible=False),
             OutputSpec(name="affordable_monthly_expense", question="可支撑的退休月支出",
                        type="number", unit="元", semantic="money_flow_nominal"),
+            OutputSpec(name="affordable_working_expense", question="可支撑的工作期月支出",
+                       type="number", unit="元", semantic="money_flow_nominal"),
+            OutputSpec(name="required_monthly_income", question="维持支出需要的最低月收入",
+                       type="number", unit="元", semantic="money_flow_nominal",
+                       description="支出计划不变、成功率不低于九成时所需的最低工作期月税后收入。"),
         ),
     ),
     handler=lambda inputs: _simulate(inputs),
@@ -208,6 +216,8 @@ def _simulate(inputs: dict[str, Any]) -> dict[str, Any]:
         "terminal_median": result.terminal_median,
         "terminal_p90": result.terminal_p90,
         "affordable_monthly_expense": result.affordable_monthly_expense,
+        "affordable_working_expense": result.affordable_working_expense,
+        "required_monthly_income": result.required_monthly_income,
     }
 
 

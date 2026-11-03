@@ -59,4 +59,8 @@ class SimulationResult:
     terminal_median: float
     terminal_p90: float
     affordable_monthly_expense: float
-    """成功率不低于 90% 时能支撑的退休后月支出。"""
+    """成功率不低于 90% 时能支撑的退休后月生活支出。"""
+    affordable_working_expense: float
+    """同一支出倍数下能支撑的工作期月生活支出。"""
+    required_monthly_income: float | None
+    """维持现有支出计划、成功率不低于 90% 所需的最低工作期月收入；超出上限时为 None。"""

@@ -48,6 +48,12 @@ def test_仿真命令给出成功率():
     assert result["affordable_monthly_expense"] > 0
 
 
+def test_仿真命令给出两个预测():
+    result = run("lifecycle.simulate", paths=200)
+    assert result["affordable_working_expense"] > 0
+    assert result["required_monthly_income"] is None or result["required_monthly_income"] > 0
+
+
 def test_对比命令给出五个策略():
     result = run("strategy.compare")
     assert len(result["variants"]) == 5

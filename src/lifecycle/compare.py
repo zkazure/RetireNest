@@ -34,7 +34,7 @@ def compare(
     for preset_id in preset_ids:
         variant = apply(get_preset(preset_id), profile)
         projection = project(variant)
-        simulation = simulate(variant, paths=paths, seed=seed)
+        simulation = simulate(variant, paths=paths, seed=seed, required=False)
         summaries.append(
             VariantSummary(
                 preset_id=preset_id,

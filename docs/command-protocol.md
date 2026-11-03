@@ -359,9 +359,14 @@ const response = await runCommand('medical.estimate', {
 
 ### lifecycle.simulate
 
-- 问题：按三档资产配置，成功概率有多大。
+- 问题：按三档资产配置，成功概率有多大；维持支出要挣多少，现有收入能花多少。
 - 输入：与 `lifecycle.project` 相同，另有可选 `paths`（100–20000，默认 1000）与 `seed`。
-- 输出：`success_rate`、`depleted_p10/p50/p90`、`terminal_p10/p50/p90`、`affordable_monthly_expense`。
+- 输出：`success_rate`、`depleted_p10/p50/p90`、`terminal_p10/p50/p90`、`affordable_monthly_expense`、`affordable_working_expense`、`required_monthly_income`。
+- 现金流与 `lifecycle.project` 同口径：工作期流入工资，退休期流入养老金，再减支出；成功率是资产从未为负的路径占比。
+- `required_monthly_income`：支出计划不变、成功率不低于九成时所需的最低工作期月税后收入；候选收入会重算缴费指数与个人账户，养老金随之变化。封顶 1000 万仍不达标时为 `null`。
+- `affordable_monthly_expense` 与 `affordable_working_expense`：收入不变时，工作期与退休后的基础生活支出按同一比例缩放，医疗与软性支出不变；九成成功率下的最大比例分别乘到两项支出上。
+- 两个预测都始终求解；`strategy.compare` 内部关闭 `required_monthly_income`，控制五个变体的耗时。
+- 命令版本 1.1.0 增加 `affordable_working_expense` 与 `required_monthly_income`，并把养老金纳入现金流；成功率与两个可支撑支出因此变化。
 - 固定 `seed` 时结果可复现。
 
 ### strategy.compare

@@ -763,9 +763,9 @@
     },
     {
       "command": "lifecycle.simulate",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "question": "按三档资产配置，成功概率有多大？",
-      "description": "按配比抽收益路径，输出成功率、破产年龄分位、期末资产分位与可支撑的退休支出。",
+      "description": "按配比抽收益路径，输出成功率、破产年龄分位、期末资产分位，以及两个方向：维持现有支出需要的最低月收入、现有收入能支撑的工作期与退休后月支出。",
       "inputs": {
         "sex": "sex",
         "city": "city",
@@ -885,6 +885,24 @@
         {
           "name": "affordable_monthly_expense",
           "question": "可支撑的退休月支出",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": "money_flow_nominal",
+          "visible": true
+        },
+        {
+          "name": "affordable_working_expense",
+          "question": "可支撑的工作期月支出",
+          "type": "number",
+          "unit": "元",
+          "precision": null,
+          "semantic": "money_flow_nominal",
+          "visible": true
+        },
+        {
+          "name": "required_monthly_income",
+          "question": "维持支出需要的最低月收入",
           "type": "number",
           "unit": "元",
           "precision": null,
